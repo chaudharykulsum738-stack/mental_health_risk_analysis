@@ -118,16 +118,22 @@ def ensure_data_files_exist():
             else:
                 pd.DataFrame().to_excel(filepath, index=False)
 
-def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes):
+def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=None):
     ensure_data_files_exist()
     filepath = os.path.join(DATA_DIR, "user_history.xlsx")
     try:
         df = pd.read_excel(filepath)
     except:
         df = pd.DataFrame(columns=["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"])
+    if entry_date is None:
+        date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    else:
+        # Combine the chosen date with the current time so multiple entries on
+        # the same date still sort correctly and stay unique.
+        date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
     new_entry = pd.DataFrame([{
         "username": username,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "date": date_str,
         "mood": mood,
         "sleep_hours": sleep_hours,
         "stress_level": stress_level,
@@ -440,6 +446,7 @@ elif page == "📋 Assessment":
     st.markdown("---")
     
     username = st.text_input("👤 Enter your name", "Guest User")
+    entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date())
     
     st.markdown("## Answer the following questions:")
     
@@ -465,16 +472,17 @@ elif page == "📋 Assessment":
     st.metric("Preview Wellness Score", f"{preview_score}/100")
     
     if st.button("✅ Submit Assessment"):
-        entry = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
+        entry = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=entry_date)
         st.session_state['assessment_data'] = {
             "username": username,
+            "date": entry_date,
             "mood": mood,
             "sleep_hours": sleep_hours,
             "stress_level": stress_level,
             "anxiety_level": anxiety_level,
             "exercise_minutes": exercise_minutes
         }
-        st.success("🎉 Assessment saved successfully!")
+        st.success(f"🎉 Assessment saved for {entry_date.strftime('%Y-%m-%d')}!")
 
 # Risk Prediction Page
 elif page == "🤖 Risk Prediction":
