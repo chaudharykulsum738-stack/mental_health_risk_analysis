@@ -5,6 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import os
 import random
+import sqlite3
 from datetime import datetime
 from textblob import TextBlob
 from reportlab.lib.pagesizes import letter
@@ -13,10 +14,8 @@ from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
 import io
 
-# Page Configuration
 st.set_page_config(page_title="Mental Health Risk Analysis", page_icon="🧠", layout="wide")
 
-# Custom CSS for better styling
 st.markdown("""
 <style>
     .main {
@@ -99,68 +98,85 @@ st.markdown("""
 
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
+DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
 
-def ensure_data_files_exist():
-    filenames = [
-        "mental_health_dataset.xlsx",
-        "user_history.xlsx",
-        "predictions.xlsx"
-    ]
-    for filename in filenames:
-        filepath = os.path.join(DATA_DIR, filename)
-        if not os.path.exists(filepath):
-            if filename == "user_history.xlsx":
-                df = pd.DataFrame(columns=["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"])
-                df.to_excel(filepath, index=False)
-            elif filename == "predictions.xlsx":
-                df = pd.DataFrame(columns=["username", "date", "risk_level", "wellness_score", "factors"])
-                df.to_excel(filepath, index=False)
-            else:
-                pd.DataFrame().to_excel(filepath, index=False)
+
+def get_connection():
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def init_db():
+    """Create the SQL tables if they don't exist yet. Safe to call repeatedly."""
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS user_history (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            date TEXT,
+            mood TEXT,
+            sleep_hours REAL,
+            stress_level REAL,
+            anxiety_level REAL,
+            exercise_minutes REAL
+        )
+    """)
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS predictions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT,
+            date TEXT,
+            risk_level TEXT,
+            wellness_score REAL,
+            factors TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
 
 def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=None):
-    ensure_data_files_exist()
-    filepath = os.path.join(DATA_DIR, "user_history.xlsx")
-    try:
-        df = pd.read_excel(filepath)
-    except:
-        df = pd.DataFrame(columns=["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"])
+    init_db()
     if entry_date is None:
         date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     else:
         # Combine the chosen date with the current time so multiple entries on
         # the same date still sort correctly and stay unique.
         date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
-    new_entry = pd.DataFrame([{
-        "username": username,
-        "date": date_str,
-        "mood": mood,
-        "sleep_hours": sleep_hours,
-        "stress_level": stress_level,
-        "anxiety_level": anxiety_level,
-        "exercise_minutes": exercise_minutes
+
+    conn = get_connection()
+    conn.execute(
+        """INSERT INTO user_history
+           (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
+           VALUES (?, ?, ?, ?, ?, ?, ?)""",
+        (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes),
+    )
+    conn.commit()
+    conn.close()
+
+    return pd.DataFrame([{
+        "username": username, "date": date_str, "mood": mood, "sleep_hours": sleep_hours,
+        "stress_level": stress_level, "anxiety_level": anxiety_level, "exercise_minutes": exercise_minutes,
     }])
-    df = pd.concat([df, new_entry], ignore_index=True)
-    df.to_excel(filepath, index=False)
-    return new_entry
+
 
 def save_prediction(username, risk_level, wellness_score, factors):
-    ensure_data_files_exist()
-    filepath = os.path.join(DATA_DIR, "predictions.xlsx")
-    try:
-        df = pd.read_excel(filepath)
-    except:
-        df = pd.DataFrame(columns=["username", "date", "risk_level", "wellness_score", "factors"])
-    new_prediction = pd.DataFrame([{
-        "username": username,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "risk_level": risk_level,
-        "wellness_score": wellness_score,
-        "factors": str(factors)
+    init_db()
+    conn = get_connection()
+    conn.execute(
+        """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
+           VALUES (?, ?, ?, ?, ?)""",
+        (username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), risk_level, wellness_score, str(factors)),
+    )
+    conn.commit()
+    conn.close()
+
+    return pd.DataFrame([{
+        "username": username, "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "risk_level": risk_level, "wellness_score": wellness_score, "factors": str(factors),
     }])
-    df = pd.concat([df, new_prediction], ignore_index=True)
-    df.to_excel(filepath, index=False)
-    return new_prediction
 
 def calculate_wellness_score(stress, sleep, anxiety, exercise):
     score = 0
@@ -268,13 +284,14 @@ def mood_to_score(series):
     return series.map(mood_map)
 
 def get_history_data():
-    history_path = os.path.join(DATA_DIR, "user_history.xlsx")
-    if not os.path.exists(history_path):
-        return pd.DataFrame()
+    init_db()
+    conn = get_connection()
     try:
-        df = pd.read_excel(history_path)
+        df = pd.read_sql_query("SELECT * FROM user_history", conn)
     except Exception:
         return pd.DataFrame()
+    finally:
+        conn.close()
     if df.empty:
         return df
     df = df.copy()
@@ -289,13 +306,14 @@ def get_history_data():
     return df.dropna(subset=["date"])
 
 def get_prediction_data():
-    predictions_path = os.path.join(DATA_DIR, "predictions.xlsx")
-    if not os.path.exists(predictions_path):
-        return pd.DataFrame()
+    init_db()
+    conn = get_connection()
     try:
-        df = pd.read_excel(predictions_path)
+        df = pd.read_sql_query("SELECT * FROM predictions", conn)
     except Exception:
         return pd.DataFrame()
+    finally:
+        conn.close()
     if df.empty:
         return df
     df = df.copy()
@@ -398,20 +416,19 @@ if page == "🏠 Home":
     st.markdown("---")
     
     # Stats Preview
-    history_path = os.path.join(DATA_DIR, "user_history.xlsx")
-    if os.path.exists(history_path):
-        try:
-            df = pd.read_excel(history_path)
-            if len(df) > 0:
-                st.markdown("## 📊 Your Stats")
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Total Assessments", len(df))
-                m2.metric("Avg Sleep", f"{df['sleep_hours'].mean():.1f}h")
-                m3.metric("Avg Stress", f"{df['stress_level'].mean():.1f}")
-                m4.metric("Last Entry", df['date'].iloc[-1][:10])
-                st.markdown("---")
-        except:
-            pass
+    try:
+        df = get_history_data()
+        if len(df) > 0:
+            df_sorted = df.sort_values("date")
+            st.markdown("## 📊 Your Stats")
+            m1, m2, m3, m4 = st.columns(4)
+            m1.metric("Total Assessments", len(df_sorted))
+            m2.metric("Avg Sleep", f"{df_sorted['sleep_hours'].mean():.1f}h")
+            m3.metric("Avg Stress", f"{df_sorted['stress_level'].mean():.1f}")
+            m4.metric("Last Entry", df_sorted['date'].iloc[-1].strftime("%Y-%m-%d"))
+            st.markdown("---")
+    except Exception:
+        pass
     
     # Daily Wellness Tips
     wellness_tips = [
@@ -650,23 +667,23 @@ elif page == "📂 Bulk Upload":
                     )
                 with save_col:
                     if st.button("➕ Add these records to the backend data", use_container_width=True):
-                        ensure_data_files_exist()
-                        history_path = os.path.join(DATA_DIR, "user_history.xlsx")
-                        predictions_path = os.path.join(DATA_DIR, "predictions.xlsx")
-
-                        try:
-                            existing_history = pd.read_excel(history_path)
-                        except Exception:
-                            existing_history = pd.DataFrame(columns=["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"])
-                        history_to_add = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]]
-                        pd.concat([existing_history, history_to_add], ignore_index=True).to_excel(history_path, index=False)
-
-                        try:
-                            existing_predictions = pd.read_excel(predictions_path)
-                        except Exception:
-                            existing_predictions = pd.DataFrame(columns=["username", "date", "risk_level", "wellness_score", "factors"])
-                        predictions_to_add = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]]
-                        pd.concat([existing_predictions, predictions_to_add], ignore_index=True).to_excel(predictions_path, index=False)
+                        init_db()
+                        conn = get_connection()
+                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]].values.tolist()
+                        conn.executemany(
+                            """INSERT INTO user_history
+                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
+                               VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                            history_rows,
+                        )
+                        prediction_rows = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]].values.tolist()
+                        conn.executemany(
+                            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
+                               VALUES (?, ?, ?, ?, ?)""",
+                            prediction_rows,
+                        )
+                        conn.commit()
+                        conn.close()
 
                         st.success(f"✅ Added {len(bulk_df)} records to the backend. They'll now show up in Dashboard and Admin.")
 
@@ -987,45 +1004,45 @@ elif page == "📄 Report":
 elif page == "📊 Admin":
     st.title("📊 Admin Dashboard")
     st.markdown("---")
-    
+
     st.markdown("## 📁 Data Management")
-    history_path = os.path.join(DATA_DIR, "user_history.xlsx")
-    predictions_path = os.path.join(DATA_DIR, "predictions.xlsx")
-    
+    st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`.")
+    init_db()
+
     col1, col2 = st.columns(2)
-    
+
     with col1:
-        if os.path.exists(history_path):
-            try:
-                df_history = pd.read_excel(history_path)
-                st.markdown("### 👥 User History Data")
-                st.dataframe(df_history, use_container_width=True)
-                st.metric("Total Entries", len(df_history))
+        try:
+            conn = get_connection()
+            df_history = pd.read_sql_query("SELECT * FROM user_history", conn)
+            conn.close()
+            st.markdown("### 👥 User History Data")
+            st.dataframe(df_history, use_container_width=True)
+            st.metric("Total Entries", len(df_history))
+            if not df_history.empty:
                 st.download_button(
                     label="📥 Download Patient History (Excel)",
                     data=export_to_excel(df_history, sheet_name="Patient History"),
                     file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
-            except Exception as e:
-                st.error(f"❌ Error: {e}")
-        else:
-            st.info("📭 User history file not found.")
-    
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+
     with col2:
-        if os.path.exists(predictions_path):
-            try:
-                df_predictions = pd.read_excel(predictions_path)
-                st.markdown("### 🤖 Predictions Data")
-                st.dataframe(df_predictions, use_container_width=True)
-                st.metric("Total Predictions", len(df_predictions))
+        try:
+            conn = get_connection()
+            df_predictions = pd.read_sql_query("SELECT * FROM predictions", conn)
+            conn.close()
+            st.markdown("### 🤖 Predictions Data")
+            st.dataframe(df_predictions, use_container_width=True)
+            st.metric("Total Predictions", len(df_predictions))
+            if not df_predictions.empty:
                 st.download_button(
                     label="📥 Download Predictions (Excel)",
                     data=export_to_excel(df_predictions, sheet_name="Predictions"),
                     file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                     mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 )
-            except Exception as e:
-                st.error(f"❌ Error: {e}")
-        else:
-            st.info("📭 Predictions file not found.")
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
