@@ -361,7 +361,7 @@ if 'nav_to' in st.session_state:
 else:
     page = st.sidebar.radio(
         "Go to",
-        ["🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "📈 Dashboard", "📝 Journal", "📄 Report", "📊 Admin"],
+        ["🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📄 Report", "📊 Admin"],
         label_visibility="collapsed"
     )
 
@@ -544,6 +544,123 @@ elif page == "🤖 Risk Prediction":
             st.success(rec)
         
         save_prediction(username, risk, wellness_score, factors)
+
+# Bulk Upload Page
+elif page == "📂 Bulk Upload":
+    st.title("📂 Bulk Upload & Analyze")
+    st.markdown("---")
+    st.write(
+        "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
+        "instead of entering them one by one in the Assessment page."
+    )
+
+    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]
+
+    with st.expander("📋 Expected file format / download a template"):
+        st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
+        st.caption("`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. A `date` column is optional.")
+        template_df = pd.DataFrame([{
+            "username": "John Doe", "mood": "Good", "sleep_hours": 7,
+            "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
+        }])
+        st.download_button(
+            label="📥 Download Template (Excel)",
+            data=export_to_excel(template_df, sheet_name="Template"),
+            file_name="bulk_upload_template.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        )
+
+    uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
+
+    if uploaded_file is not None:
+        try:
+            bulk_df = pd.read_excel(uploaded_file)
+        except Exception as e:
+            bulk_df = None
+            st.error(f"❌ Couldn't read that file: {e}")
+
+        if bulk_df is not None:
+            missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
+            if missing_cols:
+                st.error(f"❌ Missing required column(s): {', '.join(missing_cols)}. "
+                         f"Check the template above for the expected format.")
+            elif bulk_df.empty:
+                st.warning("⚠️ The uploaded file has no rows.")
+            else:
+                bulk_df = bulk_df.copy()
+
+                if "date" not in bulk_df.columns:
+                    bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+                risk_levels, wellness_scores, factor_lists = [], [], []
+                for _, row in bulk_df.iterrows():
+                    risk, factors, wellness = predict_risk(
+                        row["stress_level"], row["sleep_hours"], row["anxiety_level"],
+                        row["exercise_minutes"], row["mood"],
+                    )
+                    risk_levels.append(risk)
+                    wellness_scores.append(wellness)
+                    factor_lists.append(", ".join(factors))
+
+                bulk_df["wellness_score"] = wellness_scores
+                bulk_df["risk_level"] = risk_levels
+                bulk_df["factors"] = factor_lists
+
+                st.success(f"✅ Analyzed {len(bulk_df)} records.")
+
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Total Records", len(bulk_df))
+                m2.metric("Avg Wellness", f"{bulk_df['wellness_score'].mean():.0f}/100")
+                m3.metric("High Risk", int((bulk_df["risk_level"] == "High").sum()))
+                m4.metric("Low Risk", int((bulk_df["risk_level"] == "Low").sum()))
+
+                st.markdown("### 📊 Results")
+                st.dataframe(bulk_df, use_container_width=True)
+
+                c1, c2 = st.columns(2)
+                with c1:
+                    risk_counts = bulk_df["risk_level"].value_counts().reset_index()
+                    risk_counts.columns = ["Risk", "Count"]
+                    fig_risk = px.bar(
+                        risk_counts, x="Risk", y="Count", color="Risk",
+                        title="Risk Level Distribution",
+                        color_discrete_map={"Low": "#00b894", "Medium": "#fdcb6e", "High": "#d63031"},
+                    )
+                    st.plotly_chart(style_plot(fig_risk), use_container_width=True)
+                with c2:
+                    fig_hist = px.histogram(bulk_df, x="wellness_score", nbins=15, title="Wellness Score Distribution")
+                    st.plotly_chart(style_plot(fig_hist), use_container_width=True)
+
+                st.markdown("### 📥 Export or Save")
+                dl_col, save_col = st.columns(2)
+                with dl_col:
+                    st.download_button(
+                        label="📥 Download Analyzed Results (Excel)",
+                        data=export_to_excel(bulk_df, sheet_name="Bulk Analysis"),
+                        file_name=f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    )
+                with save_col:
+                    if st.button("➕ Add these records to the backend data", use_container_width=True):
+                        ensure_data_files_exist()
+                        history_path = os.path.join(DATA_DIR, "user_history.xlsx")
+                        predictions_path = os.path.join(DATA_DIR, "predictions.xlsx")
+
+                        try:
+                            existing_history = pd.read_excel(history_path)
+                        except Exception:
+                            existing_history = pd.DataFrame(columns=["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"])
+                        history_to_add = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]]
+                        pd.concat([existing_history, history_to_add], ignore_index=True).to_excel(history_path, index=False)
+
+                        try:
+                            existing_predictions = pd.read_excel(predictions_path)
+                        except Exception:
+                            existing_predictions = pd.DataFrame(columns=["username", "date", "risk_level", "wellness_score", "factors"])
+                        predictions_to_add = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]]
+                        pd.concat([existing_predictions, predictions_to_add], ignore_index=True).to_excel(predictions_path, index=False)
+
+                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They'll now show up in Dashboard and Admin.")
 
 # Dashboard Page
 elif page == "📈 Dashboard":
