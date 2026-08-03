@@ -76,7 +76,7 @@ st.markdown("""
     .sidebar .sidebar-content {
         background: rgba(255,255,255,0.05);
     }
-    
+
     .stButton > button {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -88,7 +88,7 @@ st.markdown("""
         transition: all 0.3s ease;
         box-shadow: 0 4px 15px rgba(0,0,0,0.2);
     }
-    
+
     .stButton > button:hover {
         transform: translateY(-3px);
         box-shadow: 0 8px 25px rgba(0,0,0,0.3);
@@ -372,22 +372,43 @@ def create_factor_bar(stress, sleep, anxiety, exercise):
     fig.update_layout(barmode="group", title="Your Wellness Factors vs Healthy Targets")
     return style_plot(fig)
 
+# ---------------------------------------------------------------------------
 # Sidebar navigation
+# ---------------------------------------------------------------------------
+# FIX: previously the radio widget was only rendered inside the `else`
+# branch of an `if 'nav_to' in st.session_state` check, and `page` was set
+# directly from a one-off session_state flag that got deleted immediately.
+# That meant the radio widget itself never registered a selection when you
+# navigated via the Home page buttons. On the very next rerun (which
+# Streamlit triggers for EVERY widget interaction, e.g. moving a slider on
+# the Assessment page), `nav_to` was already gone, so the code fell back to
+# rendering a fresh `st.sidebar.radio(...)` with no persisted state -- and
+# it defaulted back to "🏠 Home", wiping whatever the user had filled in.
+#
+# The fix: always render the radio widget, give it a `key` so Streamlit
+# persists its value in session_state across every rerun, and have the
+# Home-page quick-nav buttons set that SAME key before the widget is
+# instantiated instead of bypassing the widget entirely.
+PAGES = [
+    "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "📂 Bulk Upload",
+    "📈 Dashboard", "📝 Journal", "📄 Report", "📊 Admin"
+]
+
 st.sidebar.markdown("# 🧭 Navigation")
 
-# Handle quick navigation from home page
 if 'nav_to' in st.session_state:
     if st.session_state['nav_to'] == 'assessment':
-        page = "📋 Assessment"
+        st.session_state['page_radio'] = "📋 Assessment"
     elif st.session_state['nav_to'] == 'journal':
-        page = "📝 Journal"
+        st.session_state['page_radio'] = "📝 Journal"
     del st.session_state['nav_to']
-else:
-    page = st.sidebar.radio(
-        "Go to",
-        ["🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📄 Report", "📊 Admin"],
-        label_visibility="collapsed"
-    )
+
+page = st.sidebar.radio(
+    "Go to",
+    PAGES,
+    key="page_radio",
+    label_visibility="collapsed"
+)
 
 # Home Page
 if page == "🏠 Home":
@@ -398,9 +419,9 @@ if page == "🏠 Home":
         <p style="font-size: 1.3em; opacity: 0.9;">Your personal wellness companion</p>
     </div>
     """, unsafe_allow_html=True)
-    
+
     st.markdown("---")
-    
+
     # Quick Actions
     st.markdown("## ⚡ Quick Start")
     col1, col2 = st.columns(2)
@@ -412,9 +433,9 @@ if page == "🏠 Home":
         if st.button("📝 Write in Journal", use_container_width=True):
             st.session_state['nav_to'] = 'journal'
             st.rerun()
-    
+
     st.markdown("---")
-    
+
     # Stats Preview
     try:
         df = get_history_data()
@@ -429,7 +450,7 @@ if page == "🏠 Home":
             st.markdown("---")
     except Exception:
         pass
-    
+
     # Daily Wellness Tips
     wellness_tips = [
         "Take a 5-minute walk outside 🌳",
@@ -443,9 +464,9 @@ if page == "🏠 Home":
     ]
     st.markdown("## 🌟 Daily Wellness Tip")
     st.info(random.choice(wellness_tips))
-    
+
     st.markdown("---")
-    
+
     # Motivational Quote
     quotes = [
         "“The greatest glory in living lies not in never falling, but in rising every time we fall.” – Nelson Mandela",
@@ -461,12 +482,12 @@ if page == "🏠 Home":
 elif page == "📋 Assessment":
     st.title("📋 Mental Health Assessment")
     st.markdown("---")
-    
+
     username = st.text_input("👤 Enter your name", "Guest User")
     entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date())
-    
+
     st.markdown("## Answer the following questions:")
-    
+
     # Mood selection with emojis
     mood_emojis = {"Very Bad": "😢", "Bad": "😔", "Neutral": "😐", "Good": "😊", "Very Good": "😄"}
     mood = st.select_slider(
@@ -475,7 +496,7 @@ elif page == "📋 Assessment":
         value="Good",
         format_func=lambda x: f"{mood_emojis[x]} {x}"
     )
-    
+
     col1, col2 = st.columns(2)
     with col1:
         sleep_hours = st.slider("😴 How many hours did you sleep last night?", 0, 12, 7)
@@ -483,11 +504,11 @@ elif page == "📋 Assessment":
     with col2:
         anxiety_level = st.slider("😟 How anxious are you? (0-10)", 0, 10, 3)
         exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30)
-    
+
     # Quick preview of wellness score
     preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes)
     st.metric("Preview Wellness Score", f"{preview_score}/100")
-    
+
     if st.button("✅ Submit Assessment"):
         entry = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=entry_date)
         st.session_state['assessment_data'] = {
@@ -505,7 +526,7 @@ elif page == "📋 Assessment":
 elif page == "🤖 Risk Prediction":
     st.title("🤖 Mental Health Risk Prediction")
     st.markdown("---")
-    
+
     if 'assessment_data' not in st.session_state:
         st.warning("⚠️ Please complete the Assessment first!")
     else:
@@ -516,10 +537,10 @@ elif page == "🤖 Risk Prediction":
         exercise = data["exercise_minutes"]
         mood = data["mood"]
         username = data["username"]
-        
+
         risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
         recommendations = get_recommendations(stress, sleep, anxiety, exercise)
-        
+
         # Gauge chart for wellness score
         st.markdown("## 📊 Prediction Results")
         fig_gauge = go.Figure(go.Indicator(
@@ -542,7 +563,7 @@ elif page == "🤖 Risk Prediction":
         ))
         fig_gauge.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': "#2d3748"})
         st.plotly_chart(fig_gauge, use_container_width=True)
-        
+
         col1, col2 = st.columns(2)
         with col1:
             if risk == "Low":
@@ -559,15 +580,15 @@ elif page == "🤖 Risk Prediction":
             st.plotly_chart(create_factor_bar(stress, sleep, anxiety, exercise), use_container_width=True)
         with radar_col:
             st.plotly_chart(create_wellness_radar(sleep, stress, anxiety, exercise, mood), use_container_width=True)
-        
+
         st.markdown("## 🔍 Key Factors")
         for factor in factors:
             st.info(f"• {factor}")
-        
+
         st.markdown("## 💡 Personalized Recommendations")
         for rec in recommendations:
             st.success(rec)
-        
+
         save_prediction(username, risk, wellness_score, factors)
 
 # Bulk Upload Page
@@ -906,17 +927,17 @@ elif page == "📈 Dashboard":
 elif page == "📝 Journal":
     st.title("📝 Journal & Sentiment Analysis")
     st.markdown("---")
-    
+
     st.write("Write about your day and we'll analyze your mood!")
     journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?")
-    
+
     if st.button("🔍 Analyze Sentiment"):
         if journal_text:
             sentiment, polarity = analyze_sentiment(journal_text)
-            
+
             st.markdown("## 📊 Sentiment Analysis Results")
             col1, col2 = st.columns(2)
-            
+
             with col1:
                 if sentiment == "positive":
                     st.success(f"Sentiment: **Positive** 😊")
@@ -924,7 +945,7 @@ elif page == "📝 Journal":
                     st.error(f"Sentiment: **Negative** 😔")
                 else:
                     st.info(f"Sentiment: **Neutral** 😐")
-            
+
             with col2:
                 # Visual polarity meter
                 fig_polarity = go.Figure(go.Indicator(
@@ -947,7 +968,7 @@ elif page == "📝 Journal":
                 ))
                 fig_polarity.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': "#2d3748"})
                 st.plotly_chart(fig_polarity, use_container_width=True)
-            
+
             st.markdown("### 📝 Your Entry:")
             st.write(journal_text)
         else:
@@ -957,7 +978,7 @@ elif page == "📝 Journal":
 elif page == "📄 Report":
     st.title("📄 Health Report")
     st.markdown("---")
-    
+
     if 'assessment_data' not in st.session_state:
         st.warning("⚠️ Please complete the Assessment first!")
     else:
@@ -968,12 +989,12 @@ elif page == "📄 Report":
         anxiety = data["anxiety_level"]
         exercise = data["exercise_minutes"]
         mood = data["mood"]
-        
+
         risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
         recommendations = get_recommendations(stress, sleep, anxiety, exercise)
-        
+
         st.markdown("## 📋 Report Preview")
-        
+
         st.markdown(f"**👤 Username:** {username}")
         if risk == "Low":
             st.success(f"🎯 Risk Level: **{risk}**")
@@ -982,17 +1003,17 @@ elif page == "📄 Report":
         else:
             st.error(f"🚨 Risk Level: **{risk}**")
         st.metric("🏆 Wellness Score", f"{wellness_score}/100")
-        
+
         st.markdown("## 🔍 Key Factors")
         for factor in factors:
             st.info(f"• {factor}")
-        
+
         st.markdown("## 💡 Recommendations")
         for rec in recommendations:
             st.success(rec)
-        
+
         pdf_buffer = generate_pdf_report(username, risk, wellness_score, factors, recommendations)
-        
+
         st.download_button(
             label="📥 Download PDF Report",
             data=pdf_buffer,
