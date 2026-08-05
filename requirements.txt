@@ -1,8 +1,9 @@
 streamlit==1.61.0
-uvicorn==0.30.0 
-pandas==3.0.5
-numpy==2.5.1
-plotly==6.9.0
-textblob==0.20.1
-reportlab==5.0.0
-openpyxl==3.1.5
+starlette>=0.37.0
+uvicorn>=0.30.0
+pandas
+numpy
+plotly
+textblob
+reportlab
+openpyxl
