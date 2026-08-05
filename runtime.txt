@@ -1,12 +1,1 @@
-python-3.12
-# Navigate to your repo directory
-cd mental_health_risk_analysis
 
-# Delete the file
-git rm runtime.txt
-
-# Commit the deletion
-git commit -m "Remove runtime.txt"
-
-# Push to GitHub
-git push origin main
