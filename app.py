@@ -286,6 +286,69 @@ def get_goals(username):
     return dict(row) if row else None
 
 
+
+
+# ---------------------------------------------------------------------------
+# Journal CSV storage
+# ---------------------------------------------------------------------------
+JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
+
+def save_journal_entry(username, text, sentiment, polarity):
+    """Save a journal entry with sentiment analysis to CSV."""
+    os.makedirs(DATA_DIR, exist_ok=True)
+    entry = {
+        "id": datetime.now().strftime("%Y%m%d%H%M%S%f"),
+        "username": username,
+        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "text": text,
+        "sentiment": sentiment,
+        "polarity": round(polarity, 4),
+    }
+    df_new = pd.DataFrame([entry])
+    if os.path.exists(JOURNAL_CSV):
+        df_existing = pd.read_csv(JOURNAL_CSV)
+        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+    else:
+        df_combined = df_new
+    df_combined.to_csv(JOURNAL_CSV, index=False)
+    return entry
+
+def get_journal_entries(username=None):
+    """Load journal entries from CSV. Filter by username if provided."""
+    if not os.path.exists(JOURNAL_CSV):
+        return pd.DataFrame(columns=["id", "username", "date", "text", "sentiment", "polarity"])
+    df = pd.read_csv(JOURNAL_CSV)
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+    if username:
+        df = df[df["username"].astype(str) == str(username)]
+    return df.sort_values("date", ascending=False).reset_index(drop=True)
+
+def delete_journal_entry(entry_id):
+    """Delete a journal entry by ID."""
+    if not os.path.exists(JOURNAL_CSV):
+        return
+    df = pd.read_csv(JOURNAL_CSV)
+    df = df[df["id"].astype(str) != str(entry_id)]
+    df.to_csv(JOURNAL_CSV, index=False)
+
+def delete_all_journal_entries(username):
+    """Delete all journal entries for a user."""
+    if not os.path.exists(JOURNAL_CSV):
+        return
+    df = pd.read_csv(JOURNAL_CSV)
+    df = df[df["username"].astype(str) != str(username)]
+    df.to_csv(JOURNAL_CSV, index=False)
+
+def export_journal_to_excel(username=None):
+    """Export journal entries to Excel."""
+    df = get_journal_entries(username)
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Journal Entries")
+    buffer.seek(0)
+    return buffer
+
+
 def delete_entry(entry_id):
     conn = get_connection()
     conn.execute("DELETE FROM user_history WHERE id=?", (int(entry_id),))
@@ -615,7 +678,7 @@ def create_mood_calendar(df, weeks=12):
 # to "Home" the moment you touch a slider on another page.
 PAGES = [
     "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
-    "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "🗂️ My Entries",
+    "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
     "🆘 Support & Coping", "📄 Report", "📊 Admin"
 ]
 
@@ -627,6 +690,7 @@ st.sidebar.markdown("""
 if 'nav_to' in st.session_state:
     _nav_map = {
         'assessment': "📋 Assessment", 'journal': "📝 Journal",
+        'my_journals': "📓 My Journals",
         'support': "🆘 Support & Coping", 'goals': "🎯 Goals",
     }
     if st.session_state['nav_to'] in _nav_map:
@@ -1111,11 +1175,17 @@ elif page == "📈 Dashboard":
 # Journal Page
 elif page == "📝 Journal":
     page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day and we'll analyze your mood.")
+
+    username = st.text_input("👤 Your name", "Guest User", key="journal_username")
     journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?")
 
-    if st.button("🔍 Analyze Sentiment"):
-        if journal_text:
+    if st.button("🔍 Analyze & Save"):
+        if journal_text.strip():
             sentiment, polarity = analyze_sentiment(journal_text)
+
+            # Save to CSV
+            entry = save_journal_entry(username, journal_text.strip(), sentiment, polarity)
+
             st.markdown("## 📊 Sentiment Analysis Results")
             col1, col2 = st.columns(2)
             with col1:
@@ -1137,6 +1207,8 @@ elif page == "📝 Journal":
             st.markdown("### 📝 Your Entry:")
             st.write(journal_text)
 
+            st.success(f"✅ Entry saved for {username} at {entry['date']}!")
+
             if sentiment == "negative" and polarity < -0.4:
                 pulse_divider()
                 st.info(
@@ -1145,6 +1217,69 @@ elif page == "📝 Journal":
                 )
         else:
             st.warning("⚠️ Please write something in your journal first!")
+
+
+# My Journals Page
+elif page == "📓 My Journals":
+    page_header("📓", "Your Words", "My Journal History", "Review, reflect on, and manage your saved journal entries.")
+
+    username = st.text_input("👤 Enter your name to view your journals", "Guest User", key="my_journals_username")
+    df = get_journal_entries(username)
+
+    if df.empty:
+        st.info("No journal entries found for this name yet. Go to **Journal** to write your first entry!")
+    else:
+        st.caption(f"{len(df)} journal entries found for **{username}**.")
+
+        # Summary stats
+        col1, col2, col3, col4 = st.columns(4)
+        col1.metric("Total Entries", len(df))
+        col2.metric("Positive", len(df[df["sentiment"] == "positive"]))
+        col3.metric("Neutral", len(df[df["sentiment"] == "neutral"]))
+        col4.metric("Negative", len(df[df["sentiment"] == "negative"]))
+
+        # Sentiment trend chart
+        if len(df) >= 2:
+            pulse_divider()
+            st.markdown("### 📈 Sentiment Trend")
+            df_chart = df.sort_values("date").copy()
+            df_chart["polarity_smooth"] = df_chart["polarity"].rolling(window=min(3, len(df_chart)), min_periods=1).mean()
+            fig = px.line(df_chart, x="date", y="polarity", markers=True,
+                          title="Polarity Over Time", color_discrete_sequence=[COLOR_PRIMARY])
+            fig.add_scatter(x=df_chart["date"], y=df_chart["polarity_smooth"],
+                            mode="lines", name="Trend", line=dict(color=COLOR_MEDIUM, width=2))
+            fig.add_hline(y=0, line_dash="dot", line_color=COLOR_MUTED, annotation_text="Neutral")
+            st.plotly_chart(style_plot(fig), use_container_width=True)
+
+        pulse_divider()
+        st.markdown("### 📖 Your Entries")
+        for _, row in df.iterrows():
+            sentiment_emoji = {"positive": "😊", "negative": "😔", "neutral": "😐"}.get(row["sentiment"], "😐")
+            with st.container():
+                c1, c2, c3 = st.columns([2, 1, 0.8])
+                c1.markdown(f"**{row['date'].strftime('%Y-%m-%d %H:%M')}** · {sentiment_emoji} {row['sentiment'].title()}")
+                c2.write(f"Polarity: {row['polarity']:.3f}")
+                if c3.button("🗑️", key=f"del_journal_{row['id']}", help="Delete this entry"):
+                    delete_journal_entry(row["id"])
+                    st.rerun()
+            with st.expander("Read entry"):
+                st.write(row["text"])
+            st.markdown("---")
+
+        pulse_divider()
+        dl_col, clear_col = st.columns(2)
+        with dl_col:
+            st.download_button(
+                "📥 Download My Journals (Excel)",
+                data=export_journal_to_excel(username),
+                file_name=f"{username}_journals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            )
+        with clear_col:
+            if st.button("🧹 Clear all my journals", use_container_width=True):
+                delete_all_journal_entries(username)
+                st.success("All journal entries cleared.")
+                st.rerun()
 
 # My Entries Page
 elif page == "🗂️ My Entries":
