@@ -1,1069 +1,1198 @@
-import streamlit as st
-import pandas as pd
+"""
+Mental Health Risk Analysis — Streamlit App
+Author: enhanced by Emergent E1
+
+Four features in one file:
+  1. Risk Predictor       — Random Forest on synthetic clinical data
+  2. Journal & Sentiment  — TextBlob mood tracker + trend chart
+  3. Clinical Screening   — PHQ-9 (depression) + GAD-7 (anxiety)
+  4. AI Companion         — rule-based supportive chatbot with crisis detection
+"""
+
+from __future__ import annotations
+
+import os
+from datetime import datetime
+
 import numpy as np
+import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
-import os
-import random
-import sqlite3
-from datetime import datetime
+import streamlit as st
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
 from textblob import TextBlob
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.units import inch
-import io
-
-st.set_page_config(page_title="Mental Health Risk Analysis", page_icon="🧠", layout="wide")
-
-st.markdown("""
-<style>
-    .main {
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #ffecd2 100%);
-    }
-    .stApp {
-        background: linear-gradient(135deg, #a8edea 0%, #fed6e3 50%, #ffecd2 100%);
-    }
-    .block-container {
-        padding-top: 2rem;
-        padding-bottom: 2rem;
-    }
-    .css-1d391kg {
-        padding-top: 0;
-    }
-    .stMetric {
-        background: rgba(255,255,255,0.85);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 20px;
-        border: 1px solid rgba(0,0,0,0.1);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-    }
-    .feature-card {
-        background: rgba(255,255,255,0.9);
-        backdrop-filter: blur(10px);
-        border-radius: 15px;
-        padding: 25px;
-        border: 1px solid rgba(0,0,0,0.1);
-        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        transition: transform 0.3s ease;
-    }
-    .feature-card:hover {
-        transform: translateY(-5px);
-    }
-    h1, h2, h3 {
-        color: #2d3748 !important;
-    }
-    .stMarkdown, .stMarkdown p {
-        color: #4a5568 !important;
-    }
-    .css-16huue1, .css-10trblm, .css-1c7yx88 {
-        color: #2d3748 !important;
-    }
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 10px;
-        padding: 10px 25px;
-        font-weight: bold;
-        transition: all 0.3s ease;
-    }
-    .stButton > button:hover {
-        transform: scale(1.05);
-        box-shadow: 0 10px 25px rgba(0,0,0,0.2);
-    }
-    .sidebar .sidebar-content {
-        background: rgba(255,255,255,0.05);
-    }
-
-    .stButton > button {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border: none;
-        border-radius: 15px;
-        padding: 15px 30px;
-        font-weight: bold;
-        font-size: 1.1em;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-    }
-
-    .stButton > button:hover {
-        transform: translateY(-3px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
-    }
-</style>
-""", unsafe_allow_html=True)
-
-DATA_DIR = "data"
-os.makedirs(DATA_DIR, exist_ok=True)
-DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
 
 
-def get_connection():
-    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    return conn
-
-
-def init_db():
-    """Create the SQL tables if they don't exist yet. Safe to call repeatedly."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS user_history (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            date TEXT,
-            mood TEXT,
-            sleep_hours REAL,
-            stress_level REAL,
-            anxiety_level REAL,
-            exercise_minutes REAL
-        )
-    """)
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS predictions (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT,
-            date TEXT,
-            risk_level TEXT,
-            wellness_score REAL,
-            factors TEXT
-        )
-    """)
-    conn.commit()
-    conn.close()
-
-
-def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=None):
-    init_db()
-    if entry_date is None:
-        date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        # Combine the chosen date with the current time so multiple entries on
-        # the same date still sort correctly and stay unique.
-        date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
-
-    conn = get_connection()
-    conn.execute(
-        """INSERT INTO user_history
-           (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes),
-    )
-    conn.commit()
-    conn.close()
-
-    return pd.DataFrame([{
-        "username": username, "date": date_str, "mood": mood, "sleep_hours": sleep_hours,
-        "stress_level": stress_level, "anxiety_level": anxiety_level, "exercise_minutes": exercise_minutes,
-    }])
-
-
-def save_prediction(username, risk_level, wellness_score, factors):
-    init_db()
-    conn = get_connection()
-    conn.execute(
-        """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
-           VALUES (?, ?, ?, ?, ?)""",
-        (username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), risk_level, wellness_score, str(factors)),
-    )
-    conn.commit()
-    conn.close()
-
-    return pd.DataFrame([{
-        "username": username, "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "risk_level": risk_level, "wellness_score": wellness_score, "factors": str(factors),
-    }])
-
-def calculate_wellness_score(stress, sleep, anxiety, exercise):
-    score = 0
-    score += (10 - stress) * 5
-    score += min(sleep, 10) * 3
-    score += (10 - anxiety) * 5
-    score += min(exercise, 120) / 2
-    return min(score, 100)
-
-def predict_risk(stress, sleep, anxiety, exercise, mood):
-    wellness_score = calculate_wellness_score(stress, sleep, anxiety, exercise)
-    if wellness_score < 40:
-        risk = "High"
-    elif wellness_score < 70:
-        risk = "Medium"
-    else:
-        risk = "Low"
-    factors = []
-    if stress > 7:
-        factors.append("High stress levels")
-    if sleep < 6:
-        factors.append("Insufficient sleep")
-    if anxiety > 7:
-        factors.append("High anxiety levels")
-    if exercise < 30:
-        factors.append("Low physical activity")
-    if not factors:
-        factors = ["Good overall wellness indicators"]
-    return risk, factors, wellness_score
-
-def get_recommendations(stress, sleep, anxiety, exercise):
-    recommendations = []
-    if stress > 7:
-        recommendations.append("🧘 Try deep breathing exercises for 5 minutes daily")
-        recommendations.append("🧘‍♂️ Practice mindfulness meditation")
-        recommendations.append("☕ Take short breaks throughout your work/study")
-    if sleep < 6:
-        recommendations.append("🛏️ Establish a consistent sleep schedule")
-        recommendations.append("📵 Avoid screens 1 hour before bedtime")
-        recommendations.append("🌙 Create a relaxing bedtime routine")
-    if anxiety > 7:
-        recommendations.append("🧘 Try progressive muscle relaxation")
-        recommendations.append("📝 Consider journaling your thoughts")
-        recommendations.append("🌱 Practice grounding techniques")
-    if exercise < 30:
-        recommendations.append("🚶 Aim for 30 minutes of daily walking")
-        recommendations.append("🧘 Try yoga or stretching exercises")
-        recommendations.append("🏃 Incorporate physical activity into your routine")
-    if len(recommendations) == 0:
-        recommendations.append("🎉 Great job! Keep maintaining your healthy habits!")
-        recommendations.append("✅ Continue with your current wellness routine")
-        recommendations.append("🎨 Consider exploring new hobbies")
-    return recommendations
-
-def analyze_sentiment(text):
-    if not text or len(text.strip()) == 0:
-        return "neutral", 0.0
-    blob = TextBlob(text)
-    polarity = blob.sentiment.polarity
-    if polarity > 0.1:
-        sentiment = "positive"
-    elif polarity < -0.1:
-        sentiment = "negative"
-    else:
-        sentiment = "neutral"
-    return sentiment, polarity
-
-def generate_pdf_report(username, risk_level, wellness_score, factors, recommendations):
-    buffer = io.BytesIO()
-    doc = SimpleDocTemplate(buffer, pagesize=letter)
-    styles = getSampleStyleSheet()
-    story = []
-    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=30, alignment=1)
-    story.append(Paragraph("Mental Health Report", title_style))
-    subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Heading2'], fontSize=16, spaceAfter=20)
-    story.append(Paragraph(f"For: {username}", subtitle_style))
-    story.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", subtitle_style))
-    story.append(Spacer(1, 20))
-    info_style = ParagraphStyle('CustomInfo', parent=styles['Normal'], fontSize=12, spaceAfter=12)
-    story.append(Paragraph(f"Risk Level: {risk_level}", info_style))
-    story.append(Paragraph(f"Wellness Score: {wellness_score}/100", info_style))
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Key Factors:", subtitle_style))
-    for factor in factors:
-        story.append(Paragraph(f"- {factor}", info_style))
-    story.append(Spacer(1, 20))
-    story.append(Paragraph("Recommendations:", subtitle_style))
-    for rec in recommendations:
-        story.append(Paragraph(f"- {rec}", info_style))
-    doc.build(story)
-    buffer.seek(0)
-    return buffer
-
-def export_to_excel(df, sheet_name="Data"):
-    """Convert a DataFrame into an in-memory Excel file (.xlsx) ready for download.
-    Used to let users export their patient/history data straight from the UI."""
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name=sheet_name)
-    buffer.seek(0)
-    return buffer
-
-def mood_to_score(series):
-    mood_map = {"Very Bad": 1, "Bad": 2, "Neutral": 3, "Good": 4, "Very Good": 5}
-    return series.map(mood_map)
-
-def get_history_data():
-    init_db()
-    conn = get_connection()
-    try:
-        df = pd.read_sql_query("SELECT * FROM user_history", conn)
-    except Exception:
-        return pd.DataFrame()
-    finally:
-        conn.close()
-    if df.empty:
-        return df
-    df = df.copy()
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["mood_num"] = mood_to_score(df["mood"])
-    df["wellness_score"] = df.apply(
-        lambda row: calculate_wellness_score(
-            row["stress_level"], row["sleep_hours"], row["anxiety_level"], row["exercise_minutes"]
-        ),
-        axis=1,
-    )
-    return df.dropna(subset=["date"])
-
-def get_prediction_data():
-    init_db()
-    conn = get_connection()
-    try:
-        df = pd.read_sql_query("SELECT * FROM predictions", conn)
-    except Exception:
-        return pd.DataFrame()
-    finally:
-        conn.close()
-    if df.empty:
-        return df
-    df = df.copy()
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    risk_map = {"Low": 1, "Medium": 2, "High": 3}
-    df["risk_num"] = df["risk_level"].map(risk_map)
-    return df.dropna(subset=["date"])
-
-def style_plot(fig):
-    fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)",
-        plot_bgcolor="rgba(255,255,255,0.35)",
-        font={"color": "#2d3748"},
-        margin=dict(l=20, r=20, t=50, b=20),
-    )
-    return fig
-
-def create_wellness_radar(sleep, stress, anxiety, exercise, mood):
-    mood_scale = {"Very Bad": 2, "Bad": 4, "Neutral": 6, "Good": 8, "Very Good": 10}
-    categories = ["Sleep", "Exercise", "Mood", "Stress Balance", "Anxiety Balance"]
-    values = [
-        min(float(sleep), 10),
-        min(float(exercise) / 12, 10),
-        mood_scale.get(mood, 6),
-        10 - float(stress),
-        10 - float(anxiety),
-    ]
-    fig = go.Figure()
-    fig.add_trace(
-        go.Scatterpolar(
-            r=values + [values[0]],
-            theta=categories + [categories[0]],
-            fill="toself",
-            name="Wellness Profile",
-            line_color="#667eea",
-            fillcolor="rgba(102,126,234,0.30)",
-        )
-    )
-    fig.update_layout(
-        polar=dict(
-            bgcolor="rgba(0,0,0,0)",
-            radialaxis=dict(visible=True, range=[0, 10], tickfont=dict(color="#2d3748")),
-            angularaxis=dict(tickfont=dict(color="#2d3748")),
-        ),
-        showlegend=False,
-    )
-    return style_plot(fig)
-
-def create_factor_bar(stress, sleep, anxiety, exercise):
-    categories = ["Stress", "Sleep", "Anxiety", "Exercise"]
-    actual_values = [stress, sleep, anxiety, exercise]
-    healthy_targets = [3, 8, 3, 45]
-    fig = go.Figure()
-    fig.add_trace(go.Bar(name="Your Values", x=categories, y=actual_values, marker_color="#667eea"))
-    fig.add_trace(go.Bar(name="Healthy Target", x=categories, y=healthy_targets, marker_color="#00cc96"))
-    fig.update_layout(barmode="group", title="Your Wellness Factors vs Healthy Targets")
-    return style_plot(fig)
-
-# ---------------------------------------------------------------------------
-# Sidebar navigation
-# ---------------------------------------------------------------------------
-# FIX: previously the radio widget was only rendered inside the `else`
-# branch of an `if 'nav_to' in st.session_state` check, and `page` was set
-# directly from a one-off session_state flag that got deleted immediately.
-# That meant the radio widget itself never registered a selection when you
-# navigated via the Home page buttons. On the very next rerun (which
-# Streamlit triggers for EVERY widget interaction, e.g. moving a slider on
-# the Assessment page), `nav_to` was already gone, so the code fell back to
-# rendering a fresh `st.sidebar.radio(...)` with no persisted state -- and
-# it defaulted back to "🏠 Home", wiping whatever the user had filled in.
-#
-# The fix: always render the radio widget, give it a `key` so Streamlit
-# persists its value in session_state across every rerun, and have the
-# Home-page quick-nav buttons set that SAME key before the widget is
-# instantiated instead of bypassing the widget entirely.
-PAGES = [
-    "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "📂 Bulk Upload",
-    "📈 Dashboard", "📝 Journal", "📄 Report", "📊 Admin"
-]
-
-st.sidebar.markdown("# 🧭 Navigation")
-
-if 'nav_to' in st.session_state:
-    if st.session_state['nav_to'] == 'assessment':
-        st.session_state['page_radio'] = "📋 Assessment"
-    elif st.session_state['nav_to'] == 'journal':
-        st.session_state['page_radio'] = "📝 Journal"
-    del st.session_state['nav_to']
-
-page = st.sidebar.radio(
-    "Go to",
-    PAGES,
-    key="page_radio",
-    label_visibility="collapsed"
+# ─────────────────────────  PAGE CONFIG + THEME  ──────────────────────────
+st.set_page_config(
+    page_title="Mental Health Risk Analysis",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded",
 )
 
-# Home Page
-if page == "🏠 Home":
-    st.markdown("""
-    <div style="text-align: center; padding: 40px 0;">
-        <h1 style="font-size: 4em; margin-bottom: 0;">🧠</h1>
-        <h1 style="font-size: 3em; margin-top: 0;">Mental Health Risk Analysis</h1>
-        <p style="font-size: 1.3em; opacity: 0.9;">Your personal wellness companion</p>
+CUSTOM_CSS = """
+<style>
+  :root {
+    --sage:   #6B9080;
+    --sage2:  #A4C3B2;
+    --cream:  #F6FFF8;
+    --peach:  #EAAC8B;
+    --deep:   #354F52;
+  }
+  .stApp { background: linear-gradient(180deg,#F6FFF8 0%,#EAF4EA 100%); }
+  h1, h2, h3 { color: var(--deep); font-family: 'Georgia', serif; }
+  .hero {
+      background: linear-gradient(120deg,#6B9080,#A4C3B2);
+      color:#fff; padding:28px 32px; border-radius:18px;
+      box-shadow: 0 6px 24px rgba(53,79,82,.15);
+      margin-bottom: 18px;
+  }
+  .hero h1 { color:#fff !important; margin:0 0 6px; font-size: 2.1rem; }
+  .hero p  { color:#F6FFF8; margin:0; opacity:.95;}
+  .metric-card{
+      background:#fff;border-radius:14px;padding:16px 18px;
+      box-shadow:0 3px 10px rgba(53,79,82,.08);
+      border-left:5px solid var(--sage);
+  }
+  .risk-low   { color:#2E7D32; font-weight:700; }
+  .risk-mod   { color:#EF6C00; font-weight:700; }
+  .risk-high  { color:#C62828; font-weight:700; }
+  .stButton>button{
+      background:var(--sage); color:#fff; border:0; border-radius:10px;
+      padding:.55rem 1.2rem; font-weight:600;
+  }
+  .stButton>button:hover{ background:var(--deep); color:#fff; }
+  .bubble-user{
+      background:#DDE7DE;padding:10px 14px;border-radius:14px 14px 2px 14px;
+      margin:6px 0 6px 22%;display:inline-block;max-width:78%;
+  }
+  .bubble-bot{
+      background:#fff;padding:10px 14px;border-radius:14px 14px 14px 2px;
+      margin:6px 22% 6px 0;display:inline-block;max-width:78%;
+      border-left:4px solid var(--sage);
+  }
+  .crisis-box{
+      background:#FFF3F0;border:2px solid #C62828;border-radius:12px;
+      padding:14px 18px;margin:10px 0;color:#7A0C0C;
+  }
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
+
+st.markdown(
+    """
+    <div class="hero">
+      <h1>🧠 Mental Health Risk Analysis</h1>
+      <p>A caring companion powered by machine learning, clinical screeners, and sentiment analysis. Not a substitute for professional care.</p>
     </div>
-    """, unsafe_allow_html=True)
+    """,
+    unsafe_allow_html=True,
+)
 
-    st.markdown("---")
 
-    # Quick Actions
-    st.markdown("## ⚡ Quick Start")
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("📋 Start New Assessment", use_container_width=True):
-            st.session_state['nav_to'] = 'assessment'
-            st.rerun()
-    with col2:
-        if st.button("📝 Write in Journal", use_container_width=True):
-            st.session_state['nav_to'] = 'journal'
-            st.rerun()
+# ─────────────────────────  DATA + MODEL (cached)  ─────────────────────────
+DATA_PATH = "mental_health_data.csv"
+CATEGORICAL = ["gender", "occupation"]
 
-    st.markdown("---")
 
-    # Stats Preview
-    try:
-        df = get_history_data()
-        if len(df) > 0:
-            df_sorted = df.sort_values("date")
-            st.markdown("## 📊 Your Stats")
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Total Assessments", len(df_sorted))
-            m2.metric("Avg Sleep", f"{df_sorted['sleep_hours'].mean():.1f}h")
-            m3.metric("Avg Stress", f"{df_sorted['stress_level'].mean():.1f}")
-            m4.metric("Last Entry", df_sorted['date'].iloc[-1].strftime("%Y-%m-%d"))
-            st.markdown("---")
-    except Exception:
-        pass
-
-    # Daily Wellness Tips
-    wellness_tips = [
-        "Take a 5-minute walk outside 🌳",
-        "Practice deep breathing for 2 minutes 🧘",
-        "Drink a glass of water 💧",
-        "Call a friend or family member 📞",
-        "Write down 3 things you're grateful for ✍️",
-        "Stretch your body for 10 minutes 🤸",
-        "Listen to your favorite song 🎵",
-        "Take a short break from screens 📵"
-    ]
-    st.markdown("## 🌟 Daily Wellness Tip")
-    st.info(random.choice(wellness_tips))
-
-    st.markdown("---")
-
-    # Motivational Quote
-    quotes = [
-        "“The greatest glory in living lies not in never falling, but in rising every time we fall.” – Nelson Mandela",
-        "“The way to get started is to quit talking and begin doing.” – Walt Disney",
-        "“Your time is limited, don't waste it living someone else's life.” – Steve Jobs",
-        "“The future belongs to those who believe in the beauty of their dreams.” – Eleanor Roosevelt",
-        "“It does not matter how slowly you go as long as you do not stop.” – Confucius"
-    ]
-    st.markdown("## 💬 Motivation")
-    st.success(random.choice(quotes))
-
-# Assessment Page
-elif page == "📋 Assessment":
-    st.title("📋 Mental Health Assessment")
-    st.markdown("---")
-
-    username = st.text_input("👤 Enter your name", "Guest User")
-    entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date())
-
-    st.markdown("## Answer the following questions:")
-
-    # Mood selection with emojis
-    mood_emojis = {"Very Bad": "😢", "Bad": "😔", "Neutral": "😐", "Good": "😊", "Very Good": "😄"}
-    mood = st.select_slider(
-        "How is your mood today?",
-        options=["Very Bad", "Bad", "Neutral", "Good", "Very Good"],
-        value="Good",
-        format_func=lambda x: f"{mood_emojis[x]} {x}"
-    )
-
-    col1, col2 = st.columns(2)
-    with col1:
-        sleep_hours = st.slider("😴 How many hours did you sleep last night?", 0, 12, 7)
-        stress_level = st.slider("😰 How stressed are you? (0-10)", 0, 10, 3)
-    with col2:
-        anxiety_level = st.slider("😟 How anxious are you? (0-10)", 0, 10, 3)
-        exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30)
-
-    # Quick preview of wellness score
-    preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes)
-    st.metric("Preview Wellness Score", f"{preview_score}/100")
-
-    if st.button("✅ Submit Assessment"):
-        entry = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=entry_date)
-        st.session_state['assessment_data'] = {
-            "username": username,
-            "date": entry_date,
-            "mood": mood,
-            "sleep_hours": sleep_hours,
-            "stress_level": stress_level,
-            "anxiety_level": anxiety_level,
-            "exercise_minutes": exercise_minutes
-        }
-        st.success(f"🎉 Assessment saved for {entry_date.strftime('%Y-%m-%d')}!")
-
-# Risk Prediction Page
-elif page == "🤖 Risk Prediction":
-    st.title("🤖 Mental Health Risk Prediction")
-    st.markdown("---")
-
-    if 'assessment_data' not in st.session_state:
-        st.warning("⚠️ Please complete the Assessment first!")
-    else:
-        data = st.session_state['assessment_data']
-        stress = data["stress_level"]
-        sleep = data["sleep_hours"]
-        anxiety = data["anxiety_level"]
-        exercise = data["exercise_minutes"]
-        mood = data["mood"]
-        username = data["username"]
-
-        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
-        recommendations = get_recommendations(stress, sleep, anxiety, exercise)
-
-        # Gauge chart for wellness score
-        st.markdown("## 📊 Prediction Results")
-        fig_gauge = go.Figure(go.Indicator(
-            mode="gauge+number",
-            value=wellness_score,
-            domain={'x': [0, 1], 'y': [0, 1]},
-            title={'text': "Wellness Score", 'font': {'size': 24, 'color': '#2d3748'}},
-            gauge={
-                'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "#2d3748"},
-                'bar': {'color': "#00cc96"},
-                'bgcolor': "rgba(0,0,0,0)",
-                'borderwidth': 2,
-                'bordercolor': "#2d3748",
-                'steps': [
-                    {'range': [0, 40], 'color': "#ef553b"},
-                    {'range': [40, 70], 'color': "#ffaa00"},
-                    {'range': [70, 100], 'color': "#00cc96"}
-                ],
-            }
-        ))
-        fig_gauge.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': "#2d3748"})
-        st.plotly_chart(fig_gauge, use_container_width=True)
-
-        col1, col2 = st.columns(2)
-        with col1:
-            if risk == "Low":
-                st.success(f"🎯 Risk Level: **{risk}**")
-            elif risk == "Medium":
-                st.warning(f"⚠️ Risk Level: **{risk}**")
-            else:
-                st.error(f"🚨 Risk Level: **{risk}**")
-        with col2:
-            st.metric("Wellness Score", f"{wellness_score}/100")
-
-        compare_col, radar_col = st.columns(2)
-        with compare_col:
-            st.plotly_chart(create_factor_bar(stress, sleep, anxiety, exercise), use_container_width=True)
-        with radar_col:
-            st.plotly_chart(create_wellness_radar(sleep, stress, anxiety, exercise, mood), use_container_width=True)
-
-        st.markdown("## 🔍 Key Factors")
-        for factor in factors:
-            st.info(f"• {factor}")
-
-        st.markdown("## 💡 Personalized Recommendations")
-        for rec in recommendations:
-            st.success(rec)
-
-        save_prediction(username, risk, wellness_score, factors)
-
-# Bulk Upload Page
-elif page == "📂 Bulk Upload":
-    st.title("📂 Bulk Upload & Analyze")
-    st.markdown("---")
-    st.write(
-        "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
-        "instead of entering them one by one in the Assessment page."
-    )
-
-    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]
-
-    with st.expander("📋 Expected file format / download a template"):
-        st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
-        st.caption("`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. A `date` column is optional.")
-        template_df = pd.DataFrame([{
-            "username": "John Doe", "mood": "Good", "sleep_hours": 7,
-            "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
-        }])
-        st.download_button(
-            label="📥 Download Template (Excel)",
-            data=export_to_excel(template_df, sheet_name="Template"),
-            file_name="bulk_upload_template.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+@st.cache_data(show_spinner=False)
+def load_data() -> pd.DataFrame:
+    if not os.path.exists(DATA_PATH):
+        st.error(
+            f"Dataset file '{DATA_PATH}' not found. "
+            "Please add it to the repo root (run generate_dataset.py)."
         )
+        st.stop()
+    return pd.read_csv(DATA_PATH)
 
-    uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"])
 
-    if uploaded_file is not None:
-        try:
-            bulk_df = pd.read_excel(uploaded_file)
-        except Exception as e:
-            bulk_df = None
-            st.error(f"❌ Couldn't read that file: {e}")
+@st.cache_resource(show_spinner="Training risk model…")
+def train_model(df: pd.DataFrame):
+    df = df.copy()
+    encoders: dict[str, LabelEncoder] = {}
+    for col in CATEGORICAL:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
+        encoders[col] = le
 
-        if bulk_df is not None:
-            missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
-            if missing_cols:
-                st.error(f"❌ Missing required column(s): {', '.join(missing_cols)}. "
-                         f"Check the template above for the expected format.")
-            elif bulk_df.empty:
-                st.warning("⚠️ The uploaded file has no rows.")
-            else:
-                bulk_df = bulk_df.copy()
+    y = df["risk_level"]
+    X = df.drop(columns=["risk_level"])
 
-                if "date" not in bulk_df.columns:
-                    bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    Xtr, Xte, ytr, yte = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    model = RandomForestClassifier(
+        n_estimators=300, max_depth=12, random_state=42, n_jobs=-1
+    )
+    model.fit(Xtr, ytr)
+    acc = accuracy_score(yte, model.predict(Xte))
+    importances = pd.Series(
+        model.feature_importances_, index=X.columns
+    ).sort_values(ascending=False)
+    return model, encoders, X.columns.tolist(), acc, importances
 
-                risk_levels, wellness_scores, factor_lists = [], [], []
-                for _, row in bulk_df.iterrows():
-                    risk, factors, wellness = predict_risk(
-                        row["stress_level"], row["sleep_hours"], row["anxiety_level"],
-                        row["exercise_minutes"], row["mood"],
-                    )
-                    risk_levels.append(risk)
-                    wellness_scores.append(wellness)
-                    factor_lists.append(", ".join(factors))
 
-                bulk_df["wellness_score"] = wellness_scores
-                bulk_df["risk_level"] = risk_levels
-                bulk_df["factors"] = factor_lists
+df = load_data()
+model, encoders, feature_order, model_acc, feat_importances = train_model(df)
 
-                st.success(f"✅ Analyzed {len(bulk_df)} records.")
 
-                m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Total Records", len(bulk_df))
-                m2.metric("Avg Wellness", f"{bulk_df['wellness_score'].mean():.0f}/100")
-                m3.metric("High Risk", int((bulk_df["risk_level"] == "High").sum()))
-                m4.metric("Low Risk", int((bulk_df["risk_level"] == "Low").sum()))
-
-                st.markdown("### 📊 Results")
-                st.dataframe(bulk_df, use_container_width=True)
-
-                c1, c2 = st.columns(2)
-                with c1:
-                    risk_counts = bulk_df["risk_level"].value_counts().reset_index()
-                    risk_counts.columns = ["Risk", "Count"]
-                    fig_risk = px.bar(
-                        risk_counts, x="Risk", y="Count", color="Risk",
-                        title="Risk Level Distribution",
-                        color_discrete_map={"Low": "#00b894", "Medium": "#fdcb6e", "High": "#d63031"},
-                    )
-                    st.plotly_chart(style_plot(fig_risk), use_container_width=True)
-                with c2:
-                    fig_hist = px.histogram(bulk_df, x="wellness_score", nbins=15, title="Wellness Score Distribution")
-                    st.plotly_chart(style_plot(fig_hist), use_container_width=True)
-
-                st.markdown("### 📥 Export or Save")
-                dl_col, save_col = st.columns(2)
-                with dl_col:
-                    st.download_button(
-                        label="📥 Download Analyzed Results (Excel)",
-                        data=export_to_excel(bulk_df, sheet_name="Bulk Analysis"),
-                        file_name=f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                    )
-                with save_col:
-                    if st.button("➕ Add these records to the backend data", use_container_width=True):
-                        init_db()
-                        conn = get_connection()
-                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]].values.tolist()
-                        conn.executemany(
-                            """INSERT INTO user_history
-                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
-                               VALUES (?, ?, ?, ?, ?, ?, ?)""",
-                            history_rows,
-                        )
-                        prediction_rows = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]].values.tolist()
-                        conn.executemany(
-                            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
-                               VALUES (?, ?, ?, ?, ?)""",
-                            prediction_rows,
-                        )
-                        conn.commit()
-                        conn.close()
-
-                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They'll now show up in Dashboard and Admin.")
-
-# Dashboard Page
-elif page == "📈 Dashboard":
-    st.title("📈 Analytics Dashboard")
+# ─────────────────────────  SIDEBAR  ───────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 🧭 Navigation")
+    page = st.radio(
+        "Go to",
+        ["Risk Predictor", "Journal & Mood", "Clinical Screening", "AI Companion", "About Data"],
+        label_visibility="collapsed",
+    )
     st.markdown("---")
+    st.markdown("#### 📊 Model")
+    st.metric("Accuracy (holdout)", f"{model_acc*100:.1f}%")
+    st.caption(f"Trained on {len(df):,} samples")
+    st.markdown("---")
+    st.markdown("#### ☎️ Crisis Support")
+    st.caption(
+        "**India:** iCall +91-9152987821  \n"
+        "**Vandrevala:** 1860-2662-345  \n"
+        "**US:** 988  •  **UK:** 116 123"
+    )
 
-    history_df = get_history_data()
-    prediction_df = get_prediction_data()
 
-    if history_df.empty:
-        st.info("📭 No data available yet! Complete an assessment first.")
-    else:
-        filter_col1, filter_col2, filter_col3 = st.columns([1.3, 1.2, 1])
-        with filter_col1:
-            users = ["All Users"] + sorted(history_df["username"].dropna().astype(str).unique().tolist())
-            selected_user = st.selectbox("Filter by user", users)
-        with filter_col2:
-            min_date = history_df["date"].min().date()
-            max_date = history_df["date"].max().date()
-            selected_dates = st.date_input("Date range", value=(min_date, max_date), min_value=min_date, max_value=max_date)
-        with filter_col3:
-            chart_style = st.selectbox("Chart mode", ["Smooth", "Detailed"])
+# ═════════════════════════  TAB 1 — RISK PREDICTOR  ═══════════════════════
+def page_predictor():
+    st.subheader("🔮 Personal Risk Assessment")
+    st.write(
+        "Fill in the questionnaire below. The trained Random Forest model will "
+        "estimate your mental-health risk and show which factors influenced it."
+    )
 
-        filtered_df = history_df.copy()
-        if selected_user != "All Users":
-            filtered_df = filtered_df[filtered_df["username"].astype(str) == selected_user]
+    with st.form("risk_form"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            age = st.number_input("Age", 16, 65, 25)
+            gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+            occupation = st.selectbox(
+                "Occupation",
+                ["Student", "Employed", "Unemployed", "Self-Employed", "Retired"],
+            )
+            sleep_hours = st.slider("Sleep hours / night", 2.0, 12.0, 7.0, 0.1)
+            physical_activity_hours = st.slider(
+                "Physical activity (hrs / week)", 0.0, 20.0, 3.0, 0.5
+            )
+            screen_time_hours = st.slider("Screen time (hrs / day)", 0.0, 16.0, 6.0, 0.5)
+        with c2:
+            work_study_hours = st.slider("Work / study hrs / day", 0.0, 16.0, 8.0, 0.5)
+            stress_level = st.slider("Stress level", 1, 10, 5)
+            social_support = st.slider("Social support", 1, 10, 6)
+            mood_score = st.slider("Current mood (higher = better)", 1, 10, 6)
+            energy_level = st.slider("Energy level", 1, 10, 6)
+        with c3:
+            concentration_difficulty = st.slider("Concentration difficulty", 1, 10, 4)
+            hopelessness = st.slider("Feelings of hopelessness", 1, 10, 3)
+            appetite_change = st.radio("Recent appetite change?", ["No", "Yes"], horizontal=True)
+            previous_mh_history = st.radio(
+                "Previous mental-health diagnosis?", ["No", "Yes"], horizontal=True
+            )
+            family_history = st.radio("Family mental-health history?", ["No", "Yes"], horizontal=True)
+            alcohol_use = st.selectbox("Alcohol use", ["None", "Occasional", "Regular"])
 
-        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-            start_date, end_date = selected_dates
-            filtered_df = filtered_df[
-                (filtered_df["date"].dt.date >= start_date) & (filtered_df["date"].dt.date <= end_date)
-            ]
+        submitted = st.form_submit_button("Analyze my risk", use_container_width=True)
 
-        if filtered_df.empty:
-            st.warning("No records match the selected filters.")
+    if not submitted:
+        return
+
+    row = {
+        "age": age,
+        "gender": encoders["gender"].transform([gender])[0],
+        "occupation": encoders["occupation"].transform([occupation])[0],
+        "sleep_hours": sleep_hours,
+        "physical_activity_hours": physical_activity_hours,
+        "screen_time_hours": screen_time_hours,
+        "work_study_hours": work_study_hours,
+        "stress_level": stress_level,
+        "social_support": social_support,
+        "mood_score": mood_score,
+        "energy_level": energy_level,
+        "concentration_difficulty": concentration_difficulty,
+        "hopelessness": hopelessness,
+        "appetite_change": 1 if appetite_change == "Yes" else 0,
+        "previous_mh_history": 1 if previous_mh_history == "Yes" else 0,
+        "family_history": 1 if family_history == "Yes" else 0,
+        "alcohol_use": ["None", "Occasional", "Regular"].index(alcohol_use),
+    }
+    x = pd.DataFrame([row])[feature_order]
+    pred = model.predict(x)[0]
+    proba = dict(zip(model.classes_, model.predict_proba(x)[0]))
+
+    label_class = {"Low": "risk-low", "Moderate": "risk-mod", "High": "risk-high"}[pred]
+    top_conf = proba[pred] * 100
+
+    lc, rc = st.columns([1.1, 1])
+    with lc:
+        st.markdown(
+            f"<div class='metric-card'><h3>Predicted Risk Level</h3>"
+            f"<div style='font-size:2.4rem' class='{label_class}'>{pred}</div>"
+            f"<div>Confidence: <b>{top_conf:.1f}%</b></div></div>",
+            unsafe_allow_html=True,
+        )
+        # gauge
+        gauge_val = {"Low": 25, "Moderate": 60, "High": 90}[pred]
+        gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=gauge_val,
+            number={"suffix": " / 100"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "#354F52"},
+                "steps": [
+                    {"range": [0, 40], "color": "#B5E48C"},
+                    {"range": [40, 75], "color": "#F9DC5C"},
+                    {"range": [75, 100], "color": "#F28482"},
+                ],
+            },
+            title={"text": "Risk score"},
+        ))
+        gauge.update_layout(height=280, margin=dict(l=10, r=10, t=40, b=10))
+        st.plotly_chart(gauge, use_container_width=True)
+
+    with rc:
+        st.markdown("#### Class probabilities")
+        pdf = pd.DataFrame({"Risk": list(proba.keys()),
+                            "Probability": [v * 100 for v in proba.values()]})
+        fig = px.bar(pdf, x="Risk", y="Probability", color="Risk",
+                     color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                     text=pdf["Probability"].round(1).astype(str) + "%")
+        fig.update_layout(height=280, showlegend=False, margin=dict(l=10, r=10, t=10, b=10),
+                          yaxis_title="%", xaxis_title="")
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("#### 🧩 Top factors influencing your prediction")
+    top = feat_importances.head(8).reset_index()
+    top.columns = ["Feature", "Importance"]
+    fig2 = px.bar(top, x="Importance", y="Feature", orientation="h",
+                  color="Importance", color_continuous_scale="Teal")
+    fig2.update_layout(height=340, yaxis={"categoryorder": "total ascending"},
+                       margin=dict(l=10, r=10, t=10, b=10))
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # Personalized suggestions
+    tips = []
+    if sleep_hours < 6:      tips.append("😴 Aim for 7–9 hrs of sleep — consistent bedtime helps.")
+    if stress_level >= 7:    tips.append("🧘 Try 10 min of breathing or meditation each day.")
+    if physical_activity_hours < 2: tips.append("🚶 Add a 20-min walk 3× a week.")
+    if social_support <= 4:  tips.append("💬 Reach out to one person you trust this week.")
+    if hopelessness >= 7 or mood_score <= 3:
+        tips.append("🤝 Please consider talking to a mental-health professional.")
+    if not tips:
+        tips.append("🌱 You're doing well — keep up your healthy routines!")
+    st.markdown("#### 💡 Personalized suggestions")
+    for t in tips:
+        st.write("- " + t)
+
+
+# ═════════════════════════  TAB 2 — JOURNAL & MOOD  ═══════════════════════
+def page_journal():
+    st.subheader("📝 Daily Journal & Mood Tracker")
+    st.write("Write about your day. We'll analyse the sentiment and plot your mood trend.")
+
+    if "journal" not in st.session_state:
+        st.session_state.journal = []  # list of dicts
+
+    entry = st.text_area("How are you feeling today?", height=140,
+                         placeholder="Today I felt…")
+    if st.button("Save entry"):
+        if entry.strip():
+            blob = TextBlob(entry)
+            polarity = blob.sentiment.polarity        # -1..1
+            subjectivity = blob.sentiment.subjectivity
+            mood = round((polarity + 1) * 5, 2)       # 0..10
+            st.session_state.journal.append({
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "text": entry.strip(),
+                "polarity": round(polarity, 3),
+                "subjectivity": round(subjectivity, 3),
+                "mood_0_10": mood,
+            })
+            st.success("Entry saved.")
         else:
-            st.markdown("## 📊 Quick Stats")
-            m1, m2, m3, m4 = st.columns(4)
-            m1.metric("Visible Entries", len(filtered_df))
-            m2.metric("Avg Wellness", f"{filtered_df['wellness_score'].mean():.0f}/100")
-            m3.metric("Avg Mood", f"{filtered_df['mood_num'].mean():.1f}/5")
-            m4.metric("Avg Sleep", f"{filtered_df['sleep_hours'].mean():.1f}h")
+            st.warning("Write something first 🙂")
 
-            st.download_button(
-                label="📥 Download History (Excel)",
-                data=export_to_excel(filtered_df.drop(columns=["mood_num"], errors="ignore"), sheet_name="History"),
-                file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    if not st.session_state.journal:
+        st.info("Your journal is empty. Save your first entry above.")
+        return
+
+    j = pd.DataFrame(st.session_state.journal)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Entries", len(j))
+    c2.metric("Avg mood (0–10)", f"{j['mood_0_10'].mean():.2f}")
+    last_trend = "→"
+    if len(j) >= 2:
+        delta = j["mood_0_10"].iloc[-1] - j["mood_0_10"].iloc[-2]
+        last_trend = "↑ Better" if delta > 0.2 else ("↓ Lower" if delta < -0.2 else "→ Stable")
+    c3.metric("Latest trend", last_trend)
+
+    fig = px.line(j, x="time", y="mood_0_10", markers=True,
+                  title="Mood trend over time", range_y=[0, 10])
+    fig.update_traces(line_color="#6B9080")
+    fig.add_hline(y=5, line_dash="dot", line_color="gray")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # crisis keywords
+    crisis_kw = ["suicide", "kill myself", "end my life", "hopeless", "worthless",
+                 "self harm", "cutting", "no reason to live"]
+    text_all = " ".join(j["text"].tolist()).lower()
+    hits = [k for k in crisis_kw if k in text_all]
+    if hits:
+        st.markdown(
+            f"<div class='crisis-box'>⚠️ Concerning words detected in your entries "
+            f"({', '.join(hits)}). Please reach out to someone you trust or a helpline "
+            f"listed in the sidebar. You matter. 💚</div>", unsafe_allow_html=True)
+
+    with st.expander("📖 See all my entries"):
+        st.dataframe(j[::-1], use_container_width=True, hide_index=True)
+
+
+# ═════════════════════════  TAB 3 — CLINICAL SCREENING  ═══════════════════
+PHQ9_Q = [
+    "Little interest or pleasure in doing things",
+    "Feeling down, depressed, or hopeless",
+    "Trouble falling / staying asleep, or sleeping too much",
+    "Feeling tired or having little energy",
+    "Poor appetite or overeating",
+    "Feeling bad about yourself — or that you're a failure",
+    "Trouble concentrating on things",
+    "Moving or speaking slowly — or being fidgety / restless",
+    "Thoughts that you would be better off dead or hurting yourself",
+]
+GAD7_Q = [
+    "Feeling nervous, anxious, or on edge",
+    "Not being able to stop or control worrying",
+    "Worrying too much about different things",
+    "Trouble relaxing",
+    "Being so restless it's hard to sit still",
+    "Becoming easily annoyed or irritable",
+    "Feeling afraid something awful might happen",
+]
+OPTS = {
+    "Not at all": 0, "Several days": 1, "More than half the days": 2, "Nearly every day": 3
+}
+
+
+def phq9_severity(s):
+    if s <= 4:  return "Minimal", "#2E7D32"
+    if s <= 9:  return "Mild", "#66BB6A"
+    if s <= 14: return "Moderate", "#FBC02D"
+    if s <= 19: return "Moderately Severe", "#EF6C00"
+    return "Severe", "#C62828"
+
+
+def gad7_severity(s):
+    if s <= 4:  return "Minimal", "#2E7D32"
+    if s <= 9:  return "Mild", "#66BB6A"
+    if s <= 14: return "Moderate", "#EF6C00"
+    return "Severe", "#C62828"
+
+
+def _run_screener(title, questions, key_prefix, sev_fn, max_score):
+    st.markdown(f"### {title}")
+    st.caption("Over the last 2 weeks, how often have you been bothered by…")
+    scores = []
+    for i, q in enumerate(questions):
+        choice = st.radio(f"{i+1}. {q}", list(OPTS.keys()),
+                          key=f"{key_prefix}_{i}", horizontal=True, index=0)
+        scores.append(OPTS[choice])
+    total = sum(scores)
+    label, color = sev_fn(total)
+    st.markdown(
+        f"<div class='metric-card'><b>Score:</b> {total} / {max_score} — "
+        f"<span style='color:{color};font-weight:700'>{label}</span></div>",
+        unsafe_allow_html=True,
+    )
+    g = go.Figure(go.Indicator(
+        mode="gauge+number", value=total,
+        gauge={"axis": {"range": [0, max_score]}, "bar": {"color": color}},
+        title={"text": f"{title} score"},
+    ))
+    g.update_layout(height=260, margin=dict(l=10, r=10, t=40, b=10))
+    st.plotly_chart(g, use_container_width=True)
+    return total, label
+
+
+def page_screening():
+    st.subheader("🏥 Clinical Screening (PHQ-9 & GAD-7)")
+    st.write("These are the standard tools used in clinics worldwide — for screening only, not diagnosis.")
+    left, right = st.columns(2)
+    with left:
+        _run_screener("PHQ-9 (Depression)", PHQ9_Q, "phq", phq9_severity, 27)
+    with right:
+        _run_screener("GAD-7 (Anxiety)", GAD7_Q, "gad", gad7_severity, 21)
+
+    st.info("If your scores are Moderate or higher, please consider consulting a mental-health "
+            "professional. The helplines in the sidebar can help you get started.")
+
+
+# ═════════════════════════  TAB 4 — AI COMPANION  ═════════════════════════
+CRISIS_WORDS = ["suicide", "kill myself", "end my life", "want to die",
+                "self harm", "cutting myself", "no reason to live"]
+
+RESPONSES = {
+    "sad": [
+        "I hear you, and I'm sorry you're feeling this way. Would you like to talk about what triggered it?",
+        "It sounds heavy. Remember — feelings pass. What's one small thing that usually brings you a bit of comfort?",
+    ],
+    "anxious": [
+        "That anxious feeling can be exhausting. Try breathing in for 4, hold 4, out 6 — three times. I'll wait.",
+        "Anxiety often shrinks when we name what's beneath it. What worry is loudest right now?",
+    ],
+    "angry": [
+        "It's okay to feel angry. Would it help to write down what triggered it?",
+        "Anger often protects a softer feeling underneath — sadness, fear, hurt. Does anything come to mind?",
+    ],
+    "happy": [
+        "That's wonderful to hear! What made today feel good?",
+        "Love that. Savor the moment — small joys are the antidote to burnout.",
+    ],
+    "tired": [
+        "Being tired is a signal, not a weakness. What's one thing you can drop today?",
+        "Rest is productive. Can you carve out 15 min just for yourself?",
+    ],
+    "lonely": [
+        "Loneliness is hard. Is there one person you could message — even a small hello?",
+        "You're not alone in feeling alone. I'm here to listen.",
+    ],
+    "default": [
+        "Thank you for sharing that with me. Can you tell me a little more?",
+        "I'm listening. How has this been affecting your day?",
+        "That sounds important. What would feel supportive right now?",
+    ],
+}
+
+EMOTION_KEYWORDS = {
+    "sad":     ["sad", "cry", "down", "depressed", "unhappy", "miserable", "empty"],
+    "anxious": ["anxious", "worry", "panic", "nervous", "stressed", "overwhelmed", "scared"],
+    "angry":   ["angry", "furious", "mad", "irritated", "annoyed", "hate"],
+    "happy":   ["happy", "great", "good", "wonderful", "excited", "grateful", "joy"],
+    "tired":   ["tired", "exhausted", "drained", "burned out", "no energy"],
+    "lonely":  ["lonely", "alone", "isolated", "no friends", "nobody"],
+}
+
+
+def detect_emotion(text: str) -> str:
+    t = text.lower()
+    for emo, words in EMOTION_KEYWORDS.items():
+        if any(w in t for w in words):
+            return emo
+    # fall back to polarity
+    pol = TextBlob(text).sentiment.polarity
+    if pol < -0.2:  return "sad"
+    if pol >  0.2:  return "happy"
+    return "default"
+
+
+def companion_reply(text: str) -> tuple[str, bool]:
+    low = text.lower()
+    if any(w in low for w in CRISIS_WORDS):
+        return (
+            "I'm really glad you told me. Your safety matters most right now. "
+            "Please reach out immediately — in India call **iCall +91-9152987821** or "
+            "**Vandrevala 1860-2662-345**. In the US dial **988**. You are not alone. 💚",
+            True,
+        )
+    emo = detect_emotion(text)
+    bank = RESPONSES.get(emo, RESPONSES["default"])
+    idx = len(text) % len(bank)  # deterministic variety
+    return bank[idx], False
+
+
+def page_companion():
+    st.subheader("💬 Supportive Companion")
+    st.caption("A gentle, rule-based listener. Not a therapist — but always here.")
+
+    if "chat" not in st.session_state:
+        st.session_state.chat = [
+            ("bot", "Hi 👋 I'm here to listen. How are you feeling today?", False)
+        ]
+
+    for who, msg, crisis in st.session_state.chat:
+        cls = "bubble-user" if who == "user" else "bubble-bot"
+        st.markdown(f"<div class='{cls}'>{msg}</div>", unsafe_allow_html=True)
+        if crisis:
+            st.markdown(
+                "<div class='crisis-box'>⚠️ Crisis language detected — please see helplines in the sidebar.</div>",
+                unsafe_allow_html=True,
             )
 
-            trends_tab, dist_tab, insights_tab = st.tabs(["📈 Trends", "🧩 Distributions", "🔎 Insights"])
+    user_msg = st.chat_input("Type your message…")
+    if user_msg:
+        st.session_state.chat.append(("user", user_msg, False))
+        reply, crisis = companion_reply(user_msg)
+        st.session_state.chat.append(("bot", reply, crisis))
+        st.rerun()
 
-            with trends_tab:
-                col1, col2 = st.columns(2)
-                line_shape = "spline" if chart_style == "Smooth" else "linear"
+    if st.button("🔄 Reset conversation"):
+        st.session_state.chat = [
+            ("bot", "Hi 👋 I'm here to listen. How are you feeling today?", False)
+        ]
+        st.rerun()
 
-                with col1:
-                    fig_mood = px.line(
-                        filtered_df.sort_values("date"),
-                        x="date",
-                        y="mood_num",
-                        markers=True,
-                        title="Mood Over Time",
-                        color_discrete_sequence=["#00b894"],
-                    )
-                    fig_mood.update_traces(line_shape=line_shape)
-                    st.plotly_chart(style_plot(fig_mood), use_container_width=True)
 
-                with col2:
-                    fig_sleep = px.area(
-                        filtered_df.sort_values("date"),
-                        x="date",
-                        y="sleep_hours",
-                        title="Sleep Pattern",
-                        color_discrete_sequence=["#6c5ce7"],
-                    )
-                    st.plotly_chart(style_plot(fig_sleep), use_container_width=True)
+# ═════════════════════════  TAB 5 — ABOUT DATA  ═══════════════════════════
+def page_about():
+    st.subheader("📊 About the training data")
+    st.write(
+        f"The Random Forest was trained on **{len(df):,}** synthetic samples "
+        "grounded in validated clinical questionnaires (PHQ-9, GAD-7) "
+        "and known psychosocial risk factors."
+    )
 
-                col3, col4 = st.columns(2)
-                with col3:
-                    fig_stress = px.line(
-                        filtered_df.sort_values("date"),
-                        x="date",
-                        y="stress_level",
-                        markers=True,
-                        title="Stress Trend",
-                        color_discrete_sequence=["#e17055"],
-                    )
-                    fig_stress.update_traces(line_shape=line_shape)
-                    st.plotly_chart(style_plot(fig_stress), use_container_width=True)
+    c1, c2 = st.columns(2)
+    with c1:
+        counts = df["risk_level"].value_counts().reset_index()
+        counts.columns = ["risk_level", "count"]
+        fig = px.pie(counts, names="risk_level", values="count", hole=0.5,
+                     color="risk_level",
+                     color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                     title="Risk-level distribution")
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        fig = px.histogram(df, x="stress_level", color="risk_level", nbins=10,
+                           color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                           title="Stress level by risk group")
+        st.plotly_chart(fig, use_container_width=True)
 
-                with col4:
-                    fig_exercise = px.bar(
-                        filtered_df.sort_values("date"),
-                        x="date",
-                        y="exercise_minutes",
-                        title="Exercise Activity",
-                        color="exercise_minutes",
-                        color_continuous_scale="Tealgrn",
-                    )
-                    st.plotly_chart(style_plot(fig_exercise), use_container_width=True)
+    fig = px.box(df, x="risk_level", y="sleep_hours", color="risk_level",
+                 color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                 title="Sleep hours by risk group")
+    st.plotly_chart(fig, use_container_width=True)
 
-                fig_wellness = px.line(
-                    filtered_df.sort_values("date"),
-                    x="date",
-                    y="wellness_score",
-                    markers=True,
-                    title="Overall Wellness Score Trend",
-                    color_discrete_sequence=["#0984e3"],
-                )
-                fig_wellness.update_traces(line_shape=line_shape)
-                st.plotly_chart(style_plot(fig_wellness), use_container_width=True)
+    st.markdown("#### 🌟 Feature importance (from Random Forest)")
+    fi = feat_importances.reset_index()
+    fi.columns = ["Feature", "Importance"]
+    fig = px.bar(fi, x="Importance", y="Feature", orientation="h",
+                 color="Importance", color_continuous_scale="Teal")
+    fig.update_layout(height=520, yaxis={"categoryorder": "total ascending"})
+    st.plotly_chart(fig, use_container_width=True)
 
-            with dist_tab:
-                col1, col2 = st.columns(2)
+    with st.expander("Preview training data"):
+        st.dataframe(df.head(50), use_container_width=True, hide_index=True)
 
-                with col1:
-                    mood_counts = filtered_df["mood"].value_counts().reset_index()
-                    mood_counts.columns = ["Mood", "Count"]
-                    fig_mood_dist = px.pie(
-                        mood_counts,
-                        names="Mood",
-                        values="Count",
-                        hole=0.55,
-                        title="Mood Distribution",
-                        color_discrete_sequence=px.colors.qualitative.Set3,
-                    )
-                    st.plotly_chart(style_plot(fig_mood_dist), use_container_width=True)
 
-                with col2:
-                    fig_sleep_box = px.box(
-                        filtered_df,
-                        y="sleep_hours",
-                        points="all",
-                        title="Sleep Variability",
-                        color_discrete_sequence=["#6c5ce7"],
-                    )
-                    st.plotly_chart(style_plot(fig_sleep_box), use_container_width=True)
+# ─────────────────────────  ROUTER  ────────────────────────────────────────
+PAGES = {
+    "Risk Predictor":     page_predictor,
+    "Journal & Mood":     page_journal,
+    "Clinical Screening": page_screening,
+    "AI Companion":       page_companion,
+    "About Data":         page_about,
+}
+PAGES[page]()
 
-                col3, col4 = st.columns(2)
-                with col3:
-                    fig_scatter = px.scatter(
-                        filtered_df,
-                        x="sleep_hours",
-                        y="stress_level",
-                        size="exercise_minutes",
-                        color="wellness_score",
-                        hover_data=["username", "mood"],
-                        title="Sleep vs Stress vs Exercise",
-                        color_continuous_scale="Viridis",
-                    )
-                    st.plotly_chart(style_plot(fig_scatter), use_container_width=True)
+st.markdown("---")
+st.caption(
+    "⚠️ This tool provides educational information and self-reflection support only. "
+    "It is **not** a medical diagnosis. If you are struggling, please contact a licensed "
+    "mental-health professional or one of the helplines listed in the sidebar."
+)
+"""
+Mental Health Risk Analysis — Streamlit App
+Author: enhanced by Emergent E1
 
-                with col4:
-                    if not prediction_df.empty:
-                        pred_filtered = prediction_df.copy()
-                        if selected_user != "All Users":
-                            pred_filtered = pred_filtered[pred_filtered["username"].astype(str) == selected_user]
-                        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
-                            pred_filtered = pred_filtered[
-                                (pred_filtered["date"].dt.date >= start_date) & (pred_filtered["date"].dt.date <= end_date)
-                            ]
-                        if not pred_filtered.empty:
-                            risk_counts = pred_filtered["risk_level"].value_counts().reset_index()
-                            risk_counts.columns = ["Risk", "Count"]
-                            fig_risk = px.bar(
-                                risk_counts,
-                                x="Risk",
-                                y="Count",
-                                color="Risk",
-                                title="Risk Level Distribution",
-                                color_discrete_map={"Low": "#00b894", "Medium": "#fdcb6e", "High": "#d63031"},
-                            )
-                            st.plotly_chart(style_plot(fig_risk), use_container_width=True)
-                        else:
-                            st.info("No prediction records available for the selected filters.")
-                    else:
-                        st.info("No prediction records available yet.")
+Four features in one file:
+  1. Risk Predictor       — Random Forest on synthetic clinical data
+  2. Journal & Sentiment  — TextBlob mood tracker + trend chart
+  3. Clinical Screening   — PHQ-9 (depression) + GAD-7 (anxiety)
+  4. AI Companion         — rule-based supportive chatbot with crisis detection
+"""
 
-            with insights_tab:
-                corr_df = filtered_df[["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes", "mood_num", "wellness_score"]].corr()
-                heatmap = go.Figure(
-                    data=go.Heatmap(
-                        z=corr_df.values,
-                        x=corr_df.columns,
-                        y=corr_df.index,
-                        colorscale="RdYlGn",
-                        zmin=-1,
-                        zmax=1,
-                        text=np.round(corr_df.values, 2),
-                        texttemplate="%{text}",
-                    )
-                )
-                heatmap.update_layout(title="Correlation Heatmap")
-                st.plotly_chart(style_plot(heatmap), use_container_width=True)
+from __future__ import annotations
 
-                last_row = filtered_df.sort_values("date").iloc[-1]
-                radar_col, info_col = st.columns([1.2, 1])
-                with radar_col:
-                    st.plotly_chart(
-                        create_wellness_radar(
-                            last_row["sleep_hours"],
-                            last_row["stress_level"],
-                            last_row["anxiety_level"],
-                            last_row["exercise_minutes"],
-                            last_row["mood"],
-                        ),
-                        use_container_width=True,
-                    )
-                with info_col:
-                    st.markdown("### Latest Snapshot")
-                    st.metric("Latest Wellness", f"{last_row['wellness_score']:.0f}/100")
-                    st.metric("Latest Mood", last_row["mood"])
-                    st.metric("Latest Stress", f"{last_row['stress_level']}/10")
-                    st.metric("Latest Anxiety", f"{last_row['anxiety_level']}/10")
+import os
+from datetime import datetime
 
-# Journal Page
-elif page == "📝 Journal":
-    st.title("📝 Journal & Sentiment Analysis")
-    st.markdown("---")
+import numpy as np
+import pandas as pd
+import plotly.express as px
+import plotly.graph_objects as go
+import streamlit as st
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+from textblob import TextBlob
 
-    st.write("Write about your day and we'll analyze your mood!")
-    journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?")
 
-    if st.button("🔍 Analyze Sentiment"):
-        if journal_text:
-            sentiment, polarity = analyze_sentiment(journal_text)
+# ─────────────────────────  PAGE CONFIG + THEME  ──────────────────────────
+st.set_page_config(
+    page_title="Mental Health Risk Analysis",
+    page_icon="🧠",
+    layout="wide",
+    initial_sidebar_state="expanded",
+)
 
-            st.markdown("## 📊 Sentiment Analysis Results")
-            col1, col2 = st.columns(2)
+CUSTOM_CSS = """
+<style>
+  :root {
+    --sage:   #6B9080;
+    --sage2:  #A4C3B2;
+    --cream:  #F6FFF8;
+    --peach:  #EAAC8B;
+    --deep:   #354F52;
+  }
+  .stApp { background: linear-gradient(180deg,#F6FFF8 0%,#EAF4EA 100%); }
+  h1, h2, h3 { color: var(--deep); font-family: 'Georgia', serif; }
+  .hero {
+      background: linear-gradient(120deg,#6B9080,#A4C3B2);
+      color:#fff; padding:28px 32px; border-radius:18px;
+      box-shadow: 0 6px 24px rgba(53,79,82,.15);
+      margin-bottom: 18px;
+  }
+  .hero h1 { color:#fff !important; margin:0 0 6px; font-size: 2.1rem; }
+  .hero p  { color:#F6FFF8; margin:0; opacity:.95;}
+  .metric-card{
+      background:#fff;border-radius:14px;padding:16px 18px;
+      box-shadow:0 3px 10px rgba(53,79,82,.08);
+      border-left:5px solid var(--sage);
+  }
+  .risk-low   { color:#2E7D32; font-weight:700; }
+  .risk-mod   { color:#EF6C00; font-weight:700; }
+  .risk-high  { color:#C62828; font-weight:700; }
+  .stButton>button{
+      background:var(--sage); color:#fff; border:0; border-radius:10px;
+      padding:.55rem 1.2rem; font-weight:600;
+  }
+  .stButton>button:hover{ background:var(--deep); color:#fff; }
+  .bubble-user{
+      background:#DDE7DE;padding:10px 14px;border-radius:14px 14px 2px 14px;
+      margin:6px 0 6px 22%;display:inline-block;max-width:78%;
+  }
+  .bubble-bot{
+      background:#fff;padding:10px 14px;border-radius:14px 14px 14px 2px;
+      margin:6px 22% 6px 0;display:inline-block;max-width:78%;
+      border-left:4px solid var(--sage);
+  }
+  .crisis-box{
+      background:#FFF3F0;border:2px solid #C62828;border-radius:12px;
+      padding:14px 18px;margin:10px 0;color:#7A0C0C;
+  }
+</style>
+"""
+st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
-            with col1:
-                if sentiment == "positive":
-                    st.success(f"Sentiment: **Positive** 😊")
-                elif sentiment == "negative":
-                    st.error(f"Sentiment: **Negative** 😔")
-                else:
-                    st.info(f"Sentiment: **Neutral** 😐")
+st.markdown(
+    """
+    <div class="hero">
+      <h1>🧠 Mental Health Risk Analysis</h1>
+      <p>A caring companion powered by machine learning, clinical screeners, and sentiment analysis. Not a substitute for professional care.</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
-            with col2:
-                # Visual polarity meter
-                fig_polarity = go.Figure(go.Indicator(
-                    mode="gauge+number",
-                    value=polarity,
-                    domain={'x': [0, 1], 'y': [0, 1]},
-                    title={'text': "Polarity", 'font': {'size': 20, 'color': '#2d3748'}},
-                    gauge={
-                        'axis': {'range': [-1, 1], 'tickwidth': 1, 'tickcolor': "#2d3748"},
-                        'bar': {'color': "#636efa"},
-                        'bgcolor': "rgba(0,0,0,0)",
-                        'borderwidth': 2,
-                        'bordercolor': "#2d3748",
-                        'steps': [
-                            {'range': [-1, -0.1], 'color': "#ef553b"},
-                            {'range': [-0.1, 0.1], 'color': "#ffaa00"},
-                            {'range': [0.1, 1], 'color': "#00cc96"}
-                        ]
-                    }
-                ))
-                fig_polarity.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': "#2d3748"})
-                st.plotly_chart(fig_polarity, use_container_width=True)
 
-            st.markdown("### 📝 Your Entry:")
-            st.write(journal_text)
-        else:
-            st.warning("⚠️ Please write something in your journal first!")
+# ─────────────────────────  DATA + MODEL (cached)  ─────────────────────────
+DATA_PATH = "mental_health_data.csv"
+CATEGORICAL = ["gender", "occupation"]
 
-# Report Page
-elif page == "📄 Report":
-    st.title("📄 Health Report")
-    st.markdown("---")
 
-    if 'assessment_data' not in st.session_state:
-        st.warning("⚠️ Please complete the Assessment first!")
-    else:
-        data = st.session_state['assessment_data']
-        username = data["username"]
-        stress = data["stress_level"]
-        sleep = data["sleep_hours"]
-        anxiety = data["anxiety_level"]
-        exercise = data["exercise_minutes"]
-        mood = data["mood"]
-
-        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
-        recommendations = get_recommendations(stress, sleep, anxiety, exercise)
-
-        st.markdown("## 📋 Report Preview")
-
-        st.markdown(f"**👤 Username:** {username}")
-        if risk == "Low":
-            st.success(f"🎯 Risk Level: **{risk}**")
-        elif risk == "Medium":
-            st.warning(f"⚠️ Risk Level: **{risk}**")
-        else:
-            st.error(f"🚨 Risk Level: **{risk}**")
-        st.metric("🏆 Wellness Score", f"{wellness_score}/100")
-
-        st.markdown("## 🔍 Key Factors")
-        for factor in factors:
-            st.info(f"• {factor}")
-
-        st.markdown("## 💡 Recommendations")
-        for rec in recommendations:
-            st.success(rec)
-
-        pdf_buffer = generate_pdf_report(username, risk, wellness_score, factors, recommendations)
-
-        st.download_button(
-            label="📥 Download PDF Report",
-            data=pdf_buffer,
-            file_name=f"mental_health_report_{username}.pdf",
-            mime="application/pdf"
+@st.cache_data(show_spinner=False)
+def load_data() -> pd.DataFrame:
+    if not os.path.exists(DATA_PATH):
+        st.error(
+            f"Dataset file '{DATA_PATH}' not found. "
+            "Please add it to the repo root (run generate_dataset.py)."
         )
+        st.stop()
+    return pd.read_csv(DATA_PATH)
 
-# Admin Page
-elif page == "📊 Admin":
-    st.title("📊 Admin Dashboard")
+
+@st.cache_resource(show_spinner="Training risk model…")
+def train_model(df: pd.DataFrame):
+    df = df.copy()
+    encoders: dict[str, LabelEncoder] = {}
+    for col in CATEGORICAL:
+        le = LabelEncoder()
+        df[col] = le.fit_transform(df[col])
+        encoders[col] = le
+
+    y = df["risk_level"]
+    X = df.drop(columns=["risk_level"])
+
+    Xtr, Xte, ytr, yte = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
+    )
+    model = RandomForestClassifier(
+        n_estimators=300, max_depth=12, random_state=42, n_jobs=-1
+    )
+    model.fit(Xtr, ytr)
+    acc = accuracy_score(yte, model.predict(Xte))
+    importances = pd.Series(
+        model.feature_importances_, index=X.columns
+    ).sort_values(ascending=False)
+    return model, encoders, X.columns.tolist(), acc, importances
+
+
+df = load_data()
+model, encoders, feature_order, model_acc, feat_importances = train_model(df)
+
+
+# ─────────────────────────  SIDEBAR  ───────────────────────────────────────
+with st.sidebar:
+    st.markdown("### 🧭 Navigation")
+    page = st.radio(
+        "Go to",
+        ["Risk Predictor", "Journal & Mood", "Clinical Screening", "AI Companion", "About Data"],
+        label_visibility="collapsed",
+    )
     st.markdown("---")
+    st.markdown("#### 📊 Model")
+    st.metric("Accuracy (holdout)", f"{model_acc*100:.1f}%")
+    st.caption(f"Trained on {len(df):,} samples")
+    st.markdown("---")
+    st.markdown("#### ☎️ Crisis Support")
+    st.caption(
+        "**India:** iCall +91-9152987821  \n"
+        "**Vandrevala:** 1860-2662-345  \n"
+        "**US:** 988  •  **UK:** 116 123"
+    )
 
-    st.markdown("## 📁 Data Management")
-    st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`.")
-    init_db()
 
-    col1, col2 = st.columns(2)
+# ═════════════════════════  TAB 1 — RISK PREDICTOR  ═══════════════════════
+def page_predictor():
+    st.subheader("🔮 Personal Risk Assessment")
+    st.write(
+        "Fill in the questionnaire below. The trained Random Forest model will "
+        "estimate your mental-health risk and show which factors influenced it."
+    )
 
-    with col1:
-        try:
-            conn = get_connection()
-            df_history = pd.read_sql_query("SELECT * FROM user_history", conn)
-            conn.close()
-            st.markdown("### 👥 User History Data")
-            st.dataframe(df_history, use_container_width=True)
-            st.metric("Total Entries", len(df_history))
-            if not df_history.empty:
-                st.download_button(
-                    label="📥 Download Patient History (Excel)",
-                    data=export_to_excel(df_history, sheet_name="Patient History"),
-                    file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+    with st.form("risk_form"):
+        c1, c2, c3 = st.columns(3)
+        with c1:
+            age = st.number_input("Age", 16, 65, 25)
+            gender = st.selectbox("Gender", ["Male", "Female", "Other"])
+            occupation = st.selectbox(
+                "Occupation",
+                ["Student", "Employed", "Unemployed", "Self-Employed", "Retired"],
+            )
+            sleep_hours = st.slider("Sleep hours / night", 2.0, 12.0, 7.0, 0.1)
+            physical_activity_hours = st.slider(
+                "Physical activity (hrs / week)", 0.0, 20.0, 3.0, 0.5
+            )
+            screen_time_hours = st.slider("Screen time (hrs / day)", 0.0, 16.0, 6.0, 0.5)
+        with c2:
+            work_study_hours = st.slider("Work / study hrs / day", 0.0, 16.0, 8.0, 0.5)
+            stress_level = st.slider("Stress level", 1, 10, 5)
+            social_support = st.slider("Social support", 1, 10, 6)
+            mood_score = st.slider("Current mood (higher = better)", 1, 10, 6)
+            energy_level = st.slider("Energy level", 1, 10, 6)
+        with c3:
+            concentration_difficulty = st.slider("Concentration difficulty", 1, 10, 4)
+            hopelessness = st.slider("Feelings of hopelessness", 1, 10, 3)
+            appetite_change = st.radio("Recent appetite change?", ["No", "Yes"], horizontal=True)
+            previous_mh_history = st.radio(
+                "Previous mental-health diagnosis?", ["No", "Yes"], horizontal=True
+            )
+            family_history = st.radio("Family mental-health history?", ["No", "Yes"], horizontal=True)
+            alcohol_use = st.selectbox("Alcohol use", ["None", "Occasional", "Regular"])
 
-    with col2:
-        try:
-            conn = get_connection()
-            df_predictions = pd.read_sql_query("SELECT * FROM predictions", conn)
-            conn.close()
-            st.markdown("### 🤖 Predictions Data")
-            st.dataframe(df_predictions, use_container_width=True)
-            st.metric("Total Predictions", len(df_predictions))
-            if not df_predictions.empty:
-                st.download_button(
-                    label="📥 Download Predictions (Excel)",
-                    data=export_to_excel(df_predictions, sheet_name="Predictions"),
-                    file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                )
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
+        submitted = st.form_submit_button("Analyze my risk", use_container_width=True)
+
+    if not submitted:
+        return
+
+    row = {
+        "age": age,
+        "gender": encoders["gender"].transform([gender])[0],
+        "occupation": encoders["occupation"].transform([occupation])[0],
+        "sleep_hours": sleep_hours,
+        "physical_activity_hours": physical_activity_hours,
+        "screen_time_hours": screen_time_hours,
+        "work_study_hours": work_study_hours,
+        "stress_level": stress_level,
+        "social_support": social_support,
+        "mood_score": mood_score,
+        "energy_level": energy_level,
+        "concentration_difficulty": concentration_difficulty,
+        "hopelessness": hopelessness,
+        "appetite_change": 1 if appetite_change == "Yes" else 0,
+        "previous_mh_history": 1 if previous_mh_history == "Yes" else 0,
+        "family_history": 1 if family_history == "Yes" else 0,
+        "alcohol_use": ["None", "Occasional", "Regular"].index(alcohol_use),
+    }
+    x = pd.DataFrame([row])[feature_order]
+    pred = model.predict(x)[0]
+    proba = dict(zip(model.classes_, model.predict_proba(x)[0]))
+
+    label_class = {"Low": "risk-low", "Moderate": "risk-mod", "High": "risk-high"}[pred]
+    top_conf = proba[pred] * 100
+
+    lc, rc = st.columns([1.1, 1])
+    with lc:
+        st.markdown(
+            f"<div class='metric-card'><h3>Predicted Risk Level</h3>"
+            f"<div style='font-size:2.4rem' class='{label_class}'>{pred}</div>"
+            f"<div>Confidence: <b>{top_conf:.1f}%</b></div></div>",
+            unsafe_allow_html=True,
+        )
+        # gauge
+        gauge_val = {"Low": 25, "Moderate": 60, "High": 90}[pred]
+        gauge = go.Figure(go.Indicator(
+            mode="gauge+number",
+            value=gauge_val,
+            number={"suffix": " / 100"},
+            gauge={
+                "axis": {"range": [0, 100]},
+                "bar": {"color": "#354F52"},
+                "steps": [
+                    {"range": [0, 40], "color": "#B5E48C"},
+                    {"range": [40, 75], "color": "#F9DC5C"},
+                    {"range": [75, 100], "color": "#F28482"},
+                ],
+            },
+            title={"text": "Risk score"},
+        ))
+        gauge.update_layout(height=280, margin=dict(l=10, r=10, t=40, b=10))
+        st.plotly_chart(gauge, use_container_width=True)
+
+    with rc:
+        st.markdown("#### Class probabilities")
+        pdf = pd.DataFrame({"Risk": list(proba.keys()),
+                            "Probability": [v * 100 for v in proba.values()]})
+        fig = px.bar(pdf, x="Risk", y="Probability", color="Risk",
+                     color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                     text=pdf["Probability"].round(1).astype(str) + "%")
+        fig.update_layout(height=280, showlegend=False, margin=dict(l=10, r=10, t=10, b=10),
+                          yaxis_title="%", xaxis_title="")
+        st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("#### 🧩 Top factors influencing your prediction")
+    top = feat_importances.head(8).reset_index()
+    top.columns = ["Feature", "Importance"]
+    fig2 = px.bar(top, x="Importance", y="Feature", orientation="h",
+                  color="Importance", color_continuous_scale="Teal")
+    fig2.update_layout(height=340, yaxis={"categoryorder": "total ascending"},
+                       margin=dict(l=10, r=10, t=10, b=10))
+    st.plotly_chart(fig2, use_container_width=True)
+
+    # Personalized suggestions
+    tips = []
+    if sleep_hours < 6:      tips.append("😴 Aim for 7–9 hrs of sleep — consistent bedtime helps.")
+    if stress_level >= 7:    tips.append("🧘 Try 10 min of breathing or meditation each day.")
+    if physical_activity_hours < 2: tips.append("🚶 Add a 20-min walk 3× a week.")
+    if social_support <= 4:  tips.append("💬 Reach out to one person you trust this week.")
+    if hopelessness >= 7 or mood_score <= 3:
+        tips.append("🤝 Please consider talking to a mental-health professional.")
+    if not tips:
+        tips.append("🌱 You're doing well — keep up your healthy routines!")
+    st.markdown("#### 💡 Personalized suggestions")
+    for t in tips:
+        st.write("- " + t)
+
+
+# ═════════════════════════  TAB 2 — JOURNAL & MOOD  ═══════════════════════
+def page_journal():
+    st.subheader("📝 Daily Journal & Mood Tracker")
+    st.write("Write about your day. We'll analyse the sentiment and plot your mood trend.")
+
+    if "journal" not in st.session_state:
+        st.session_state.journal = []  # list of dicts
+
+    entry = st.text_area("How are you feeling today?", height=140,
+                         placeholder="Today I felt…")
+    if st.button("Save entry"):
+        if entry.strip():
+            blob = TextBlob(entry)
+            polarity = blob.sentiment.polarity        # -1..1
+            subjectivity = blob.sentiment.subjectivity
+            mood = round((polarity + 1) * 5, 2)       # 0..10
+            st.session_state.journal.append({
+                "time": datetime.now().strftime("%Y-%m-%d %H:%M"),
+                "text": entry.strip(),
+                "polarity": round(polarity, 3),
+                "subjectivity": round(subjectivity, 3),
+                "mood_0_10": mood,
+            })
+            st.success("Entry saved.")
+        else:
+            st.warning("Write something first 🙂")
+
+    if not st.session_state.journal:
+        st.info("Your journal is empty. Save your first entry above.")
+        return
+
+    j = pd.DataFrame(st.session_state.journal)
+
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Entries", len(j))
+    c2.metric("Avg mood (0–10)", f"{j['mood_0_10'].mean():.2f}")
+    last_trend = "→"
+    if len(j) >= 2:
+        delta = j["mood_0_10"].iloc[-1] - j["mood_0_10"].iloc[-2]
+        last_trend = "↑ Better" if delta > 0.2 else ("↓ Lower" if delta < -0.2 else "→ Stable")
+    c3.metric("Latest trend", last_trend)
+
+    fig = px.line(j, x="time", y="mood_0_10", markers=True,
+                  title="Mood trend over time", range_y=[0, 10])
+    fig.update_traces(line_color="#6B9080")
+    fig.add_hline(y=5, line_dash="dot", line_color="gray")
+    st.plotly_chart(fig, use_container_width=True)
+
+    # crisis keywords
+    crisis_kw = ["suicide", "kill myself", "end my life", "hopeless", "worthless",
+                 "self harm", "cutting", "no reason to live"]
+    text_all = " ".join(j["text"].tolist()).lower()
+    hits = [k for k in crisis_kw if k in text_all]
+    if hits:
+        st.markdown(
+            f"<div class='crisis-box'>⚠️ Concerning words detected in your entries "
+            f"({', '.join(hits)}). Please reach out to someone you trust or a helpline "
+            f"listed in the sidebar. You matter. 💚</div>", unsafe_allow_html=True)
+
+    with st.expander("📖 See all my entries"):
+        st.dataframe(j[::-1], use_container_width=True, hide_index=True)
+
+
+# ═════════════════════════  TAB 3 — CLINICAL SCREENING  ═══════════════════
+PHQ9_Q = [
+    "Little interest or pleasure in doing things",
+    "Feeling down, depressed, or hopeless",
+    "Trouble falling / staying asleep, or sleeping too much",
+    "Feeling tired or having little energy",
+    "Poor appetite or overeating",
+    "Feeling bad about yourself — or that you're a failure",
+    "Trouble concentrating on things",
+    "Moving or speaking slowly — or being fidgety / restless",
+    "Thoughts that you would be better off dead or hurting yourself",
+]
+GAD7_Q = [
+    "Feeling nervous, anxious, or on edge",
+    "Not being able to stop or control worrying",
+    "Worrying too much about different things",
+    "Trouble relaxing",
+    "Being so restless it's hard to sit still",
+    "Becoming easily annoyed or irritable",
+    "Feeling afraid something awful might happen",
+]
+OPTS = {
+    "Not at all": 0, "Several days": 1, "More than half the days": 2, "Nearly every day": 3
+}
+
+
+def phq9_severity(s):
+    if s <= 4:  return "Minimal", "#2E7D32"
+    if s <= 9:  return "Mild", "#66BB6A"
+    if s <= 14: return "Moderate", "#FBC02D"
+    if s <= 19: return "Moderately Severe", "#EF6C00"
+    return "Severe", "#C62828"
+
+
+def gad7_severity(s):
+    if s <= 4:  return "Minimal", "#2E7D32"
+    if s <= 9:  return "Mild", "#66BB6A"
+    if s <= 14: return "Moderate", "#EF6C00"
+    return "Severe", "#C62828"
+
+
+def _run_screener(title, questions, key_prefix, sev_fn, max_score):
+    st.markdown(f"### {title}")
+    st.caption("Over the last 2 weeks, how often have you been bothered by…")
+    scores = []
+    for i, q in enumerate(questions):
+        choice = st.radio(f"{i+1}. {q}", list(OPTS.keys()),
+                          key=f"{key_prefix}_{i}", horizontal=True, index=0)
+        scores.append(OPTS[choice])
+    total = sum(scores)
+    label, color = sev_fn(total)
+    st.markdown(
+        f"<div class='metric-card'><b>Score:</b> {total} / {max_score} — "
+        f"<span style='color:{color};font-weight:700'>{label}</span></div>",
+        unsafe_allow_html=True,
+    )
+    g = go.Figure(go.Indicator(
+        mode="gauge+number", value=total,
+        gauge={"axis": {"range": [0, max_score]}, "bar": {"color": color}},
+        title={"text": f"{title} score"},
+    ))
+    g.update_layout(height=260, margin=dict(l=10, r=10, t=40, b=10))
+    st.plotly_chart(g, use_container_width=True)
+    return total, label
+
+
+def page_screening():
+    st.subheader("🏥 Clinical Screening (PHQ-9 & GAD-7)")
+    st.write("These are the standard tools used in clinics worldwide — for screening only, not diagnosis.")
+    left, right = st.columns(2)
+    with left:
+        _run_screener("PHQ-9 (Depression)", PHQ9_Q, "phq", phq9_severity, 27)
+    with right:
+        _run_screener("GAD-7 (Anxiety)", GAD7_Q, "gad", gad7_severity, 21)
+
+    st.info("If your scores are Moderate or higher, please consider consulting a mental-health "
+            "professional. The helplines in the sidebar can help you get started.")
+
+
+# ═════════════════════════  TAB 4 — AI COMPANION  ═════════════════════════
+CRISIS_WORDS = ["suicide", "kill myself", "end my life", "want to die",
+                "self harm", "cutting myself", "no reason to live"]
+
+RESPONSES = {
+    "sad": [
+        "I hear you, and I'm sorry you're feeling this way. Would you like to talk about what triggered it?",
+        "It sounds heavy. Remember — feelings pass. What's one small thing that usually brings you a bit of comfort?",
+    ],
+    "anxious": [
+        "That anxious feeling can be exhausting. Try breathing in for 4, hold 4, out 6 — three times. I'll wait.",
+        "Anxiety often shrinks when we name what's beneath it. What worry is loudest right now?",
+    ],
+    "angry": [
+        "It's okay to feel angry. Would it help to write down what triggered it?",
+        "Anger often protects a softer feeling underneath — sadness, fear, hurt. Does anything come to mind?",
+    ],
+    "happy": [
+        "That's wonderful to hear! What made today feel good?",
+        "Love that. Savor the moment — small joys are the antidote to burnout.",
+    ],
+    "tired": [
+        "Being tired is a signal, not a weakness. What's one thing you can drop today?",
+        "Rest is productive. Can you carve out 15 min just for yourself?",
+    ],
+    "lonely": [
+        "Loneliness is hard. Is there one person you could message — even a small hello?",
+        "You're not alone in feeling alone. I'm here to listen.",
+    ],
+    "default": [
+        "Thank you for sharing that with me. Can you tell me a little more?",
+        "I'm listening. How has this been affecting your day?",
+        "That sounds important. What would feel supportive right now?",
+    ],
+}
+
+EMOTION_KEYWORDS = {
+    "sad":     ["sad", "cry", "down", "depressed", "unhappy", "miserable", "empty"],
+    "anxious": ["anxious", "worry", "panic", "nervous", "stressed", "overwhelmed", "scared"],
+    "angry":   ["angry", "furious", "mad", "irritated", "annoyed", "hate"],
+    "happy":   ["happy", "great", "good", "wonderful", "excited", "grateful", "joy"],
+    "tired":   ["tired", "exhausted", "drained", "burned out", "no energy"],
+    "lonely":  ["lonely", "alone", "isolated", "no friends", "nobody"],
+}
+
+
+def detect_emotion(text: str) -> str:
+    t = text.lower()
+    for emo, words in EMOTION_KEYWORDS.items():
+        if any(w in t for w in words):
+            return emo
+    # fall back to polarity
+    pol = TextBlob(text).sentiment.polarity
+    if pol < -0.2:  return "sad"
+    if pol >  0.2:  return "happy"
+    return "default"
+
+
+def companion_reply(text: str) -> tuple[str, bool]:
+    low = text.lower()
+    if any(w in low for w in CRISIS_WORDS):
+        return (
+            "I'm really glad you told me. Your safety matters most right now. "
+            "Please reach out immediately — in India call **iCall +91-9152987821** or "
+            "**Vandrevala 1860-2662-345**. In the US dial **988**. You are not alone. 💚",
+            True,
+        )
+    emo = detect_emotion(text)
+    bank = RESPONSES.get(emo, RESPONSES["default"])
+    idx = len(text) % len(bank)  # deterministic variety
+    return bank[idx], False
+
+
+def page_companion():
+    st.subheader("💬 Supportive Companion")
+    st.caption("A gentle, rule-based listener. Not a therapist — but always here.")
+
+    if "chat" not in st.session_state:
+        st.session_state.chat = [
+            ("bot", "Hi 👋 I'm here to listen. How are you feeling today?", False)
+        ]
+
+    for who, msg, crisis in st.session_state.chat:
+        cls = "bubble-user" if who == "user" else "bubble-bot"
+        st.markdown(f"<div class='{cls}'>{msg}</div>", unsafe_allow_html=True)
+        if crisis:
+            st.markdown(
+                "<div class='crisis-box'>⚠️ Crisis language detected — please see helplines in the sidebar.</div>",
+                unsafe_allow_html=True,
+            )
+
+    user_msg = st.chat_input("Type your message…")
+    if user_msg:
+        st.session_state.chat.append(("user", user_msg, False))
+        reply, crisis = companion_reply(user_msg)
+        st.session_state.chat.append(("bot", reply, crisis))
+        st.rerun()
+
+    if st.button("🔄 Reset conversation"):
+        st.session_state.chat = [
+            ("bot", "Hi 👋 I'm here to listen. How are you feeling today?", False)
+        ]
+        st.rerun()
+
+
+# ═════════════════════════  TAB 5 — ABOUT DATA  ═══════════════════════════
+def page_about():
+    st.subheader("📊 About the training data")
+    st.write(
+        f"The Random Forest was trained on **{len(df):,}** synthetic samples "
+        "grounded in validated clinical questionnaires (PHQ-9, GAD-7) "
+        "and known psychosocial risk factors."
+    )
+
+    c1, c2 = st.columns(2)
+    with c1:
+        counts = df["risk_level"].value_counts().reset_index()
+        counts.columns = ["risk_level", "count"]
+        fig = px.pie(counts, names="risk_level", values="count", hole=0.5,
+                     color="risk_level",
+                     color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                     title="Risk-level distribution")
+        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        fig = px.histogram(df, x="stress_level", color="risk_level", nbins=10,
+                           color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                           title="Stress level by risk group")
+        st.plotly_chart(fig, use_container_width=True)
+
+    fig = px.box(df, x="risk_level", y="sleep_hours", color="risk_level",
+                 color_discrete_map={"Low": "#6B9080", "Moderate": "#EAAC8B", "High": "#C62828"},
+                 title="Sleep hours by risk group")
+    st.plotly_chart(fig, use_container_width=True)
+
+    st.markdown("#### 🌟 Feature importance (from Random Forest)")
+    fi = feat_importances.reset_index()
+    fi.columns = ["Feature", "Importance"]
+    fig = px.bar(fi, x="Importance", y="Feature", orientation="h",
+                 color="Importance", color_continuous_scale="Teal")
+    fig.update_layout(height=520, yaxis={"categoryorder": "total ascending"})
+    st.plotly_chart(fig, use_container_width=True)
+
+    with st.expander("Preview training data"):
+        st.dataframe(df.head(50), use_container_width=True, hide_index=True)
+
+
+# ─────────────────────────  ROUTER  ────────────────────────────────────────
+PAGES = {
+    "Risk Predictor":     page_predictor,
+    "Journal & Mood":     page_journal,
+    "Clinical Screening": page_screening,
+    "AI Companion":       page_companion,
+    "About Data":         page_about,
+}
+PAGES[page]()
+
+st.markdown("---")
+st.caption(
+    "⚠️ This tool provides educational information and self-reflection support only. "
+    "It is **not** a medical diagnosis. If you are struggling, please contact a licensed "
+    "mental-health professional or one of the helplines listed in the sidebar."
+)
