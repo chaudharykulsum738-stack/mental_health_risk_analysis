@@ -96,7 +96,7 @@ st.markdown(
 
 # ─────────────────────────  DATA + MODEL (cached)  ─────────────────────────
 DATA_PATH = "mental_health_data.csv"
-CATEGORICAL = ["gender", "occupation"]
+CATEGORICAL = ["gender", "occupation", "alcohol_use"]
 
 
 @st.cache_data(show_spinner=False)
@@ -221,7 +221,7 @@ def page_predictor():
         "appetite_change": 1 if appetite_change == "Yes" else 0,
         "previous_mh_history": 1 if previous_mh_history == "Yes" else 0,
         "family_history": 1 if family_history == "Yes" else 0,
-        "alcohol_use": ["None", "Occasional", "Regular"].index(alcohol_use),
+        "alcohol_use": encoders["alcohol_use"].transform([alcohol_use])[0],
     }
     x = pd.DataFrame([row])[feature_order]
     pred = model.predict(x)[0]
