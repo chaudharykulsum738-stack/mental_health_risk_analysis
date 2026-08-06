@@ -1,2 +1,1 @@
-# mental_health_risk_analysis
-streamlit pandas numpy scikit-learn plotly openpyxl textblob nltk shap reportlab pillow
+MindTrack is a web-based mental wellness application developed using Python and Streamlit. It helps users monitor their mental well-being by recording daily mood, sleep, stress, anxiety, and exercise levels. Based on this information, the app calculates a wellness score, predicts the user's mental health risk level, and provides personalized recommendations. It also includes features such as goal tracking, journal sentiment analysis, interactive dashboards, bulk data upload, PDF report generation, and data visualization to help users understand and improve their overall mental wellness.
