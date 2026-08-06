@@ -162,6 +162,128 @@ hr {{ display: none; }}
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 16px; margin-bottom: 8px;
 }}
+
+/* Login styles */
+.login-wrap {
+    max-width: 420px;
+    margin: 3rem auto;
+    padding: 2.5rem;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(27,36,48,0.08);
+    text-align: center;
+}
+.login-icon {
+    font-size: 3.5rem;
+    margin-bottom: 0.5rem;
+}
+.login-title {
+    font-family: 'Fraunces', serif;
+    font-size: 1.8rem;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+}
+.login-subtitle {
+    color: var(--muted);
+    font-size: 0.95rem;
+    margin-bottom: 1.8rem;
+}
+.login-input-wrap {
+    text-align: left;
+    margin-bottom: 1.2rem;
+}
+.login-input-wrap label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+    display: block;
+}
+.login-input-wrap input {
+    width: 100%;
+    padding: 12px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    font-size: 1rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--ink);
+    background: var(--paper);
+    transition: border-color 0.15s ease;
+}
+.login-input-wrap input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+.login-btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    margin-top: 0.5rem;
+}
+.login-btn:hover {
+    background: var(--primary-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(47,111,98,0.25);
+}
+.login-divider {
+    display: flex;
+    align-items: center;
+    margin: 1.5rem 0;
+    color: var(--muted);
+    font-size: 0.8rem;
+}
+.login-divider::before, .login-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--border);
+    margin: 0 10px;
+}
+.user-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(47,111,98,0.10);
+    border: 1px solid rgba(47,111,98,0.25);
+    color: var(--primary);
+    border-radius: 999px;
+    padding: 6px 16px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+}
+.logout-link {
+    color: var(--high) !important;
+    font-size: 0.8rem;
+    cursor: pointer;
+    text-decoration: underline;
+}
+.locked-page {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--muted);
+}
+.locked-page-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+}
+.locked-page h2 {
+    font-family: 'Fraunces', serif;
+    color: var(--ink);
+    margin-bottom: 0.5rem;
+}
 </style>
 """, unsafe_allow_html=True)
 
@@ -289,64 +411,87 @@ def get_goals(username):
 
 
 # ---------------------------------------------------------------------------
-# Journal CSV storage
+# Login / Session Management
 # ---------------------------------------------------------------------------
-JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
 
-def save_journal_entry(username, text, sentiment, polarity):
-    """Save a journal entry with sentiment analysis to CSV."""
-    os.makedirs(DATA_DIR, exist_ok=True)
-    entry = {
-        "id": datetime.now().strftime("%Y%m%d%H%M%S%f"),
-        "username": username,
-        "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        "text": text,
-        "sentiment": sentiment,
-        "polarity": round(polarity, 4),
-    }
-    df_new = pd.DataFrame([entry])
-    if os.path.exists(JOURNAL_CSV):
-        df_existing = pd.read_csv(JOURNAL_CSV)
-        df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-    else:
-        df_combined = df_new
-    df_combined.to_csv(JOURNAL_CSV, index=False)
-    return entry
+def init_login_state():
+    """Initialize login-related session state keys."""
+    if "logged_in" not in st.session_state:
+        st.session_state.logged_in = False
+    if "current_user" not in st.session_state:
+        st.session_state.current_user = None
+    if "login_error" not in st.session_state:
+        st.session_state.login_error = None
 
-def get_journal_entries(username=None):
-    """Load journal entries from CSV. Filter by username if provided."""
-    if not os.path.exists(JOURNAL_CSV):
-        return pd.DataFrame(columns=["id", "username", "date", "text", "sentiment", "polarity"])
-    df = pd.read_csv(JOURNAL_CSV)
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    if username:
-        df = df[df["username"].astype(str) == str(username)]
-    return df.sort_values("date", ascending=False).reset_index(drop=True)
+def login_user(username):
+    """Log in a user and store in session state."""
+    st.session_state.logged_in = True
+    st.session_state.current_user = username.strip()
+    st.session_state.login_error = None
 
-def delete_journal_entry(entry_id):
-    """Delete a journal entry by ID."""
-    if not os.path.exists(JOURNAL_CSV):
-        return
-    df = pd.read_csv(JOURNAL_CSV)
-    df = df[df["id"].astype(str) != str(entry_id)]
-    df.to_csv(JOURNAL_CSV, index=False)
+def logout_user():
+    """Log out the current user."""
+    st.session_state.logged_in = False
+    st.session_state.current_user = None
+    st.session_state.login_error = None
+    # Clear navigation to home
+    st.session_state['page_radio'] = "🏠 Home"
 
-def delete_all_journal_entries(username):
-    """Delete all journal entries for a user."""
-    if not os.path.exists(JOURNAL_CSV):
-        return
-    df = pd.read_csv(JOURNAL_CSV)
-    df = df[df["username"].astype(str) != str(username)]
-    df.to_csv(JOURNAL_CSV, index=False)
+def require_login():
+    """Check if user is logged in. If not, show login screen and stop."""
+    init_login_state()
+    if not st.session_state.logged_in:
+        show_login_page()
+        st.stop()
 
-def export_journal_to_excel(username=None):
-    """Export journal entries to Excel."""
-    df = get_journal_entries(username)
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Journal Entries")
-    buffer.seek(0)
-    return buffer
+def show_login_page():
+    """Render the login screen."""
+    st.markdown("""
+    <div class="login-wrap">
+        <div class="login-icon">🧠</div>
+        <div class="login-title">MindTrack</div>
+        <div class="login-subtitle">Sign in to access your wellness dashboard</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Use a form for cleaner handling
+    with st.form("login_form", clear_on_submit=False):
+        username = st.text_input("👤 Your name", placeholder="Enter your name", 
+                                  value=st.session_state.get("login_input", ""),
+                                  label_visibility="collapsed")
+
+        if st.session_state.get("login_error"):
+            st.error(st.session_state.login_error)
+
+        submitted = st.form_submit_button("Sign In", use_container_width=True)
+
+        if submitted:
+            if not username or not username.strip():
+                st.session_state.login_error = "Please enter your name to continue."
+                st.rerun()
+            else:
+                login_user(username)
+                st.success(f"Welcome, {username.strip()}! 🎉")
+                st.rerun()
+
+    st.markdown("""
+    <div style="text-align:center; color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">
+        No account needed — just enter your name to get started.
+    </div>
+    """, unsafe_allow_html=True)
+
+def show_user_badge():
+    """Show logged-in user badge in sidebar."""
+    if st.session_state.get("logged_in") and st.session_state.get("current_user"):
+        st.sidebar.markdown(f"""
+        <div style="margin-bottom: 12px;">
+            <div class="user-badge">👤 {st.session_state.current_user}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        if st.sidebar.button("🚪 Log out", use_container_width=True):
+            logout_user()
+            st.rerun()
+        st.sidebar.markdown("---")
 
 
 def delete_entry(entry_id):
@@ -678,7 +823,7 @@ def create_mood_calendar(df, weeks=12):
 # to "Home" the moment you touch a slider on another page.
 PAGES = [
     "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
-    "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
+    "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "🗂️ My Entries",
     "🆘 Support & Coping", "📄 Report", "📊 Admin"
 ]
 
@@ -690,7 +835,6 @@ st.sidebar.markdown("""
 if 'nav_to' in st.session_state:
     _nav_map = {
         'assessment': "📋 Assessment", 'journal': "📝 Journal",
-        'my_journals': "📓 My Journals",
         'support': "🆘 Support & Coping", 'goals': "🎯 Goals",
     }
     if st.session_state['nav_to'] in _nav_map:
@@ -698,6 +842,9 @@ if 'nav_to' in st.session_state:
     del st.session_state['nav_to']
 
 page = st.sidebar.radio("Go to", PAGES, key="page_radio", label_visibility="collapsed")
+
+# Show user badge if logged in
+show_user_badge()
 
 st.sidebar.markdown("""
 <div class="sidebar-disclaimer">
@@ -708,11 +855,19 @@ In crisis (US)? Call or text <b>988</b> — or see Support & Coping.
 
 # Home Page
 if page == "🏠 Home":
-    st.markdown("""
+    init_login_state()
+
+    # If not logged in, show login screen
+    if not st.session_state.logged_in:
+        show_login_page()
+        st.stop()
+
+    # Logged in - show home dashboard
+    st.markdown(f"""
     <div class="hero-wrap">
         <div class="hero-icon">🧠</div>
         <div class="hero-title">MindTrack</div>
-        <div class="hero-tagline">Real Progress, One Check-in at a Time</div>
+        <div class="hero-tagline">Welcome back, {st.session_state.current_user}</div>
     </div>
     """, unsafe_allow_html=True)
     pulse_divider()
@@ -779,10 +934,11 @@ if page == "🏠 Home":
 
 # Assessment Page
 elif page == "📋 Assessment":
+    require_login()
     page_header("📋", "Daily Check-in", "Mental Health Assessment",
                 "A few quick questions to understand how you're doing today.")
 
-    username = st.text_input("👤 Enter your name", "Guest User")
+    username = st.text_input("👤 Your name", st.session_state.get("current_user", "Guest User"))
     entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date())
 
     st.markdown("## Answer the following questions:")
@@ -820,6 +976,7 @@ elif page == "📋 Assessment":
 
 # Risk Prediction Page
 elif page == "🤖 Risk Prediction":
+    require_login()
     page_header("🤖", "AI Analysis", "Mental Health Risk Prediction", "Based on your most recent assessment.")
 
     if 'assessment_data' not in st.session_state:
@@ -870,10 +1027,11 @@ elif page == "🤖 Risk Prediction":
 
 # Goals Page
 elif page == "🎯 Goals":
+    require_login()
     page_header("🎯", "Personal Targets", "Your Wellness Goals",
                 "Set targets that matter to you — we'll track your progress against them.")
 
-    username = st.text_input("👤 Your name", "Guest User", key="goals_username")
+    username = st.text_input("👤 Your name", st.session_state.get("current_user", "Guest User"), key="goals_username")
     existing = get_goals(username)
 
     col1, col2, col3 = st.columns(3)
@@ -914,6 +1072,7 @@ elif page == "🎯 Goals":
 
 # Bulk Upload Page
 elif page == "📂 Bulk Upload":
+    require_login()
     page_header("📂", "Batch Processing", "Bulk Upload & Analyze", "Upload an Excel file to analyze many records at once.")
     st.write(
         "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
@@ -1022,6 +1181,7 @@ elif page == "📂 Bulk Upload":
 
 # Dashboard Page
 elif page == "📈 Dashboard":
+    require_login()
     page_header("📈", "Analytics", "Wellness Dashboard", "Trends, distributions, and correlations over time.")
 
     history_df = get_history_data()
@@ -1174,18 +1334,13 @@ elif page == "📈 Dashboard":
 
 # Journal Page
 elif page == "📝 Journal":
+    require_login()
     page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day and we'll analyze your mood.")
-
-    username = st.text_input("👤 Your name", "Guest User", key="journal_username")
     journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?")
 
-    if st.button("🔍 Analyze & Save"):
-        if journal_text.strip():
+    if st.button("🔍 Analyze Sentiment"):
+        if journal_text:
             sentiment, polarity = analyze_sentiment(journal_text)
-
-            # Save to CSV
-            entry = save_journal_entry(username, journal_text.strip(), sentiment, polarity)
-
             st.markdown("## 📊 Sentiment Analysis Results")
             col1, col2 = st.columns(2)
             with col1:
@@ -1207,8 +1362,6 @@ elif page == "📝 Journal":
             st.markdown("### 📝 Your Entry:")
             st.write(journal_text)
 
-            st.success(f"✅ Entry saved for {username} at {entry['date']}!")
-
             if sentiment == "negative" and polarity < -0.4:
                 pulse_divider()
                 st.info(
@@ -1218,74 +1371,12 @@ elif page == "📝 Journal":
         else:
             st.warning("⚠️ Please write something in your journal first!")
 
-
-# My Journals Page
-elif page == "📓 My Journals":
-    page_header("📓", "Your Words", "My Journal History", "Review, reflect on, and manage your saved journal entries.")
-
-    username = st.text_input("👤 Enter your name to view your journals", "Guest User", key="my_journals_username")
-    df = get_journal_entries(username)
-
-    if df.empty:
-        st.info("No journal entries found for this name yet. Go to **Journal** to write your first entry!")
-    else:
-        st.caption(f"{len(df)} journal entries found for **{username}**.")
-
-        # Summary stats
-        col1, col2, col3, col4 = st.columns(4)
-        col1.metric("Total Entries", len(df))
-        col2.metric("Positive", len(df[df["sentiment"] == "positive"]))
-        col3.metric("Neutral", len(df[df["sentiment"] == "neutral"]))
-        col4.metric("Negative", len(df[df["sentiment"] == "negative"]))
-
-        # Sentiment trend chart
-        if len(df) >= 2:
-            pulse_divider()
-            st.markdown("### 📈 Sentiment Trend")
-            df_chart = df.sort_values("date").copy()
-            df_chart["polarity_smooth"] = df_chart["polarity"].rolling(window=min(3, len(df_chart)), min_periods=1).mean()
-            fig = px.line(df_chart, x="date", y="polarity", markers=True,
-                          title="Polarity Over Time", color_discrete_sequence=[COLOR_PRIMARY])
-            fig.add_scatter(x=df_chart["date"], y=df_chart["polarity_smooth"],
-                            mode="lines", name="Trend", line=dict(color=COLOR_MEDIUM, width=2))
-            fig.add_hline(y=0, line_dash="dot", line_color=COLOR_MUTED, annotation_text="Neutral")
-            st.plotly_chart(style_plot(fig), use_container_width=True)
-
-        pulse_divider()
-        st.markdown("### 📖 Your Entries")
-        for _, row in df.iterrows():
-            sentiment_emoji = {"positive": "😊", "negative": "😔", "neutral": "😐"}.get(row["sentiment"], "😐")
-            with st.container():
-                c1, c2, c3 = st.columns([2, 1, 0.8])
-                c1.markdown(f"**{row['date'].strftime('%Y-%m-%d %H:%M')}** · {sentiment_emoji} {row['sentiment'].title()}")
-                c2.write(f"Polarity: {row['polarity']:.3f}")
-                if c3.button("🗑️", key=f"del_journal_{row['id']}", help="Delete this entry"):
-                    delete_journal_entry(row["id"])
-                    st.rerun()
-            with st.expander("Read entry"):
-                st.write(row["text"])
-            st.markdown("---")
-
-        pulse_divider()
-        dl_col, clear_col = st.columns(2)
-        with dl_col:
-            st.download_button(
-                "📥 Download My Journals (Excel)",
-                data=export_journal_to_excel(username),
-                file_name=f"{username}_journals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            )
-        with clear_col:
-            if st.button("🧹 Clear all my journals", use_container_width=True):
-                delete_all_journal_entries(username)
-                st.success("All journal entries cleared.")
-                st.rerun()
-
 # My Entries Page
 elif page == "🗂️ My Entries":
+    require_login()
     page_header("🗂️", "Your Data", "My Entries", "Review, correct, or remove your own check-in history.")
 
-    username = st.text_input("👤 Enter your name to view your entries", "Guest User", key="my_entries_username")
+    username = st.text_input("👤 Enter your name to view your entries", st.session_state.get("current_user", "Guest User"), key="my_entries_username")
     df = get_history_data()
     mine = df[df["username"].astype(str) == username].sort_values("date", ascending=False) if not df.empty else df
 
@@ -1317,6 +1408,7 @@ elif page == "🗂️ My Entries":
 
 # Support & Coping Page
 elif page == "🆘 Support & Coping":
+    require_login()
     page_header("🆘", "Take a Moment", "Support & Coping Toolkit", "Tools for right now, and where to go for more support.")
 
     st.markdown("### 🫁 Guided Breathing")
@@ -1349,6 +1441,7 @@ elif page == "🆘 Support & Coping":
 
 # Report Page
 elif page == "📄 Report":
+    require_login()
     page_header("📄", "Documentation", "Health Report", "A shareable summary of your latest assessment.")
 
     if 'assessment_data' not in st.session_state:
@@ -1382,6 +1475,7 @@ elif page == "📄 Report":
 
 # Admin Page
 elif page == "📊 Admin":
+    require_login()
     page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
 
     st.markdown("## 📁 Data Management")
