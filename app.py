@@ -164,126 +164,32 @@ hr {{ display: none; }}
 }}
 
 /* Login styles */
-.login-wrap {
-    max-width: 420px;
-    margin: 3rem auto;
-    padding: 2.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    box-shadow: 0 4px 20px rgba(27,36,48,0.08);
-    text-align: center;
-}
-.login-icon {
-    font-size: 3.5rem;
-    margin-bottom: 0.5rem;
-}
-.login-title {
-    font-family: 'Fraunces', serif;
-    font-size: 1.8rem;
-    color: var(--ink);
-    margin-bottom: 0.3rem;
-}
-.login-subtitle {
-    color: var(--muted);
-    font-size: 0.95rem;
-    margin-bottom: 1.8rem;
-}
-.login-input-wrap {
-    text-align: left;
-    margin-bottom: 1.2rem;
-}
-.login-input-wrap label {
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
-    color: var(--muted);
-    margin-bottom: 0.4rem;
-    display: block;
-}
-.login-input-wrap input {
-    width: 100%;
-    padding: 12px 14px;
-    border: 1.5px solid var(--border);
-    border-radius: 10px;
-    font-size: 1rem;
-    font-family: 'Inter', sans-serif;
-    color: var(--ink);
-    background: var(--paper);
-    transition: border-color 0.15s ease;
-}
-.login-input-wrap input:focus {
-    outline: none;
-    border-color: var(--primary);
-}
-.login-btn {
-    width: 100%;
-    padding: 14px;
-    background: var(--primary);
-    color: #fff;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    font-weight: 600;
-    font-family: 'Inter', sans-serif;
-    cursor: pointer;
-    transition: all 0.15s ease;
-    margin-top: 0.5rem;
-}
-.login-btn:hover {
-    background: var(--primary-light);
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(47,111,98,0.25);
-}
-.login-divider {
-    display: flex;
-    align-items: center;
-    margin: 1.5rem 0;
-    color: var(--muted);
-    font-size: 0.8rem;
-}
-.login-divider::before, .login-divider::after {
-    content: '';
-    flex: 1;
-    height: 1px;
-    background: var(--border);
-    margin: 0 10px;
-}
-.user-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    background: rgba(47,111,98,0.10);
-    border: 1px solid rgba(47,111,98,0.25);
-    color: var(--primary);
-    border-radius: 999px;
-    padding: 6px 16px;
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.85rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-}
-.logout-link {
-    color: var(--high) !important;
-    font-size: 0.8rem;
-    cursor: pointer;
-    text-decoration: underline;
-}
-.locked-page {
-    text-align: center;
-    padding: 4rem 2rem;
-    color: var(--muted);
-}
-.locked-page-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-}
-.locked-page h2 {
-    font-family: 'Fraunces', serif;
-    color: var(--ink);
-    margin-bottom: 0.5rem;
-}
+.login-box {{
+    max-width: 400px; margin: 2rem auto; padding: 2rem;
+    background: #fff; border: 1px solid rgba(27,36,48,0.10);
+    border-radius: 14px; text-align: center;
+}}
+.login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
+.login-title {{
+    font-family: 'Fraunces', serif; font-size: 1.6rem;
+    color: var(--ink); margin-bottom: 0.3rem;
+}}
+.login-sub {{
+    color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;
+}}
+.user-pill {{
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(47,111,98,0.10); border: 1px solid rgba(47,111,98,0.25);
+    color: var(--primary); border-radius: 999px;
+    padding: 5px 14px; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.8rem; font-weight: 600;
+}}
+.lock-screen {{
+    text-align: center; padding: 3rem 1rem;
+}}
+.lock-screen h2 {{
+    font-family: 'Fraunces', serif; color: var(--ink);
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -409,90 +315,69 @@ def get_goals(username):
 
 
 
-
 # ---------------------------------------------------------------------------
 # Login / Session Management
 # ---------------------------------------------------------------------------
 
 def init_login_state():
-    """Initialize login-related session state keys."""
     if "logged_in" not in st.session_state:
         st.session_state.logged_in = False
     if "current_user" not in st.session_state:
         st.session_state.current_user = None
-    if "login_error" not in st.session_state:
-        st.session_state.login_error = None
 
 def login_user(username):
-    """Log in a user and store in session state."""
     st.session_state.logged_in = True
     st.session_state.current_user = username.strip()
-    st.session_state.login_error = None
 
 def logout_user():
-    """Log out the current user."""
     st.session_state.logged_in = False
     st.session_state.current_user = None
-    st.session_state.login_error = None
-    # Clear navigation to home
-    st.session_state['page_radio'] = "🏠 Home"
+    st.session_state["page_radio"] = "🏠 Home"
 
 def require_login():
-    """Check if user is logged in. If not, show login screen and stop."""
     init_login_state()
     if not st.session_state.logged_in:
-        show_login_page()
+        st.markdown("""
+        <div class="lock-screen">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
+            <h2>Please Sign In</h2>
+            <p>You need to sign in to access this page.</p>
+            <p>Go to <b>🏠 Home</b> to sign in.</p>
+        </div>
+        """, unsafe_allow_html=True)
         st.stop()
 
 def show_login_page():
-    """Render the login screen."""
+    init_login_state()
     st.markdown("""
-    <div class="login-wrap">
+    <div class="login-box">
         <div class="login-icon">🧠</div>
         <div class="login-title">MindTrack</div>
-        <div class="login-subtitle">Sign in to access your wellness dashboard</div>
+        <div class="login-sub">Sign in to access your wellness dashboard</div>
     </div>
     """, unsafe_allow_html=True)
-
-    # Use a form for cleaner handling
-    with st.form("login_form", clear_on_submit=False):
-        username = st.text_input("👤 Your name", placeholder="Enter your name", 
-                                  value=st.session_state.get("login_input", ""),
-                                  label_visibility="collapsed")
-
-        if st.session_state.get("login_error"):
-            st.error(st.session_state.login_error)
-
+    with st.form("login_form"):
+        username = st.text_input("Your name", placeholder="Enter your name")
         submitted = st.form_submit_button("Sign In", use_container_width=True)
-
         if submitted:
-            if not username or not username.strip():
-                st.session_state.login_error = "Please enter your name to continue."
-                st.rerun()
-            else:
+            if username and username.strip():
                 login_user(username)
                 st.success(f"Welcome, {username.strip()}! 🎉")
                 st.rerun()
-
-    st.markdown("""
-    <div style="text-align:center; color: var(--muted); font-size: 0.8rem; margin-top: 1rem;">
-        No account needed — just enter your name to get started.
-    </div>
-    """, unsafe_allow_html=True)
+            else:
+                st.error("Please enter your name.")
 
 def show_user_badge():
-    """Show logged-in user badge in sidebar."""
     if st.session_state.get("logged_in") and st.session_state.get("current_user"):
         st.sidebar.markdown(f"""
-        <div style="margin-bottom: 12px;">
-            <div class="user-badge">👤 {st.session_state.current_user}</div>
+        <div style="margin-bottom: 10px;">
+            <span class="user-pill">👤 {st.session_state.current_user}</span>
         </div>
         """, unsafe_allow_html=True)
         if st.sidebar.button("🚪 Log out", use_container_width=True):
             logout_user()
             st.rerun()
         st.sidebar.markdown("---")
-
 
 def delete_entry(entry_id):
     conn = get_connection()
@@ -843,7 +728,6 @@ if 'nav_to' in st.session_state:
 
 page = st.sidebar.radio("Go to", PAGES, key="page_radio", label_visibility="collapsed")
 
-# Show user badge if logged in
 show_user_badge()
 
 st.sidebar.markdown("""
@@ -856,13 +740,9 @@ In crisis (US)? Call or text <b>988</b> — or see Support & Coping.
 # Home Page
 if page == "🏠 Home":
     init_login_state()
-
-    # If not logged in, show login screen
     if not st.session_state.logged_in:
         show_login_page()
         st.stop()
-
-    # Logged in - show home dashboard
     st.markdown(f"""
     <div class="hero-wrap">
         <div class="hero-icon">🧠</div>
