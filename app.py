@@ -332,7 +332,8 @@ def login_user(username):
 def logout_user():
     st.session_state.logged_in = False
     st.session_state.current_user = None
-    st.session_state["page_radio"] = "🏠 Home"
+    # Use a flag to trigger navigation on next rerun instead of touching widget key
+    st.session_state["needs_nav_home"] = True
 
 def require_login():
     init_login_state()
@@ -716,6 +717,11 @@ st.sidebar.markdown("""
 <div class="sidebar-brand">🧠 MindTrack</div>
 <div class="sidebar-tagline">Wellness Intelligence</div>
 """, unsafe_allow_html=True)
+
+# Handle post-logout navigation (must happen BEFORE radio widget renders)
+if st.session_state.get("needs_nav_home"):
+    st.session_state["page_radio"] = "🏠 Home"
+    del st.session_state["needs_nav_home"]
 
 if 'nav_to' in st.session_state:
     _nav_map = {
