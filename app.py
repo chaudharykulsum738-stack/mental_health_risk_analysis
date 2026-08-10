@@ -1512,7 +1512,7 @@ elif page == "🧭 Risk Trajectory":
         mine = history[history["username"].astype(str) == str(username)].sort_values("date")
         if mine.empty:
             st.info("No")
-    else:
+else:
 
             result = calculate_risk_trajectory(
                 mine
