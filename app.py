@@ -1,28 +1,3 @@
-```python
-# ============================================================
-# MindTrack | Wellness Intelligence
-# Single-file Streamlit application
-#
-# Integrated research-gap features:
-#   #2  Multimodal risk analysis
-#   #3  Risk trajectory
-#   #6  Missing-data intelligence
-#   #9  Human-in-the-loop
-#   #10 Fairness audit
-#   #11 Privacy / federated-learning foundation
-#   #12 Data Trust Center
-#   #13 Safe LLM / chatbot layer
-#
-# Run:
-#   pip install streamlit pandas numpy plotly textblob reportlab openpyxl
-#   streamlit run app.py
-#
-# Optional:
-#   python -m textblob.download_corpora
-#
-# This is a research/wellness prototype.
-# It is NOT a clinical diagnostic or emergency system.
-# ============================================================
 
 import streamlit as st
 import pandas as pd
@@ -5954,4 +5929,3 @@ st.sidebar.caption(
     "MindTrack is a wellness/self-reflection prototype. "
     "It does not provide medical diagnosis or emergency care."
 )
-```
