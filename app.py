@@ -17,10 +17,6 @@ import io
 
 st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="🧠", layout="wide")
 
-# ---------------------------------------------------------------------------
-# Design tokens — calm clinical-trust palette. Risk colors carry real
-# meaning wherever they appear (gauges, badges, charts, goal deltas).
-# ---------------------------------------------------------------------------
 COLOR_INK = "#1B2430"
 COLOR_MUTED = "#5B6B6A"
 COLOR_BG = "#F4F6F5"
@@ -32,8 +28,14 @@ COLOR_SLATE = "#5C7A8A"
 COLOR_GOOD = "#4C9A79"
 COLOR_MEDIUM = "#D9A441"
 COLOR_HIGH = "#C1554A"
+COLOR_SOCIAL = "#7B68EE"
+COLOR_SCREEN = "#FF6B6B"
+COLOR_CAFFEINE = "#8B6914"
+COLOR_WATER = "#4A90D9"
+COLOR_SUNLIGHT = "#F4A460"
+COLOR_WORKLIFE = "#9B59B6"
 
-CHART_PALETTE = [COLOR_PRIMARY, COLOR_MEDIUM, COLOR_HIGH, COLOR_SLATE, COLOR_PRIMARY_LIGHT, "#8B5E3C"]
+CHART_PALETTE = [COLOR_PRIMARY, COLOR_MEDIUM, COLOR_HIGH, COLOR_SLATE, COLOR_PRIMARY_LIGHT, "#8B5E3C", COLOR_SOCIAL, COLOR_SCREEN, COLOR_CAFFEINE, COLOR_WATER, COLOR_SUNLIGHT, COLOR_WORKLIFE]
 RISK_COLOR_MAP = {"Low": COLOR_GOOD, "Medium": COLOR_MEDIUM, "High": COLOR_HIGH}
 
 st.markdown(f"""
@@ -56,7 +58,6 @@ h1, h2, h3 {{
 }}
 .stMarkdown, .stMarkdown p, label, .stText, .stCaption {{ color: var(--muted) !important; }}
 
-/* Sidebar */
 [data-testid="stSidebar"] {{ background: var(--ink); border-right: 1px solid rgba(255,255,255,0.06); }}
 [data-testid="stSidebar"] * {{ color: #EDEFEE !important; }}
 .sidebar-brand {{
@@ -79,7 +80,6 @@ h1, h2, h3 {{
     margin-top: 16px; line-height: 1.45; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);
 }}
 
-/* Page header + signature divider */
 .page-header {{ display: flex; align-items: flex-start; gap: 16px; margin-bottom: 0.2rem; }}
 .page-header-icon {{ font-size: 2.2rem; line-height: 1; margin-top: 2px; }}
 .page-eyebrow {{
@@ -91,7 +91,6 @@ h1, h2, h3 {{
 .pulse-divider {{ color: var(--primary); opacity: 0.55; height: 18px; margin: 1.2rem 0 1.6rem 0; }}
 .pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
 
-/* Hero */
 .hero-wrap {{ text-align: center; padding: 2.6rem 0 1.6rem 0; }}
 .hero-icon {{ font-size: 3.2rem; }}
 .hero-title {{ font-family: 'Fraunces', serif; font-size: 2.6rem; margin: 0.25rem 0 0.35rem 0; color: var(--ink); font-weight: 700; }}
@@ -100,7 +99,6 @@ h1, h2, h3 {{
     font-size: 0.82rem; color: var(--primary); font-weight: 600;
 }}
 
-/* Cards & metrics */
 [data-testid="stMetric"] {{
     background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 16px 18px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
@@ -115,7 +113,6 @@ h1, h2, h3 {{
     padding: 22px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
 }}
 
-/* Buttons */
 .stButton > button {{
     background: var(--primary); color: #fff; border: none; border-radius: 8px;
     padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
@@ -127,21 +124,18 @@ h1, h2, h3 {{
 }}
 .stDownloadButton > button:hover {{ background: var(--primary); color: #fff; }}
 
-/* Alerts / tabs / misc */
 div[data-testid="stAlert"] {{ border-radius: 10px; border: 1px solid var(--border); }}
 button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
 button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--primary); }}
 [data-testid="stSlider"] [role="slider"] {{ background-color: var(--primary) !important; }}
 hr {{ display: none; }}
 
-/* Streak badge */
 .streak-badge {{
     display: inline-flex; align-items: center; gap: 6px; background: rgba(217,164,65,0.12);
     border: 1px solid rgba(217,164,65,0.35); color: var(--medium) !important; border-radius: 999px;
     padding: 4px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 600;
 }}
 
-/* Breathing exercise */
 .breathing-circle-wrap {{ display: flex; justify-content: center; padding: 1.8rem 0; }}
 .breathing-circle {{
     width: 140px; height: 140px; border-radius: 50%;
@@ -157,13 +151,11 @@ hr {{ display: none; }}
     100% {{ transform: scale(0.7);  opacity: 0.8; }}
 }}
 
-/* Entry row card (My Entries page) */
 .entry-row {{
     background: var(--card); border: 1px solid var(--border); border-radius: 10px;
     padding: 10px 16px; margin-bottom: 8px;
 }}
 
-/* Login styles */
 .login-box {{
     max-width: 400px; margin: 2rem auto; padding: 2rem;
     background: #fff; border: 1px solid rgba(27,36,48,0.10);
@@ -194,8 +186,8 @@ hr {{ display: none; }}
 """, unsafe_allow_html=True)
 
 
+
 def pulse_divider():
-    """Signature section break: a thin ECG-style pulse line."""
     st.markdown("""
     <div class="pulse-divider">
         <svg viewBox="0 0 400 24" preserveAspectRatio="none">
@@ -233,14 +225,15 @@ def get_connection():
 
 
 def init_db():
-    """Create the SQL tables if they don't exist yet. Safe to call repeatedly."""
     conn = get_connection()
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS user_history (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT, date TEXT, mood TEXT, sleep_hours REAL,
-            stress_level REAL, anxiety_level REAL, exercise_minutes REAL
+            stress_level REAL, anxiety_level REAL, exercise_minutes REAL,
+            social_connection REAL, screen_time REAL, caffeine_intake REAL,
+            water_intake REAL, sunlight_exposure REAL, work_life_balance REAL
         )
     """)
     cur.execute("""
@@ -252,14 +245,18 @@ def init_db():
     cur.execute("""
         CREATE TABLE IF NOT EXISTS goals (
             username TEXT PRIMARY KEY,
-            target_sleep REAL, target_exercise REAL, target_stress_max REAL, updated_at TEXT
+            target_sleep REAL, target_exercise REAL, target_stress_max REAL,
+            target_social REAL, target_screen_max REAL, target_water REAL,
+            target_sunlight REAL, target_worklife REAL, updated_at TEXT
         )
     """)
     conn.commit()
     conn.close()
 
 
-def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=None):
+def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                      social_connection, screen_time, caffeine_intake, water_intake,
+                      sunlight_exposure, work_life_balance, entry_date=None):
     init_db()
     if entry_date is None:
         date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -269,9 +266,13 @@ def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, 
     conn = get_connection()
     conn.execute(
         """INSERT INTO user_history
-           (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
-           VALUES (?, ?, ?, ?, ?, ?, ?)""",
-        (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes),
+           (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+            social_connection, screen_time, caffeine_intake, water_intake,
+            sunlight_exposure, work_life_balance)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+        (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+         social_connection, screen_time, caffeine_intake, water_intake,
+         sunlight_exposure, work_life_balance),
     )
     conn.commit()
     conn.close()
@@ -289,18 +290,27 @@ def save_prediction(username, risk_level, wellness_score, factors):
     conn.close()
 
 
-def save_goals(username, target_sleep, target_exercise, target_stress_max):
+def save_goals(username, target_sleep, target_exercise, target_stress_max,
+               target_social, target_screen_max, target_water, target_sunlight, target_worklife):
     init_db()
     conn = get_connection()
     conn.execute(
-        """INSERT INTO goals (username, target_sleep, target_exercise, target_stress_max, updated_at)
-           VALUES (?, ?, ?, ?, ?)
+        """INSERT INTO goals (username, target_sleep, target_exercise, target_stress_max,
+             target_social, target_screen_max, target_water, target_sunlight, target_worklife, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT(username) DO UPDATE SET
              target_sleep=excluded.target_sleep,
              target_exercise=excluded.target_exercise,
              target_stress_max=excluded.target_stress_max,
+             target_social=excluded.target_social,
+             target_screen_max=excluded.target_screen_max,
+             target_water=excluded.target_water,
+             target_sunlight=excluded.target_sunlight,
+             target_worklife=excluded.target_worklife,
              updated_at=excluded.updated_at""",
-        (username, target_sleep, target_exercise, target_stress_max, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        (username, target_sleep, target_exercise, target_stress_max,
+         target_social, target_screen_max, target_water, target_sunlight, target_worklife,
+         datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
     )
     conn.commit()
     conn.close()
@@ -314,20 +324,9 @@ def get_goals(username):
     return dict(row) if row else None
 
 
-
-# ---------------------------------------------------------------------------
-# Login / Session Management
-# ---------------------------------------------------------------------------
-
-
-
-# ---------------------------------------------------------------------------
-# Journal CSV storage
-# ---------------------------------------------------------------------------
 JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
 
 def save_journal_entry(username, text, sentiment, polarity):
-    """Save a journal entry with sentiment analysis to CSV."""
     os.makedirs(DATA_DIR, exist_ok=True)
     entry = {
         "id": datetime.now().strftime("%Y%m%d%H%M%S%f"),
@@ -347,7 +346,6 @@ def save_journal_entry(username, text, sentiment, polarity):
     return entry
 
 def get_journal_entries(username=None):
-    """Load journal entries from CSV. Filter by username if provided."""
     if not os.path.exists(JOURNAL_CSV):
         return pd.DataFrame(columns=["id", "username", "date", "text", "sentiment", "polarity"])
     df = pd.read_csv(JOURNAL_CSV)
@@ -357,7 +355,6 @@ def get_journal_entries(username=None):
     return df.sort_values("date", ascending=False).reset_index(drop=True)
 
 def delete_journal_entry(entry_id):
-    """Delete a journal entry by ID."""
     if not os.path.exists(JOURNAL_CSV):
         return
     df = pd.read_csv(JOURNAL_CSV)
@@ -365,7 +362,6 @@ def delete_journal_entry(entry_id):
     df.to_csv(JOURNAL_CSV, index=False)
 
 def delete_all_journal_entries(username):
-    """Delete all journal entries for a user."""
     if not os.path.exists(JOURNAL_CSV):
         return
     df = pd.read_csv(JOURNAL_CSV)
@@ -373,7 +369,6 @@ def delete_all_journal_entries(username):
     df.to_csv(JOURNAL_CSV, index=False)
 
 def export_journal_to_excel(username=None):
-    """Export journal entries to Excel."""
     df = get_journal_entries(username)
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
@@ -395,7 +390,7 @@ def login_user(username):
 def logout_user():
     st.session_state.logged_in = False
     st.session_state.current_user = None
-    st.session_state["page_radio"] = "🏠 Home"
+    st.session_state["page_radio"] = "Home"
 
 def require_login():
     init_login_state()
@@ -405,7 +400,7 @@ def require_login():
             <div style="font-size: 3rem; margin-bottom: 1rem;">🔒</div>
             <h2>Please Sign In</h2>
             <p>You need to sign in to access this page.</p>
-            <p>Go to <b>🏠 Home</b> to sign in.</p>
+            <p>Go to <b>Home</b> to sign in.</p>
         </div>
         """, unsafe_allow_html=True)
         st.stop()
@@ -456,16 +451,27 @@ def delete_all_entries(username):
     conn.close()
 
 
-def calculate_wellness_score(stress, sleep, anxiety, exercise):
+
+def calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection, screen_time,
+                             caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     score = 0
-    score += (10 - stress) * 5
+    score += (10 - stress) * 4
     score += min(sleep, 10) * 3
-    score += (10 - anxiety) * 5
+    score += (10 - anxiety) * 4
     score += min(exercise, 120) / 2
+    score += social_connection * 2
+    score += max(0, (8 - screen_time)) * 2
+    score += min(caffeine_intake, 3) * 2
+    score += min(water_intake, 10) * 1.5
+    score += min(sunlight_exposure, 120) / 15
+    score += work_life_balance * 2
     return min(score, 100)
 
-def predict_risk(stress, sleep, anxiety, exercise, mood):
-    wellness_score = calculate_wellness_score(stress, sleep, anxiety, exercise)
+def predict_risk(stress, sleep, anxiety, exercise, mood, social_connection, screen_time,
+                 caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
+    wellness_score = calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection,
+                                               screen_time, caffeine_intake, water_intake,
+                                               sunlight_exposure, work_life_balance)
     if wellness_score < 40:
         risk = "High"
     elif wellness_score < 70:
@@ -481,11 +487,24 @@ def predict_risk(stress, sleep, anxiety, exercise, mood):
         factors.append("High anxiety levels")
     if exercise < 30:
         factors.append("Low physical activity")
+    if social_connection < 4:
+        factors.append("Low social connection")
+    if screen_time > 8:
+        factors.append("Excessive screen time")
+    if caffeine_intake > 5:
+        factors.append("High caffeine intake")
+    if water_intake < 4:
+        factors.append("Low hydration")
+    if sunlight_exposure < 15:
+        factors.append("Insufficient sunlight exposure")
+    if work_life_balance < 4:
+        factors.append("Poor work-life balance")
     if not factors:
         factors = ["Good overall wellness indicators"]
     return risk, factors, wellness_score
 
-def get_recommendations(stress, sleep, anxiety, exercise):
+def get_recommendations(stress, sleep, anxiety, exercise, social_connection, screen_time,
+                        caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     recommendations = []
     if stress > 7:
         recommendations.append("🧘 Try deep breathing exercises for 5 minutes daily")
@@ -503,6 +522,30 @@ def get_recommendations(stress, sleep, anxiety, exercise):
         recommendations.append("🚶 Aim for 30 minutes of daily walking")
         recommendations.append("🧘 Try yoga or stretching exercises")
         recommendations.append("🏃 Incorporate physical activity into your routine")
+    if social_connection < 4:
+        recommendations.append("👥 Reach out to a friend or family member")
+        recommendations.append("🤝 Join a community group or club")
+        recommendations.append("📞 Schedule regular check-ins with loved ones")
+    if screen_time > 8:
+        recommendations.append("📵 Set screen time limits on your devices")
+        recommendations.append("🌳 Take regular breaks from screens")
+        recommendations.append("📖 Try reading a physical book instead of scrolling")
+    if caffeine_intake > 5:
+        recommendations.append("☕ Reduce caffeine intake gradually")
+        recommendations.append("🍵 Try herbal tea as an alternative")
+        recommendations.append("⏰ Avoid caffeine after 2 PM")
+    if water_intake < 4:
+        recommendations.append("💧 Drink a glass of water every hour")
+        recommendations.append("🍋 Add lemon to water for flavor")
+        recommendations.append("📱 Use a hydration reminder app")
+    if sunlight_exposure < 15:
+        recommendations.append("☀️ Get 15-30 minutes of morning sunlight")
+        recommendations.append("🚶 Take walks outside during lunch")
+        recommendations.append("🪟 Open curtains and let natural light in")
+    if work_life_balance < 4:
+        recommendations.append("⏰ Set clear work boundaries")
+        recommendations.append("🛑 Learn to say no to extra commitments")
+        recommendations.append("🎨 Schedule time for hobbies and relaxation")
     if len(recommendations) == 0:
         recommendations.append("🎉 Great job! Keep maintaining your healthy habits!")
         recommendations.append("✅ Continue with your current wellness routine")
@@ -588,7 +631,10 @@ def get_history_data():
     df["mood_num"] = mood_to_score(df["mood"])
     df["wellness_score"] = df.apply(
         lambda row: calculate_wellness_score(
-            row["stress_level"], row["sleep_hours"], row["anxiety_level"], row["exercise_minutes"]
+            row["stress_level"], row["sleep_hours"], row["anxiety_level"], row["exercise_minutes"],
+            row.get("social_connection", 5), row.get("screen_time", 4),
+            row.get("caffeine_intake", 2), row.get("water_intake", 6),
+            row.get("sunlight_exposure", 30), row.get("work_life_balance", 5)
         ),
         axis=1,
     )
@@ -611,6 +657,8 @@ def get_prediction_data():
     df["risk_num"] = df["risk_level"].map(risk_map)
     return df.dropna(subset=["date"])
 
+
+
 def style_plot(fig):
     fig.update_layout(
         paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(27,36,48,0.02)",
@@ -623,12 +671,17 @@ def style_plot(fig):
     fig.update_yaxes(gridcolor="rgba(27,36,48,0.07)", color=COLOR_MUTED)
     return fig
 
-def create_wellness_radar(sleep, stress, anxiety, exercise, mood):
+def create_wellness_radar(sleep, stress, anxiety, exercise, mood, social_connection, screen_time,
+                          caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     mood_scale = {"Very Bad": 2, "Bad": 4, "Neutral": 6, "Good": 8, "Very Good": 10}
-    categories = ["Sleep", "Exercise", "Mood", "Stress Balance", "Anxiety Balance"]
+    categories = ["Sleep", "Exercise", "Mood", "Stress Balance", "Anxiety Balance",
+                  "Social", "Screen Balance", "Caffeine", "Hydration", "Sunlight", "Work-Life"]
     values = [
         min(float(sleep), 10), min(float(exercise) / 12, 10), mood_scale.get(mood, 6),
         10 - float(stress), 10 - float(anxiety),
+        float(social_connection), max(0, 10 - float(screen_time)),
+        max(0, 10 - float(caffeine_intake) * 1.5), min(float(water_intake), 10),
+        min(float(sunlight_exposure) / 15, 10), float(work_life_balance)
     ]
     fig = go.Figure()
     fig.add_trace(go.Scatterpolar(
@@ -636,7 +689,7 @@ def create_wellness_radar(sleep, stress, anxiety, exercise, mood):
         name="Wellness Profile", line_color=COLOR_PRIMARY, fillcolor="rgba(47,111,98,0.20)",
     ))
     fig.update_layout(
-        title="Wellness Profile",
+        title="Wellness Profile (11 Dimensions)",
         polar=dict(bgcolor="rgba(0,0,0,0)",
                    radialaxis=dict(visible=True, range=[0, 10], tickfont=dict(color=COLOR_MUTED)),
                    angularaxis=dict(tickfont=dict(color=COLOR_INK))),
@@ -644,14 +697,54 @@ def create_wellness_radar(sleep, stress, anxiety, exercise, mood):
     )
     return style_plot(fig)
 
-def create_factor_bar(stress, sleep, anxiety, exercise):
-    categories = ["Stress", "Sleep", "Anxiety", "Exercise"]
-    actual_values = [stress, sleep, anxiety, exercise]
-    healthy_targets = [3, 8, 3, 45]
+def create_factor_bar(stress, sleep, anxiety, exercise, social_connection, screen_time,
+                      caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
+    categories = ["Stress", "Sleep", "Anxiety", "Exercise", "Social", "Screen", "Caffeine", "Water", "Sunlight", "Work-Life"]
+    actual_values = [stress, sleep, anxiety, exercise, social_connection, screen_time,
+                     caffeine_intake, water_intake, sunlight_exposure, work_life_balance]
+    healthy_targets = [3, 8, 3, 45, 7, 4, 2, 8, 30, 7]
     fig = go.Figure()
-    fig.add_trace(go.Bar(name="Your Values", x=categories, y=actual_values, marker_color=COLOR_PRIMARY))
+    fig.add_trace(go.Bar(name="Your Values", x=categories, y=actual_values,
+                         marker_color=[COLOR_PRIMARY, COLOR_PRIMARY_LIGHT, COLOR_PRIMARY, COLOR_PRIMARY_LIGHT,
+                                       COLOR_SOCIAL, COLOR_SCREEN, COLOR_CAFFEINE, COLOR_WATER,
+                                       COLOR_SUNLIGHT, COLOR_WORKLIFE]))
     fig.add_trace(go.Bar(name="Healthy Target", x=categories, y=healthy_targets, marker_color=COLOR_SLATE))
     fig.update_layout(barmode="group", title="Your Wellness Factors vs Healthy Targets")
+    return style_plot(fig)
+
+def create_extended_factor_bar(stress, sleep, anxiety, exercise, social_connection, screen_time,
+                               caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
+    categories = ["Stress\n(lower=better)", "Sleep\n(hours)", "Anxiety\n(lower=better)", "Exercise\n(min)",
+                  "Social\n(0-10)", "Screen\n(hours)", "Caffeine\n(cups)", "Water\n(glasses)",
+                  "Sunlight\n(min)", "Work-Life\n(0-10)"]
+    actual_values = [stress, sleep, anxiety, exercise, social_connection, screen_time,
+                     caffeine_intake, water_intake, sunlight_exposure, work_life_balance]
+    healthy_targets = [3, 8, 3, 45, 7, 4, 2, 8, 30, 7]
+
+    colors = []
+    for i, (val, target) in enumerate(zip(actual_values, healthy_targets)):
+        if i in [0, 2, 5, 6]:
+            if val <= target:
+                colors.append(COLOR_GOOD)
+            elif val <= target * 1.5:
+                colors.append(COLOR_MEDIUM)
+            else:
+                colors.append(COLOR_HIGH)
+        else:
+            if val >= target:
+                colors.append(COLOR_GOOD)
+            elif val >= target * 0.6:
+                colors.append(COLOR_MEDIUM)
+            else:
+                colors.append(COLOR_HIGH)
+
+    fig = go.Figure()
+    fig.add_trace(go.Bar(name="Your Values", x=categories, y=actual_values, marker_color=colors))
+    fig.add_trace(go.Bar(name="Healthy Target", x=categories, y=healthy_targets,
+                         marker_color="rgba(92,122,138,0.3)", marker_line_color=COLOR_SLATE,
+                         marker_line_width=2))
+    fig.update_layout(barmode="group", title="Wellness Factors — Color-Coded Health Status",
+                      bargap=0.25)
     return style_plot(fig)
 
 def gauge_figure(value, title, value_range=(0, 100), steps=None):
@@ -683,8 +776,6 @@ def risk_badge(risk):
         st.error(f"🚨 Risk Level: **{risk}**")
 
 def calculate_streaks(entry_dates):
-    """Returns (current_streak, longest_streak) in consecutive days, given a
-    list of date objects (duplicates/unsorted are fine)."""
     if not entry_dates:
         return 0, 0
     dates = sorted(set(entry_dates))
@@ -709,7 +800,6 @@ def calculate_streaks(entry_dates):
     return current_streak, longest
 
 def weekly_digest(df):
-    """Average wellness score for the trailing 7 days vs the 7 days before that."""
     today = datetime.now().date()
     this_week = df[df["date"].dt.date >= today - timedelta(days=6)]
     last_week = df[(df["date"].dt.date >= today - timedelta(days=13)) &
@@ -719,7 +809,6 @@ def weekly_digest(df):
     return this_avg, last_avg
 
 def trend_nudge(df):
-    """Gentle, non-diagnostic signal: last 3 entries trending down and low."""
     d = df.sort_values("date")
     if len(d) < 3:
         return False
@@ -727,7 +816,6 @@ def trend_nudge(df):
     return recent[0] > recent[1] > recent[2] and recent[2] < 40
 
 def create_mood_calendar(df, weeks=12):
-    """GitHub-style contribution calendar, colored by average daily mood."""
     today = datetime.now().date()
     start = today - timedelta(days=weeks * 7 - 1)
     daily = df.copy()
@@ -761,14 +849,81 @@ def create_mood_calendar(df, weeks=12):
     fig.update_layout(title=f"Mood Calendar — Last {weeks} Weeks")
     return style_plot(fig)
 
-# ---------------------------------------------------------------------------
-# Sidebar navigation
-# ---------------------------------------------------------------------------
-# The radio widget always renders and owns its own session_state key
-# ("page_radio"), so Streamlit persists the selection across every rerun.
-# Quick-nav buttons set that same key BEFORE the widget is instantiated
-# rather than bypassing it -- this is what stops the app from snapping back
-# to "Home" the moment you touch a slider on another page.
+def create_lifestyle_heatmap(df):
+    if df.empty or len(df) < 2:
+        return None
+    df_sorted = df.sort_values("date").tail(30)
+    lifestyle_cols = ["social_connection", "screen_time", "caffeine_intake",
+                      "water_intake", "sunlight_exposure", "work_life_balance"]
+    available_cols = [c for c in lifestyle_cols if c in df_sorted.columns]
+    if not available_cols:
+        return None
+
+    z_data = []
+    for col in available_cols:
+        vals = df_sorted[col].fillna(0).values
+        if col in ["screen_time", "caffeine_intake"]:
+            vals = np.clip(vals, 0, 10)
+            vals = 10 - vals
+        elif col == "sunlight_exposure":
+            vals = np.clip(vals / 12, 0, 10)
+        elif col == "water_intake":
+            vals = np.clip(vals, 0, 10)
+        else:
+            vals = np.clip(vals, 0, 10)
+        z_data.append(vals)
+
+    labels = [c.replace("_", " ").title() for c in available_cols]
+    dates = df_sorted["date"].dt.strftime("%m-%d").tolist()
+
+    fig = go.Figure(data=go.Heatmap(
+        z=z_data, x=dates, y=labels,
+        colorscale=[[0, COLOR_HIGH], [0.5, COLOR_MEDIUM], [1, COLOR_GOOD]],
+        zmin=0, zmax=10, hoverongaps=False,
+        colorbar=dict(title="Score", titleside="right")
+    ))
+    fig.update_layout(title="Lifestyle Factor Patterns (Last 30 Days)",
+                      xaxis_title="Date", yaxis_title="Factor")
+    return style_plot(fig)
+
+def create_multi_metric_trend(df):
+    if df.empty or len(df) < 2:
+        return None
+    df_sorted = df.sort_values("date")
+
+    fig = go.Figure()
+
+    metrics = {
+        "Sleep": ("sleep_hours", COLOR_PRIMARY_LIGHT, lambda x: np.clip(x, 0, 10)),
+        "Stress Inv": ("stress_level", COLOR_HIGH, lambda x: 10 - np.clip(x, 0, 10)),
+        "Anxiety Inv": ("anxiety_level", COLOR_MEDIUM, lambda x: 10 - np.clip(x, 0, 10)),
+        "Exercise": ("exercise_minutes", COLOR_PRIMARY, lambda x: np.clip(x / 12, 0, 10)),
+        "Social": ("social_connection", COLOR_SOCIAL, lambda x: np.clip(x, 0, 10)),
+        "Screen Inv": ("screen_time", COLOR_SCREEN, lambda x: np.clip(10 - x, 0, 10)),
+        "Caffeine Inv": ("caffeine_intake", COLOR_CAFFEINE, lambda x: np.clip(10 - x * 1.5, 0, 10)),
+        "Hydration": ("water_intake", COLOR_WATER, lambda x: np.clip(x, 0, 10)),
+        "Sunlight": ("sunlight_exposure", COLOR_SUNLIGHT, lambda x: np.clip(x / 12, 0, 10)),
+        "Work-Life": ("work_life_balance", COLOR_WORKLIFE, lambda x: np.clip(x, 0, 10)),
+    }
+
+    for label, (col, color, transform) in metrics.items():
+        if col in df_sorted.columns:
+            fig.add_trace(go.Scatter(
+                x=df_sorted["date"], y=transform(df_sorted[col]),
+                mode="lines+markers", name=label, line=dict(color=color, width=2),
+                hovertemplate="%{y:.1f}<extra>" + label + "</extra>"
+            ))
+
+    fig.update_layout(
+        title="All Wellness Metrics Trend (Normalized 0-10)",
+        yaxis_title="Normalized Score",
+        hovermode="x unified",
+        legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
+    )
+    return style_plot(fig)
+
+
+
 PAGES = [
     "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
     "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
@@ -858,19 +1013,23 @@ if page == "🏠 Home":
     wellness_tips = [
         "Take a 5-minute walk outside 🌳", "Practice deep breathing for 2 minutes 🧘",
         "Drink a glass of water 💧", "Call a friend or family member 📞",
-        "Write down 3 things you're grateful for ✍️", "Stretch your body for 10 minutes 🤸",
-        "Listen to your favorite song 🎵", "Take a short break from screens 📵"
+        "Write down 3 things you are grateful for ✍️", "Stretch your body for 10 minutes 🤸",
+        "Listen to your favorite song 🎵", "Take a short break from screens 📵",
+        "Get 15 minutes of sunlight ☀️", "Set a work boundary today ⏰",
+        "Drink herbal tea instead of coffee 🍵", "Connect with someone you care about 👥"
     ]
     st.markdown("## 🌟 Daily Wellness Tip")
     st.info(random.choice(wellness_tips))
 
     pulse_divider()
     quotes = [
-        "“The greatest glory in living lies not in never falling, but in rising every time we fall.” – Nelson Mandela",
-        "“The way to get started is to quit talking and begin doing.” – Walt Disney",
-        "“Your time is limited, don't waste it living someone else's life.” – Steve Jobs",
-        "“The future belongs to those who believe in the beauty of their dreams.” – Eleanor Roosevelt",
-        "“It does not matter how slowly you go as long as you do not stop.” – Confucius"
+        "The greatest glory in living lies not in never falling, but in rising every time we fall. – Nelson Mandela",
+        "The way to get started is to quit talking and begin doing. – Walt Disney",
+        "Your time is limited, do not waste it living someone else's life. – Steve Jobs",
+        "The future belongs to those who believe in the beauty of their dreams. – Eleanor Roosevelt",
+        "It does not matter how slowly you go as long as you do not stop. – Confucius",
+        "Connection is why we are here; it gives purpose and meaning to our lives. – Brené Brown",
+        "Balance is not something you find, it is something you create. – Jana Kingsford"
     ]
     st.markdown("## 💬 Motivation")
     st.success(random.choice(quotes))
@@ -879,7 +1038,7 @@ if page == "🏠 Home":
 elif page == "📋 Assessment":
     require_login()
     page_header("📋", "Daily Check-in", "Mental Health Assessment",
-                "A few quick questions to understand how you're doing today.")
+                "A comprehensive 11-factor wellness check to understand how you are doing today.")
 
     username = st.text_input("👤 Your name", st.session_state.get("current_user", "Guest User"))
     entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date())
@@ -895,27 +1054,55 @@ elif page == "📋 Assessment":
     with col1:
         sleep_hours = st.slider("😴 How many hours did you sleep last night?", 0, 12, 7)
         stress_level = st.slider("😰 How stressed are you? (0-10)", 0, 10, 3)
-    with col2:
         anxiety_level = st.slider("😟 How anxious are you? (0-10)", 0, 10, 3)
         exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30)
+    with col2:
+        social_connection = st.slider("👥 Social connection quality (0-10)", 0, 10, 6,
+                                       help="How connected do you feel to friends, family, or community?")
+        screen_time = st.slider("📱 Screen time today (hours)", 0, 16, 4,
+                                 help="Total hours spent on phones, computers, TV")
+        caffeine_intake = st.slider("☕ Caffeine intake (cups today)", 0, 10, 2,
+                                     help="Coffee, tea, energy drinks, etc.")
+        water_intake = st.slider("💧 Water intake (glasses today)", 0, 20, 6,
+                                  help="Approximate number of 8oz glasses")
 
-    preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes)
+    col3, col4 = st.columns(2)
+    with col3:
+        sunlight_exposure = st.slider("☀️ Sunlight exposure (minutes today)", 0, 300, 30,
+                                       help="Time spent outdoors in natural light")
+    with col4:
+        work_life_balance = st.slider("⚖️ Work-life balance (0-10)", 0, 10, 6,
+                                       help="How well are you balancing work/study with personal life?")
+
+    preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes,
+                                              social_connection, screen_time, caffeine_intake,
+                                              water_intake, sunlight_exposure, work_life_balance)
     st.metric("Preview Wellness Score", f"{preview_score}/100")
 
     goals = get_goals(username)
     if goals:
         st.caption(
             f"🎯 Your goals: {goals['target_sleep']:.0f}h sleep · "
-            f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f}"
+            f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f} · "
+            f"social >= {goals.get('target_social', 5):.0f} · screen <= {goals.get('target_screen_max', 4):.0f}h · "
+            f"water >= {goals.get('target_water', 6):.0f} · sunlight >= {goals.get('target_sunlight', 15):.0f}min · "
+            f"work-life >= {goals.get('target_worklife', 5):.0f}"
         )
 
     if st.button("✅ Submit Assessment"):
-        save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes, entry_date=entry_date)
+        save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                          social_connection, screen_time, caffeine_intake, water_intake,
+                          sunlight_exposure, work_life_balance, entry_date=entry_date)
         st.session_state['assessment_data'] = {
             "username": username, "date": entry_date, "mood": mood, "sleep_hours": sleep_hours,
-            "stress_level": stress_level, "anxiety_level": anxiety_level, "exercise_minutes": exercise_minutes
+            "stress_level": stress_level, "anxiety_level": anxiety_level, "exercise_minutes": exercise_minutes,
+            "social_connection": social_connection, "screen_time": screen_time,
+            "caffeine_intake": caffeine_intake, "water_intake": water_intake,
+            "sunlight_exposure": sunlight_exposure, "work_life_balance": work_life_balance
         }
         st.success(f"🎉 Assessment saved for {entry_date.strftime('%Y-%m-%d')}!")
+
+
 
 # Risk Prediction Page
 elif page == "🤖 Risk Prediction":
@@ -929,9 +1116,19 @@ elif page == "🤖 Risk Prediction":
         stress, sleep = data["stress_level"], data["sleep_hours"]
         anxiety, exercise = data["anxiety_level"], data["exercise_minutes"]
         mood, username = data["mood"], data["username"]
+        social_connection = data.get("social_connection", 5)
+        screen_time = data.get("screen_time", 4)
+        caffeine_intake = data.get("caffeine_intake", 2)
+        water_intake = data.get("water_intake", 6)
+        sunlight_exposure = data.get("sunlight_exposure", 30)
+        work_life_balance = data.get("work_life_balance", 5)
 
-        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
-        recommendations = get_recommendations(stress, sleep, anxiety, exercise)
+        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood,
+                                                      social_connection, screen_time, caffeine_intake,
+                                                      water_intake, sunlight_exposure, work_life_balance)
+        recommendations = get_recommendations(stress, sleep, anxiety, exercise, social_connection,
+                                               screen_time, caffeine_intake, water_intake,
+                                               sunlight_exposure, work_life_balance)
 
         st.markdown("## 📊 Prediction Results")
         st.plotly_chart(gauge_figure(wellness_score, "Wellness Score"), use_container_width=True)
@@ -944,9 +1141,13 @@ elif page == "🤖 Risk Prediction":
 
         compare_col, radar_col = st.columns(2)
         with compare_col:
-            st.plotly_chart(create_factor_bar(stress, sleep, anxiety, exercise), use_container_width=True)
+            st.plotly_chart(create_extended_factor_bar(stress, sleep, anxiety, exercise, social_connection,
+                                                        screen_time, caffeine_intake, water_intake,
+                                                        sunlight_exposure, work_life_balance), use_container_width=True)
         with radar_col:
-            st.plotly_chart(create_wellness_radar(sleep, stress, anxiety, exercise, mood), use_container_width=True)
+            st.plotly_chart(create_wellness_radar(sleep, stress, anxiety, exercise, mood, social_connection,
+                                                   screen_time, caffeine_intake, water_intake,
+                                                   sunlight_exposure, work_life_balance), use_container_width=True)
 
         st.markdown("## 🔍 Key Factors")
         for factor in factors:
@@ -964,19 +1165,20 @@ elif page == "🤖 Risk Prediction":
             pulse_divider()
             st.warning(
                 "Your recent check-ins suggest things have felt harder lately. "
-                "That's worth paying attention to — consider reaching out to a professional "
-                "or someone you trust. The **Support & Coping** page has resources if you'd like them."
+                "That is worth paying attention to — consider reaching out to a professional "
+                "or someone you trust. The **Support & Coping** page has resources if you would like them."
             )
 
 # Goals Page
 elif page == "🎯 Goals":
     require_login()
     page_header("🎯", "Personal Targets", "Your Wellness Goals",
-                "Set targets that matter to you — we'll track your progress against them.")
+                "Set targets that matter to you — we will track your progress against them.")
 
     username = st.text_input("👤 Your name", st.session_state.get("current_user", "Guest User"), key="goals_username")
     existing = get_goals(username)
 
+    st.markdown("### Core Wellness Goals")
     col1, col2, col3 = st.columns(3)
     with col1:
         target_sleep = st.slider("🎯 Target sleep (hours)", 4, 10,
@@ -988,8 +1190,29 @@ elif page == "🎯 Goals":
         target_stress_max = st.slider("🎯 Max comfortable stress", 0, 10,
                                        int(existing["target_stress_max"]) if existing else 5)
 
+    st.markdown("### Lifestyle Goals")
+    col4, col5, col6 = st.columns(3)
+    with col4:
+        target_social = st.slider("🎯 Min social connection", 0, 10,
+                                   int(existing["target_social"]) if existing and "target_social" in existing else 5)
+    with col5:
+        target_screen_max = st.slider("🎯 Max screen time (hours)", 0, 12,
+                                       int(existing["target_screen_max"]) if existing and "target_screen_max" in existing else 4)
+    with col6:
+        target_water = st.slider("🎯 Min water intake (glasses)", 0, 15,
+                                  int(existing["target_water"]) if existing and "target_water" in existing else 6)
+
+    col7, col8 = st.columns(2)
+    with col7:
+        target_sunlight = st.slider("🎯 Min sunlight (minutes)", 0, 120,
+                                     int(existing["target_sunlight"]) if existing and "target_sunlight" in existing else 15)
+    with col8:
+        target_worklife = st.slider("🎯 Min work-life balance", 0, 10,
+                                     int(existing["target_worklife"]) if existing and "target_worklife" in existing else 5)
+
     if st.button("💾 Save Goals"):
-        save_goals(username, target_sleep, target_exercise, target_stress_max)
+        save_goals(username, target_sleep, target_exercise, target_stress_max,
+                   target_social, target_screen_max, target_water, target_sunlight, target_worklife)
         st.success("Goals saved!")
 
     pulse_divider()
@@ -1003,8 +1226,11 @@ elif page == "🎯 Goals":
         last = mine.iloc[-1]
         g = get_goals(username) or {
             "target_sleep": target_sleep, "target_exercise": target_exercise,
-            "target_stress_max": target_stress_max,
+            "target_stress_max": target_stress_max, "target_social": target_social,
+            "target_screen_max": target_screen_max, "target_water": target_water,
+            "target_sunlight": target_sunlight, "target_worklife": target_worklife,
         }
+
         gcol1, gcol2, gcol3 = st.columns(3)
         gcol1.metric("Sleep (latest)", f"{last['sleep_hours']:.1f}h",
                      f"{last['sleep_hours'] - g['target_sleep']:+.1f}h vs goal")
@@ -1012,6 +1238,22 @@ elif page == "🎯 Goals":
                      f"{last['exercise_minutes'] - g['target_exercise']:+.0f} min vs goal")
         gcol3.metric("Stress (latest)", f"{last['stress_level']:.0f}",
                      f"{last['stress_level'] - g['target_stress_max']:+.0f} vs max", delta_color="inverse")
+
+        gcol4, gcol5, gcol6 = st.columns(3)
+        gcol4.metric("Social (latest)", f"{last.get('social_connection', 0):.0f}",
+                     f"{last.get('social_connection', 0) - g['target_social']:+.0f} vs goal")
+        gcol5.metric("Screen (latest)", f"{last.get('screen_time', 0):.0f}h",
+                     f"{last.get('screen_time', 0) - g['target_screen_max']:+.0f}h vs max", delta_color="inverse")
+        gcol6.metric("Water (latest)", f"{last.get('water_intake', 0):.0f}",
+                     f"{last.get('water_intake', 0) - g['target_water']:+.0f} vs goal")
+
+        gcol7, gcol8 = st.columns(2)
+        gcol7.metric("Sunlight (latest)", f"{last.get('sunlight_exposure', 0):.0f}min",
+                     f"{last.get('sunlight_exposure', 0) - g['target_sunlight']:+.0f}min vs goal")
+        gcol8.metric("Work-Life (latest)", f"{last.get('work_life_balance', 0):.0f}",
+                     f"{last.get('work_life_balance', 0) - g['target_worklife']:+.0f} vs goal")
+
+
 
 # Bulk Upload Page
 elif page == "📂 Bulk Upload":
@@ -1022,7 +1264,9 @@ elif page == "📂 Bulk Upload":
         "instead of entering them one by one in the Assessment page."
     )
 
-    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]
+    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                        "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                        "sunlight_exposure", "work_life_balance"]
 
     with st.expander("📋 Expected file format / download a template"):
         st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
@@ -1030,6 +1274,8 @@ elif page == "📂 Bulk Upload":
         template_df = pd.DataFrame([{
             "username": "John Doe", "mood": "Good", "sleep_hours": 7,
             "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
+            "social_connection": 6, "screen_time": 4, "caffeine_intake": 2,
+            "water_intake": 6, "sunlight_exposure": 30, "work_life_balance": 6,
         }])
         st.download_button(
             label="📥 Download Template (Excel)", data=export_to_excel(template_df, sheet_name="Template"),
@@ -1044,7 +1290,7 @@ elif page == "📂 Bulk Upload":
             bulk_df = pd.read_excel(uploaded_file)
         except Exception as e:
             bulk_df = None
-            st.error(f"❌ Couldn't read that file: {e}")
+            st.error(f"❌ Could not read that file: {e}")
 
         if bulk_df is not None:
             missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
@@ -1063,6 +1309,9 @@ elif page == "📂 Bulk Upload":
                     risk, factors, wellness = predict_risk(
                         row["stress_level"], row["sleep_hours"], row["anxiety_level"],
                         row["exercise_minutes"], row["mood"],
+                        row.get("social_connection", 5), row.get("screen_time", 4),
+                        row.get("caffeine_intake", 2), row.get("water_intake", 6),
+                        row.get("sunlight_exposure", 30), row.get("work_life_balance", 5),
                     )
                     risk_levels.append(risk)
                     wellness_scores.append(wellness)
@@ -1107,11 +1356,16 @@ elif page == "📂 Bulk Upload":
                     if st.button("➕ Add these records to the backend data", use_container_width=True):
                         init_db()
                         conn = get_connection()
-                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes"]].values.tolist()
+                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level",
+                                                "anxiety_level", "exercise_minutes", "social_connection",
+                                                "screen_time", "caffeine_intake", "water_intake",
+                                                "sunlight_exposure", "work_life_balance"]].values.tolist()
                         conn.executemany(
                             """INSERT INTO user_history
-                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes)
-                               VALUES (?, ?, ?, ?, ?, ?, ?)""", history_rows,
+                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                                social_connection, screen_time, caffeine_intake, water_intake,
+                                sunlight_exposure, work_life_balance)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", history_rows,
                         )
                         prediction_rows = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]].values.tolist()
                         conn.executemany(
@@ -1120,7 +1374,9 @@ elif page == "📂 Bulk Upload":
                         )
                         conn.commit()
                         conn.close()
-                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They'll now show up in Dashboard and Admin.")
+                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They will now show up in Dashboard and Admin.")
+
+
 
 # Dashboard Page
 elif page == "📈 Dashboard":
@@ -1171,7 +1427,7 @@ elif page == "📈 Dashboard":
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             )
 
-            trends_tab, dist_tab, insights_tab = st.tabs(["📈 Trends", "🧩 Distributions", "🔎 Insights"])
+            trends_tab, dist_tab, insights_tab, lifestyle_tab = st.tabs(["📈 Trends", "🧩 Distributions", "🔎 Insights", "🌿 Lifestyle"])
 
             with trends_tab:
                 col1, col2 = st.columns(2)
@@ -1202,6 +1458,11 @@ elif page == "📈 Dashboard":
                                         title="Overall Wellness Score Trend", color_discrete_sequence=[COLOR_PRIMARY])
                 fig_wellness.update_traces(line_shape=line_shape)
                 st.plotly_chart(style_plot(fig_wellness), use_container_width=True)
+
+                # New: Multi-metric trend
+                multi_fig = create_multi_metric_trend(filtered_df)
+                if multi_fig:
+                    st.plotly_chart(multi_fig, use_container_width=True)
 
             with dist_tab:
                 col1, col2 = st.columns(2)
@@ -1244,14 +1505,19 @@ elif page == "📈 Dashboard":
                         st.info("No prediction records available yet.")
 
             with insights_tab:
-                corr_df = filtered_df[["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes", "mood_num", "wellness_score"]].corr()
-                heatmap = go.Figure(data=go.Heatmap(
-                    z=corr_df.values, x=corr_df.columns, y=corr_df.index,
-                    colorscale=[[0, COLOR_HIGH], [0.5, "#FFFFFF"], [1, COLOR_PRIMARY]],
-                    zmin=-1, zmax=1, text=np.round(corr_df.values, 2), texttemplate="%{text}",
-                ))
-                heatmap.update_layout(title="Correlation Heatmap")
-                st.plotly_chart(style_plot(heatmap), use_container_width=True)
+                corr_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                             "social_connection", "screen_time", "caffeine_intake",
+                             "water_intake", "sunlight_exposure", "work_life_balance", "mood_num", "wellness_score"]
+                available_corr_cols = [c for c in corr_cols if c in filtered_df.columns]
+                if len(available_corr_cols) >= 2:
+                    corr_df = filtered_df[available_corr_cols].corr()
+                    heatmap = go.Figure(data=go.Heatmap(
+                        z=corr_df.values, x=corr_df.columns, y=corr_df.index,
+                        colorscale=[[0, COLOR_HIGH], [0.5, "#FFFFFF"], [1, COLOR_PRIMARY]],
+                        zmin=-1, zmax=1, text=np.round(corr_df.values, 2), texttemplate="%{text}",
+                    ))
+                    heatmap.update_layout(title="Correlation Heatmap (All 11 Factors)")
+                    st.plotly_chart(style_plot(heatmap), use_container_width=True)
 
                 st.plotly_chart(create_mood_calendar(filtered_df), use_container_width=True)
 
@@ -1261,6 +1527,9 @@ elif page == "📈 Dashboard":
                     st.plotly_chart(create_wellness_radar(
                         last_row["sleep_hours"], last_row["stress_level"],
                         last_row["anxiety_level"], last_row["exercise_minutes"], last_row["mood"],
+                        last_row.get("social_connection", 5), last_row.get("screen_time", 4),
+                        last_row.get("caffeine_intake", 2), last_row.get("water_intake", 6),
+                        last_row.get("sunlight_exposure", 30), last_row.get("work_life_balance", 5),
                     ), use_container_width=True)
                 with info_col:
                     st.markdown("### Latest Snapshot")
@@ -1275,10 +1544,42 @@ elif page == "📈 Dashboard":
                         "Consider visiting **Support & Coping** or reaching out to someone you trust."
                     )
 
+            with lifestyle_tab:
+                st.markdown("### 🌿 Lifestyle Factor Analysis")
+                lifestyle_fig = create_lifestyle_heatmap(filtered_df)
+                if lifestyle_fig:
+                    st.plotly_chart(lifestyle_fig, use_container_width=True)
+                else:
+                    st.info("Need at least 2 entries with lifestyle data to generate heatmap.")
+
+                # Individual lifestyle trends
+                lifestyle_metrics = [
+                    ("social_connection", "Social Connection", COLOR_SOCIAL),
+                    ("screen_time", "Screen Time (hours)", COLOR_SCREEN),
+                    ("caffeine_intake", "Caffeine Intake (cups)", COLOR_CAFFEINE),
+                    ("water_intake", "Water Intake (glasses)", COLOR_WATER),
+                    ("sunlight_exposure", "Sunlight Exposure (min)", COLOR_SUNLIGHT),
+                    ("work_life_balance", "Work-Life Balance", COLOR_WORKLIFE),
+                ]
+
+                for i in range(0, len(lifestyle_metrics), 2):
+                    c1, c2 = st.columns(2)
+                    for j, (col, title, color) in enumerate(lifestyle_metrics[i:i+2]):
+                        if col in filtered_df.columns:
+                            fig = px.line(filtered_df.sort_values("date"), x="date", y=col, markers=True,
+                                          title=title, color_discrete_sequence=[color])
+                            fig.update_traces(line_shape=line_shape)
+                            if j == 0:
+                                c1.plotly_chart(style_plot(fig), use_container_width=True)
+                            else:
+                                c2.plotly_chart(style_plot(fig), use_container_width=True)
+
+
+
 # Journal Page
 elif page == "📝 Journal":
     require_login()
-    page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day and we'll analyze your mood.")
+    page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day and we will analyze your mood.")
 
     username = st.text_input("👤 Your name", st.session_state.get("current_user", "Guest User"), key="journal_username")
     journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?")
@@ -1287,7 +1588,6 @@ elif page == "📝 Journal":
         if journal_text.strip():
             sentiment, polarity = analyze_sentiment(journal_text)
 
-            # Save to CSV
             entry = save_journal_entry(username, journal_text.strip(), sentiment, polarity)
 
             st.markdown("## 📊 Sentiment Analysis Results")
@@ -1334,14 +1634,12 @@ elif page == "📓 My Journals":
     else:
         st.caption(f"{len(df)} journal entries found for **{username}**.")
 
-        # Summary stats
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Entries", len(df))
         col2.metric("Positive", len(df[df["sentiment"] == "positive"]))
         col3.metric("Neutral", len(df[df["sentiment"] == "neutral"]))
         col4.metric("Negative", len(df[df["sentiment"] == "negative"]))
 
-        # Sentiment trend chart
         if len(df) >= 2:
             pulse_divider()
             st.markdown("### 📈 Sentiment Trend")
@@ -1435,9 +1733,9 @@ elif page == "🆘 Support & Coping":
     pulse_divider()
     st.markdown("### 📝 Journaling Prompts")
     prompts = [
-        "What's one thing that felt hard today, and one thing that helped?",
+        "What is one thing that felt hard today, and one thing that helped?",
         "What would I tell a friend who felt the way I feel right now?",
-        "What's one small thing I can do in the next hour to take care of myself?",
+        "What is one small thing I can do in the next hour to take care of myself?",
     ]
     for p in prompts:
         st.info(p)
@@ -1465,9 +1763,19 @@ elif page == "📄 Report":
         stress, sleep = data["stress_level"], data["sleep_hours"]
         anxiety, exercise = data["anxiety_level"], data["exercise_minutes"]
         mood = data["mood"]
+        social_connection = data.get("social_connection", 5)
+        screen_time = data.get("screen_time", 4)
+        caffeine_intake = data.get("caffeine_intake", 2)
+        water_intake = data.get("water_intake", 6)
+        sunlight_exposure = data.get("sunlight_exposure", 30)
+        work_life_balance = data.get("work_life_balance", 5)
 
-        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood)
-        recommendations = get_recommendations(stress, sleep, anxiety, exercise)
+        risk, factors, wellness_score = predict_risk(stress, sleep, anxiety, exercise, mood,
+                                                      social_connection, screen_time, caffeine_intake,
+                                                      water_intake, sunlight_exposure, work_life_balance)
+        recommendations = get_recommendations(stress, sleep, anxiety, exercise, social_connection,
+                                               screen_time, caffeine_intake, water_intake,
+                                               sunlight_exposure, work_life_balance)
 
         st.markdown("## 📋 Report Preview")
         st.markdown(f"**👤 Username:** {username}")
