@@ -907,7 +907,7 @@ def create_lifestyle_heatmap(df):
         z=z_data, x=dates, y=labels,
         colorscale=[[0, COLOR_HIGH], [0.5, COLOR_MEDIUM], [1, COLOR_GOOD]],
         zmin=0, zmax=10, hoverongaps=False,
-        colorbar=dict(title="Score", titleside="right")
+        colorbar=dict(title=dict(text="Score", side="right"))
     ))
     fig.update_layout(title="Lifestyle Factor Patterns (Last 30 Days)",
                       xaxis_title="Date", yaxis_title="Factor")
