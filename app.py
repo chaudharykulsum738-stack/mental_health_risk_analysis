@@ -236,6 +236,20 @@ def init_db():
             water_intake REAL, sunlight_exposure REAL, work_life_balance REAL
         )
     """)
+    # Migrate old schema: add new columns if they don't exist
+    new_cols = [
+        ("social_connection", "REAL"),
+        ("screen_time", "REAL"),
+        ("caffeine_intake", "REAL"),
+        ("water_intake", "REAL"),
+        ("sunlight_exposure", "REAL"),
+        ("work_life_balance", "REAL"),
+    ]
+    for col_name, col_type in new_cols:
+        try:
+            cur.execute(f"ALTER TABLE user_history ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
     cur.execute("""
         CREATE TABLE IF NOT EXISTS predictions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -250,6 +264,19 @@ def init_db():
             target_sunlight REAL, target_worklife REAL, updated_at TEXT
         )
     """)
+    # Migrate old goals schema
+    new_goal_cols = [
+        ("target_social", "REAL"),
+        ("target_screen_max", "REAL"),
+        ("target_water", "REAL"),
+        ("target_sunlight", "REAL"),
+        ("target_worklife", "REAL"),
+    ]
+    for col_name, col_type in new_goal_cols:
+        try:
+            cur.execute(f"ALTER TABLE goals ADD COLUMN {col_name} {col_type}")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
     conn.commit()
     conn.close()
 
