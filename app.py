@@ -427,7 +427,7 @@ def login_user(username):
 def logout_user():
     st.session_state.logged_in = False
     st.session_state.current_user = None
-    st.session_state["page_radio"] = "🏠 Home"
+    # Navigation handled automatically by page flow
 
 def require_login():
     init_login_state()
@@ -1226,16 +1226,23 @@ st.sidebar.markdown("""
 <div class="sidebar-tagline">Wellness Intelligence</div>
 """, unsafe_allow_html=True)
 
+# Handle navigation from button clicks
+_nav_target = None
 if 'nav_to' in st.session_state:
     _nav_map = {
         'assessment': "📋 Assessment", 'journal': "📝 Journal",
         'support': "🆘 Support & Coping", 'goals': "🎯 Goals",
     }
     if st.session_state['nav_to'] in _nav_map:
-        st.session_state['page_radio'] = _nav_map[st.session_state['nav_to']]
+        _nav_target = _nav_map[st.session_state['nav_to']]
     del st.session_state['nav_to']
 
-page = st.sidebar.radio("Go to", PAGES, key="page_radio", label_visibility="collapsed")
+# Compute default index for radio based on nav target
+_default_index = 0
+if _nav_target and _nav_target in PAGES:
+    _default_index = PAGES.index(_nav_target)
+
+page = st.sidebar.radio("Go to", PAGES, index=_default_index, label_visibility="collapsed")
 
 show_user_badge()
 
@@ -2273,3 +2280,4 @@ elif page == "📊 Admin":
         st.dataframe(df_goals, use_container_width=True)
     except Exception as e:
         st.error(f"❌ Error: {e}")
+        
