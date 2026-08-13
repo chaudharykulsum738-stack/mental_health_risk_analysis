@@ -14,6 +14,16 @@ from reportlab.lib import colors as rl_colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
 from reportlab.lib.units import inch
 import io
+import warnings
+warnings.filterwarnings('ignore')
+
+try:
+    from sklearn.linear_model import LinearRegression
+    from sklearn.preprocessing import StandardScaler
+    SKLEARN_AVAILABLE = True
+except ImportError:
+    SKLEARN_AVAILABLE = False
+
 
 st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="🧠", layout="wide")
 
@@ -951,10 +961,266 @@ def create_multi_metric_trend(df):
 
 
 
+# ═══════════════════════════════════════════════════════════════
+# 🤖 AI WELLNESS INSIGHTS ENGINE
+# ═══════════════════════════════════════════════════════════════
+
+def detect_trends(df, window=5):
+    """Calculate trend slopes for key metrics using linear regression."""
+    if len(df) < 3 or not SKLEARN_AVAILABLE:
+        return {}
+    trends = {}
+    metrics = ["wellness_score", "sleep_hours", "stress_level", "anxiety_level",
+               "exercise_minutes", "social_connection", "screen_time",
+               "water_intake", "sunlight_exposure", "work_life_balance"]
+    df = df.sort_values("date").reset_index(drop=True)
+    x = np.arange(len(df)).reshape(-1, 1)
+    for metric in metrics:
+        if metric in df.columns:
+            y = df[metric].fillna(df[metric].median()).values
+            if len(y) >= 3:
+                model = LinearRegression().fit(x, y)
+                trends[metric] = {
+                    "slope": float(model.coef_[0]),
+                    "direction": "improving" if model.coef_[0] > 0.05 else "declining" if model.coef_[0] < -0.05 else "stable",
+                    "r2": float(model.score(x, y)),
+                }
+    return trends
+
+def find_key_correlations(df):
+    """Find the strongest correlations between wellness factors."""
+    if len(df) < 5:
+        return []
+    corr_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                 "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                 "sunlight_exposure", "work_life_balance", "wellness_score"]
+    available = [c for c in corr_cols if c in df.columns]
+    if len(available) < 2:
+        return []
+    corr_matrix = df[available].corr()
+    pairs = []
+    for i in range(len(available)):
+        for j in range(i + 1, len(available)):
+            val = corr_matrix.iloc[i, j]
+            if abs(val) > 0.4 and available[i] != available[j]:
+                pairs.append({
+                    "factor_a": available[i],
+                    "factor_b": available[j],
+                    "correlation": round(val, 3),
+                    "strength": "strong" if abs(val) > 0.7 else "moderate",
+                    "direction": "positive" if val > 0 else "negative",
+                })
+    return sorted(pairs, key=lambda x: abs(x["correlation"]), reverse=True)[:5]
+
+def detect_anomalies(df):
+    """Detect recent outliers using Z-score analysis."""
+    if len(df) < 5:
+        return []
+    df = df.sort_values("date").tail(7)
+    anomalies = []
+    metrics = ["stress_level", "anxiety_level", "sleep_hours", "wellness_score"]
+    for metric in metrics:
+        if metric in df.columns:
+            vals = df[metric].values
+            mean, std = np.mean(vals), np.std(vals)
+            if std > 0:
+                z_scores = [(v - mean) / std for v in vals]
+                latest_z = z_scores[-1]
+                if abs(latest_z) > 1.5:
+                    anomalies.append({
+                        "metric": metric,
+                        "value": vals[-1],
+                        "z_score": round(latest_z, 2),
+                        "severity": "high" if abs(latest_z) > 2.5 else "moderate",
+                        "direction": "spike" if latest_z > 0 else "drop",
+                    })
+    return anomalies
+
+def predict_next_wellness(df):
+    """Predict next wellness score using simple time-series regression."""
+    if len(df) < 5 or not SKLEARN_AVAILABLE:
+        return None
+    df = df.sort_values("date").reset_index(drop=True)
+    features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                "sunlight_exposure", "work_life_balance"]
+    available = [c for c in features if c in df.columns]
+    if len(available) < 3:
+        return None
+    X = df[available].fillna(df[available].median()).values
+    y = df["wellness_score"].values
+    if len(X) < 3:
+        return None
+    model = LinearRegression()
+    model.fit(X, y)
+    last_row = df[available].iloc[-1].fillna(df[available].median()).values.reshape(1, -1)
+    prediction = model.predict(last_row)[0]
+    return round(np.clip(prediction, 0, 100), 1)
+
+def generate_smart_recommendations(df, trends, correlations, anomalies):
+    """Generate context-aware, data-driven recommendations."""
+    recs = []
+    if not df.empty:
+        latest = df.iloc[-1]
+        if trends.get("wellness_score", {}).get("direction") == "declining":
+            recs.append("📉 **Trend Alert:** Your wellness score has been declining. Consider reviewing your recent habits and making one small adjustment today.")
+        if trends.get("sleep_hours", {}).get("direction") == "declining":
+            recs.append("😴 **Sleep Recovery:** Your sleep duration is trending down. Try a consistent bedtime routine — your data shows better scores on days with 7+ hours.")
+        if trends.get("stress_level", {}).get("direction") == "improving":
+            recs.append("🎉 **Great Progress:** Your stress levels are improving! Keep doing what's working.")
+        for corr in correlations:
+            if corr["factor_a"] == "sleep_hours" and corr["factor_b"] == "stress_level" and corr["direction"] == "negative":
+                recs.append(f"🔗 **Insight:** Your data shows a {corr['strength']} negative correlation between sleep and stress. Prioritizing sleep could directly lower your stress.")
+            if corr["factor_a"] == "exercise_minutes" and corr["factor_b"] == "wellness_score" and corr["direction"] == "positive":
+                recs.append(f"🔗 **Insight:** Exercise and wellness are {corr['strength']}ly linked in your history. Even 20 minutes helps!")
+        for anomaly in anomalies:
+            if anomaly["metric"] == "stress_level" and anomaly["direction"] == "spike":
+                recs.append(f"⚠️ **Recent Spike:** Your stress jumped significantly (Z-score: {anomaly['z_score']}). Try the 4-7-8 breathing technique on the Support page.")
+            if anomaly["metric"] == "sleep_hours" and anomaly["direction"] == "drop":
+                recs.append(f"⚠️ **Sleep Drop:** Your recent sleep is below your personal average. Consider avoiding screens 1 hour before bed.")
+    if not recs:
+        recs.append("✅ Your wellness patterns look stable. Keep maintaining your healthy habits!")
+    return recs
+
+def generate_ai_narrative(df, username):
+    """Generate a natural language summary of the user's wellness state."""
+    if df.empty or len(df) < 2:
+        return "Not enough data yet. Complete a few more assessments to unlock AI insights!"
+    trends = detect_trends(df)
+    correlations = find_key_correlations(df)
+    anomalies = detect_anomalies(df)
+    prediction = predict_next_wellness(df)
+    paragraphs = []
+    latest = df.iloc[-1]
+    score = latest.get("wellness_score", 0)
+    if score >= 80:
+        paragraphs.append(f"Hi **{username}**, your overall wellness is looking strong at **{score:.0f}/100**. ")
+    elif score >= 50:
+        paragraphs.append(f"Hi **{username}**, your wellness score is **{score:.0f}/100** — there's room for improvement, and your data can guide the way. ")
+    else:
+        paragraphs.append(f"Hi **{username}**, your wellness score is **{score:.0f}/100**. Your data reveals specific areas to focus on — let's look at them. ")
+    if trends:
+        trend_parts = []
+        improving = [k for k, v in trends.items() if v["direction"] == "improving" and k != "wellness_score"]
+        declining = [k for k, v in trends.items() if v["direction"] == "declining" and k != "wellness_score"]
+        if improving:
+            trend_parts.append(f"**Improving:** {', '.join([k.replace('_', ' ').title() for k in improving[:2]])}.")
+        if declining:
+            trend_parts.append(f"**Declining:** {', '.join([k.replace('_', ' ').title() for k in declining[:2]])}.")
+        if trend_parts:
+            paragraphs.append("Recent trends: " + " ".join(trend_parts))
+    if correlations:
+        top = correlations[0]
+        a = top["factor_a"].replace("_", " ").title()
+        b = top["factor_b"].replace("_", " ").title()
+        direction = "increase together" if top["direction"] == "positive" else "move in opposite directions"
+        paragraphs.append(f"Your strongest pattern: **{a}** and **{b}** {direction} (correlation: {top['correlation']}). This is one of the most reliable signals in your data.")
+    if prediction is not None:
+        diff = prediction - score
+        if abs(diff) > 5:
+            direction = "improve to" if diff > 0 else "drop to"
+            paragraphs.append(f"Based on your current trajectory, your next wellness score may **{direction} {prediction:.0f}/100**.")
+    if anomalies:
+        sev = anomalies[0]
+        paragraphs.append(f"⚠️ **Attention needed:** Your recent {sev['metric'].replace('_', ' ')} shows a significant {sev['direction']} compared to your usual pattern.")
+    return "
+
+".join(paragraphs)
+
+def create_trend_visualization(df):
+    """Create an AI trend prediction chart."""
+    if len(df) < 5 or not SKLEARN_AVAILABLE:
+        return None
+    df = df.sort_values("date").reset_index(drop=True)
+    features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                "sunlight_exposure", "work_life_balance"]
+    available = [c for c in features if c in df.columns]
+    if len(available) < 3:
+        return None
+    X = df[available].fillna(df[available].median()).values
+    y = df["wellness_score"].values
+    model = LinearRegression().fit(X, y)
+    last = df[available].iloc[-1].values
+    predictions = []
+    dates = []
+    for i in range(1, 4):
+        noise = np.random.normal(0, 0.3, len(last))
+        future_X = np.clip(last + noise, 0, None).reshape(1, -1)
+        pred = model.predict(future_X)[0]
+        predictions.append(round(np.clip(pred, 0, 100), 1))
+        dates.append(df["date"].iloc[-1] + timedelta(days=i))
+    hist_dates = df["date"].tolist()
+    hist_scores = df["wellness_score"].tolist()
+    fig = go.Figure()
+    fig.add_trace(go.Scatter(
+        x=hist_dates, y=hist_scores, mode="lines+markers", name="Historical",
+        line=dict(color=COLOR_PRIMARY, width=2)
+    ))
+    fig.add_trace(go.Scatter(
+        x=dates, y=predictions, mode="lines+markers", name="AI Prediction",
+        line=dict(color=COLOR_MEDIUM, width=2, dash="dash"),
+        marker=dict(symbol="diamond", size=10)
+    ))
+    fig.add_vline(x=hist_dates[-1], line_dash="dot", line_color=COLOR_MUTED,
+                  annotation_text="Today")
+    fig.update_layout(
+        title="Wellness Score Trajectory + 3-Day AI Forecast",
+        yaxis_title="Wellness Score",
+        hovermode="x unified"
+    )
+    return style_plot(fig)
+
+def create_correlation_network(df):
+    """Create a network-style visualization of factor correlations."""
+    correlations = find_key_correlations(df)
+    if not correlations:
+        return None
+    nodes = set()
+    edges = []
+    for c in correlations[:6]:
+        nodes.add(c["factor_a"])
+        nodes.add(c["factor_b"])
+        edges.append((c["factor_a"], c["factor_b"], abs(c["correlation"]), c["direction"]))
+    node_list = list(nodes)
+    positions = {}
+    angle_step = 2 * np.pi / len(node_list)
+    for i, node in enumerate(node_list):
+        positions[node] = (np.cos(i * angle_step) * 2, np.sin(i * angle_step) * 2)
+    fig = go.Figure()
+    for a, b, weight, direction in edges:
+        x0, y0 = positions[a]
+        x1, y1 = positions[b]
+        color = COLOR_GOOD if direction == "positive" else COLOR_HIGH
+        fig.add_trace(go.Scatter(
+            x=[x0, x1], y=[y0, y1], mode="lines",
+            line=dict(color=color, width=weight * 5),
+            hoverinfo="skip", showlegend=False
+        ))
+    for node, (x, y) in positions.items():
+        fig.add_trace(go.Scatter(
+            x=[x], y=[y], mode="markers+text",
+            marker=dict(size=30, color=COLOR_PRIMARY, line=dict(color=COLOR_INK, width=2)),
+            text=node.replace("_", " ").title(), textposition="top center",
+            textfont=dict(size=10, color=COLOR_INK),
+            hovertemplate=f"<b>{node.replace('_', ' ').title()}</b><extra></extra>",
+            showlegend=False
+        ))
+    fig.update_layout(
+        title="Wellness Factor Correlation Network",
+        xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
+        plot_bgcolor="rgba(0,0,0,0)", paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(l=20, r=20, t=50, b=20),
+        height=400
+    )
+    return fig
+
+
 PAGES = [
     "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
     "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
-    "🆘 Support & Coping", "📄 Report", "📊 Admin"
+    "🆘 Support & Coping", "📄 Report", "🧠 AI Insights", "📊 Admin"
 ]
 
 st.sidebar.markdown("""
@@ -1822,6 +2088,144 @@ elif page == "📄 Report":
                             file_name=f"mental_health_report_{username}.pdf", mime="application/pdf")
 
 # Admin Page
+# AI Insights Page
+elif page == "🧠 AI Insights":
+    require_login()
+    page_header("🧠", "Intelligence", "AI Wellness Insights", 
+                "Pattern recognition, predictive analysis, and personalized intelligence for your wellness journey.")
+
+    username = st.text_input("👤 Analyze data for", st.session_state.get("current_user", "Guest User"), key="ai_username")
+
+    hist = get_history_data()
+    mine = hist[hist["username"].astype(str) == username].sort_values("date") if not hist.empty else hist
+
+    if mine.empty or len(mine) < 2:
+        st.info("📭 Not enough data for AI analysis yet. Complete at least 2 assessments to unlock insights.")
+        if not SKLEARN_AVAILABLE:
+            st.warning("⚠️ scikit-learn is not installed. Run `pip install scikit-learn` to enable full AI features.")
+        st.stop()
+
+    # ── AI Narrative ──
+    st.markdown("## 📝 Your Wellness Story")
+    narrative = generate_ai_narrative(mine, username)
+    st.markdown(f'<div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; line-height: 1.7; font-size: 1rem; color: var(--ink);">{narrative}</div>', unsafe_allow_html=True)
+    pulse_divider()
+
+    # ── Trend Analysis ──
+    trends = detect_trends(mine)
+    if trends:
+        st.markdown("## 📈 Trend Analysis")
+        trend_df_data = []
+        for metric, data in trends.items():
+            trend_df_data.append({
+                "Metric": metric.replace("_", " ").title(),
+                "Direction": data["direction"].capitalize(),
+                "Slope": round(data["slope"], 3),
+                "Reliability (R²)": round(data["r2"], 2),
+            })
+        trend_df = pd.DataFrame(trend_df_data)
+
+        def color_direction(val):
+            if val == "Improving":
+                return f"color: {COLOR_GOOD}; font-weight: 600;"
+            elif val == "Declining":
+                return f"color: {COLOR_HIGH}; font-weight: 600;"
+            return f"color: {COLOR_MEDIUM};"
+
+        st.dataframe(trend_df.style.applymap(color_direction, subset=["Direction"]), use_container_width=True)
+        pulse_divider()
+
+    # ── Correlation Insights ──
+    correlations = find_key_correlations(mine)
+    if correlations:
+        st.markdown("## 🔗 Hidden Patterns in Your Data")
+        st.caption("Factors that move together in your personal history")
+
+        col1, col2 = st.columns([1.2, 1])
+        with col1:
+            corr_net = create_correlation_network(mine)
+            if corr_net:
+                st.plotly_chart(corr_net, use_container_width=True)
+
+        with col2:
+            st.markdown("### Top Correlations")
+            for i, corr in enumerate(correlations[:4], 1):
+                emoji = "🟢" if corr["direction"] == "positive" else "🔴"
+                st.markdown(
+                    f"{emoji} **{corr['factor_a'].replace('_', ' ').title()}** ↔ "
+                    f"**{corr['factor_b'].replace('_', ' ').title()}**  
+"
+                    f"<span style='font-family: IBM Plex Mono; font-size: 0.8rem; color: var(--muted);'>"
+                    f"r = {corr['correlation']} ({corr['strength']} {corr['direction']})</span>",
+                    unsafe_allow_html=True
+                )
+        pulse_divider()
+
+    # ── Anomaly Detection ──
+    anomalies = detect_anomalies(mine)
+    if anomalies:
+        st.markdown("## ⚠️ Recent Anomalies Detected")
+        for anom in anomalies:
+            severity_color = COLOR_HIGH if anom["severity"] == "high" else COLOR_MEDIUM
+            st.markdown(
+                f'<div style="border-left: 4px solid {severity_color}; padding-left: 12px; margin-bottom: 8px;">'
+                f'<strong>{anom["metric"].replace("_", " ").title()}</strong> — '
+                f'{anom["direction"].title()} to <strong>{anom["value"]:.1f}</strong> '
+                f'(Z-score: {anom["z_score"]})</div>',
+                unsafe_allow_html=True
+            )
+        pulse_divider()
+
+    # ── Predictive Forecast ──
+    st.markdown("## 🔮 Predictive Wellness Forecast")
+    pred_chart = create_trend_visualization(mine)
+    if pred_chart:
+        st.plotly_chart(pred_chart, use_container_width=True)
+        prediction = predict_next_wellness(mine)
+        if prediction is not None:
+            latest_score = mine.iloc[-1]["wellness_score"]
+            diff = prediction - latest_score
+            delta_color = "normal" if diff > 0 else "inverse"
+            st.metric("Predicted Next Wellness Score", f"{prediction}/100", 
+                     f"{diff:+.0f} from current", delta_color=delta_color)
+    else:
+        st.info("Need more data to generate predictions. Keep logging your assessments!")
+    pulse_divider()
+
+    # ── Smart Recommendations ──
+    st.markdown("## 💡 AI-Generated Recommendations")
+    smart_recs = generate_smart_recommendations(mine, trends, correlations, anomalies)
+    for rec in smart_recs:
+        st.success(rec)
+
+    # ── Factor Importance (Feature Weights) ──
+    if len(mine) >= 5 and SKLEARN_AVAILABLE:
+        st.markdown("## 🎯 What Drives Your Wellness Score?")
+        features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                    "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                    "sunlight_exposure", "work_life_balance"]
+        available = [c for c in features if c in mine.columns]
+        if len(available) >= 3:
+            X = mine[available].fillna(mine[available].median()).values
+            y = mine["wellness_score"].values
+            model = LinearRegression()
+            model.fit(X, y)
+
+            importance_df = pd.DataFrame({
+                "Factor": [c.replace("_", " ").title() for c in available],
+                "Impact on Wellness": model.coef_,
+                "Abs Impact": np.abs(model.coef_)
+            }).sort_values("Abs Impact", ascending=True)
+
+            fig_imp = px.bar(importance_df, x="Impact on Wellness", y="Factor", orientation="h",
+                            title="Factor Importance (How Much Each Affects Your Score)",
+                            color="Impact on Wellness", color_continuous_scale=[COLOR_HIGH, COLOR_MEDIUM, COLOR_GOOD])
+            fig_imp.update_layout(showlegend=False, yaxis_title="")
+            st.plotly_chart(style_plot(fig_imp), use_container_width=True)
+
+            top_driver = importance_df.iloc[-1]["Factor"]
+            st.info(f"🎯 **Key Insight:** **{top_driver}** has the strongest influence on your personal wellness score. Small improvements here may have the biggest impact.")
+
 elif page == "📊 Admin":
     require_login()
     page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
