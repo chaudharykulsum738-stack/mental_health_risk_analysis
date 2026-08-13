@@ -427,7 +427,7 @@ def login_user(username):
 def logout_user():
     st.session_state.logged_in = False
     st.session_state.current_user = None
-    st.session_state["page_radio"] = "Home"
+    st.session_state["page_radio"] = "🏠 Home"
 
 def require_login():
     init_login_state()
