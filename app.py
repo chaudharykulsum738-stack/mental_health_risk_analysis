@@ -2137,7 +2137,7 @@ elif page == "🧠 AI Insights":
                 return f"color: {COLOR_HIGH}; font-weight: 600;"
             return f"color: {COLOR_MEDIUM};"
 
-        st.dataframe(trend_df.style.applymap(color_direction, subset=["Direction"]), use_container_width=True)
+        st.dataframe(trend_df.style.map(color_direction, subset=["Direction"]), use_container_width=True)
         pulse_divider()
 
     # ── Correlation Insights ──
@@ -2280,4 +2280,3 @@ elif page == "📊 Admin":
         st.dataframe(df_goals, use_container_width=True)
     except Exception as e:
         st.error(f"❌ Error: {e}")
-        
