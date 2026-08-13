@@ -1123,9 +1123,7 @@ def generate_ai_narrative(df, username):
     if anomalies:
         sev = anomalies[0]
         paragraphs.append(f"⚠️ **Attention needed:** Your recent {sev['metric'].replace('_', ' ')} shows a significant {sev['direction']} compared to your usual pattern.")
-    return "
-
-".join(paragraphs)
+    return "\n\n".join(paragraphs)
 
 def create_trend_visualization(df):
     """Create an AI trend prediction chart."""
@@ -2153,8 +2151,7 @@ elif page == "🧠 AI Insights":
                 emoji = "🟢" if corr["direction"] == "positive" else "🔴"
                 st.markdown(
                     f"{emoji} **{corr['factor_a'].replace('_', ' ').title()}** ↔ "
-                    f"**{corr['factor_b'].replace('_', ' ').title()}**  
-"
+                    f"**{corr['factor_b'].replace('_', ' ').title()}**  <br>"
                     f"<span style='font-family: IBM Plex Mono; font-size: 0.8rem; color: var(--muted);'>"
                     f"r = {corr['correlation']} ({corr['strength']} {corr['direction']})</span>",
                     unsafe_allow_html=True
