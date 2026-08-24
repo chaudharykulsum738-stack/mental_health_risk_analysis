@@ -1803,7 +1803,12 @@ elif page == "📂 Bulk Upload":
                 bulk_df = bulk_df.copy()
                 if "date" not in bulk_df.columns:
                     bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+                    numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                                "social_connection", "screen_time", "caffeine_intake",
+                                "water_intake", "sunlight_exposure", "work_life_balance"]
+                for col in numeric_cols:
+                    if col in bulk_df.columns:
+                        bulk_df[col] = pd.to_numeric(bulk_df[col], errors="coerce").fillna(0)
                 risk_levels, wellness_scores, factor_lists = [], [], []
                 for _, row in bulk_df.iterrows():
                     risk, factors, wellness = predict_risk(
