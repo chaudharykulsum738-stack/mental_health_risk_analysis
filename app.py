@@ -753,7 +753,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     styles = getSampleStyleSheet()
     story = []
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
-    ink_color = rl_colors.HexColor("#2D3436" if not st.session_state.dark_mode else "#E8ECF1")
+    textColor=rl_colors.HexColor(C["muted"])
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
@@ -778,7 +778,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
         story.append(Paragraph(f"- {rec}", info_style))
     story.append(Spacer(1, 24))
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
-                                   textColor=rl_colors.HexColor(COLOR_MUTED if not st.session_state.dark_mode else "#8B95A5"))
+                                   textColor=rl_colors.HexColor(C["muted"]))
     story.append(Paragraph(
         "This report is a self-reflection summary, not a clinical diagnosis. "
         "If you are struggling, please consider speaking with a licensed professional.", footer_style))
@@ -1525,59 +1525,58 @@ elif page == "📋 Assessment":
     page_header("📋", "Daily Check-in", "Mental Health Assessment",
                 "A comprehensive 11-factor wellness check to understand how you are doing today.")
 
-    with st.form("assessment_form"):
-        username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="assessment_username")
-        entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date(), key="assessment_date")
+    # REMOVED st.form wrapper so sliders update live
+    username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="assessment_username")
+    entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date(), key="assessment_date")
 
-        st.markdown("## Answer the following questions:")
-        mood_emojis = {"Very Bad": "😢", "Bad": "😔", "Neutral": "😐", "Good": "😊", "Very Good": "😄"}
-        mood = st.select_slider(
-            "How is your mood today?", options=["Very Bad", "Bad", "Neutral", "Good", "Very Good"],
-            value="Good", format_func=lambda x: f"{mood_emojis[x]} {x}", key="assessment_mood"
+    st.markdown("## Answer the following questions:")
+    mood_emojis = {"Very Bad": "😢", "Bad": "😔", "Neutral": "😐", "Good": "😊", "Very Good": "😄"}
+    mood = st.select_slider(
+        "How is your mood today?", options=["Very Bad", "Bad", "Neutral", "Good", "Very Good"],
+        value="Good", format_func=lambda x: f"{mood_emojis[x]} {x}", key="assessment_mood"
+    )
+
+    col1, col2 = st.columns(2)
+    with col1:
+        sleep_hours = st.slider("😴 How many hours did you sleep last night?", 0, 12, 7, key="assessment_sleep")
+        stress_level = st.slider("😰 How stressed are you? (0-10)", 0, 10, 3, key="assessment_stress")
+        anxiety_level = st.slider("😟 How anxious are you? (0-10)", 0, 10, 3, key="assessment_anxiety")
+        exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30, key="assessment_exercise")
+    with col2:
+        social_connection = st.slider("👥 Social connection quality (0-10)", 0, 10, 6,
+                                       help="How connected do you feel to friends, family, or community?", key="assessment_social")
+        screen_time = st.slider("📱 Screen time today (hours)", 0, 16, 4,
+                                 help="Total hours spent on phones, computers, TV", key="assessment_screen")
+        caffeine_intake = st.slider("☕ Caffeine intake (cups today)", 0, 10, 2,
+                                     help="Coffee, tea, energy drinks, etc.", key="assessment_caffeine")
+        water_intake = st.slider("💧 Water intake (glasses today)", 0, 20, 6,
+                                  help="Approximate number of 8oz glasses", key="assessment_water")
+
+    col3, col4 = st.columns(2)
+    with col3:
+        sunlight_exposure = st.slider("☀️ Sunlight exposure (minutes today)", 0, 300, 30,
+                                       help="Time spent outdoors in natural light", key="assessment_sun")
+    with col4:
+        work_life_balance = st.slider("⚖️ Work-life balance (0-10)", 0, 10, 6,
+                                       help="How well are you balancing work/study with personal life?", key="assessment_worklife")
+
+    # Preview now updates LIVE as you drag sliders
+    preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes,
+                                              social_connection, screen_time, caffeine_intake,
+                                              water_intake, sunlight_exposure, work_life_balance)
+    st.metric("Preview Wellness Score", f"{preview_score}/100")
+
+    goals = get_goals(username)
+    if goals:
+        st.caption(
+            f"🎯 Your goals: {goals['target_sleep']:.0f}h sleep · "
+            f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f} · "
+            f"social >= {goals.get('target_social', 5):.0f} · screen <= {goals.get('target_screen_max', 4):.0f}h · "
+            f"water >= {goals.get('target_water', 6):.0f} · sunlight >= {goals.get('target_sunlight', 15):.0f}min · "
+            f"work-life >= {goals.get('target_worklife', 5):.0f}"
         )
 
-        col1, col2 = st.columns(2)
-        with col1:
-            sleep_hours = st.slider("😴 How many hours did you sleep last night?", 0, 12, 7, key="assessment_sleep")
-            stress_level = st.slider("😰 How stressed are you? (0-10)", 0, 10, 3, key="assessment_stress")
-            anxiety_level = st.slider("😟 How anxious are you? (0-10)", 0, 10, 3, key="assessment_anxiety")
-            exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30, key="assessment_exercise")
-        with col2:
-            social_connection = st.slider("👥 Social connection quality (0-10)", 0, 10, 6,
-                                           help="How connected do you feel to friends, family, or community?", key="assessment_social")
-            screen_time = st.slider("📱 Screen time today (hours)", 0, 16, 4,
-                                     help="Total hours spent on phones, computers, TV", key="assessment_screen")
-            caffeine_intake = st.slider("☕ Caffeine intake (cups today)", 0, 10, 2,
-                                         help="Coffee, tea, energy drinks, etc.", key="assessment_caffeine")
-            water_intake = st.slider("💧 Water intake (glasses today)", 0, 20, 6,
-                                      help="Approximate number of 8oz glasses", key="assessment_water")
-
-        col3, col4 = st.columns(2)
-        with col3:
-            sunlight_exposure = st.slider("☀️ Sunlight exposure (minutes today)", 0, 300, 30,
-                                           help="Time spent outdoors in natural light", key="assessment_sun")
-        with col4:
-            work_life_balance = st.slider("⚖️ Work-life balance (0-10)", 0, 10, 6,
-                                           help="How well are you balancing work/study with personal life?", key="assessment_worklife")
-
-        preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes,
-                                                  social_connection, screen_time, caffeine_intake,
-                                                  water_intake, sunlight_exposure, work_life_balance)
-        st.metric("Preview Wellness Score", f"{preview_score}/100")
-
-        goals = get_goals(username)
-        if goals:
-            st.caption(
-                f"🎯 Your goals: {goals['target_sleep']:.0f}h sleep · "
-                f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f} · "
-                f"social >= {goals.get('target_social', 5):.0f} · screen <= {goals.get('target_screen_max', 4):.0f}h · "
-                f"water >= {goals.get('target_water', 6):.0f} · sunlight >= {goals.get('target_sunlight', 15):.0f}min · "
-                f"work-life >= {goals.get('target_worklife', 5):.0f}"
-            )
-
-        submitted = st.form_submit_button("✅ Submit Assessment", use_container_width=True)
-
-    if submitted:
+    if st.button("✅ Submit Assessment", use_container_width=True, key="assessment_submit"):
         success = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
                               social_connection, screen_time, caffeine_intake, water_intake,
                               sunlight_exposure, work_life_balance, entry_date=entry_date)
