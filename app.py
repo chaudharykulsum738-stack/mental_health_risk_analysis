@@ -1409,9 +1409,17 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # Initialize page selector in session state
+if "nav_page" not in st.session_state:
+    st.session_state.nav_page = PAGES[0]
 
-page = st.sidebar.radio("Go to", PAGES, 
-                         label_visibility="collapsed",
+page = st.sidebar.radio("Go to", PAGES,
+                         index=PAGES.index(st.session_state.nav_page),
+                         label_visibility="collapsed")
+
+# Update nav_page when user manually clicks sidebar
+if page != st.session_state.nav_page:
+    st.session_state.nav_page = page
+    st.rerun()
 
 # Logout button in sidebar
 if st.session_state.get("logged_in"):
