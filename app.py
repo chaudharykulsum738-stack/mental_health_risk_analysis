@@ -1043,7 +1043,7 @@ def detect_trends(df, window=5):
             y = df[metric].fillna(df[metric].median()).values
             if len(y) >= 3:
                 model = LinearRegression().fit(x, y)
-                                trends[metric] = {
+                trends[metric] = {
                     "slope": float(model.coef_[0]),
                     "direction": "improving" if model.coef_[0] > 0.05 else "declining" if model.coef_[0] < -0.05 else "stable",
                     "r2": float(model.score(x, y)),
