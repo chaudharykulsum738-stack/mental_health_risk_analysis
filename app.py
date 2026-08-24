@@ -593,10 +593,6 @@ def show_user_badge():
             <span class="user-pill">👤 {st.session_state.current_user}</span>
         </div>
         """, unsafe_allow_html=True)
-        if st.sidebar.button("🚪 Log out", use_container_width=True, key="logout_btn"):
-            logout_user()
-            st.rerun()
-        st.sidebar.markdown("---")
 
 def delete_entry(entry_id):
     try:
@@ -1412,18 +1408,24 @@ with st.sidebar:
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
 
-if "current_page" not in st.session_state:
-    st.session_state.current_page = PAGES[0]
+# Initialize page selector in session state
+if "page_selector" not in st.session_state:
+    st.session_state.page_selector = PAGES[0]
 
-page = st.sidebar.radio("Go to", PAGES,
-                         index=PAGES.index(st.session_state.current_page),
+page = st.sidebar.radio("Go to", PAGES, 
+                         index=PAGES.index(st.session_state.page_selector), 
                          label_visibility="collapsed",
                          key="page_selector")
 
-# Update session state when user manually changes page via sidebar
-if page != st.session_state.current_page:
-    st.session_state.current_page = page
-    st.rerun()
+# Logout button in sidebar
+if st.session_state.get("logged_in"):
+    if st.sidebar.button("🚪 Log out", use_container_width=True, key="logout_btn"):
+        logout_user()
+        st.session_state.page_selector = PAGES[0]
+        st.rerun()
+    st.sidebar.markdown("---")
+
+show_user_badge()
 
 st.sidebar.markdown("""
 <div class="sidebar-disclaimer">
@@ -1452,15 +1454,15 @@ if page == "🏠 Home":
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("📋 Start New Assessment", use_container_width=True, key="home_btn_assessment"):
-            st.session_state.current_page = "📋 Assessment"
+            st.session_state.page_selector = "📋 Assessment"
             st.rerun()
     with col2:
         if st.button("📝 Write in Journal", use_container_width=True, key="home_btn_journal"):
-            st.session_state.current_page = "📝 Journal"
+            st.session_state.page_selector = "📝 Journal"
             st.rerun()
     with col3:
         if st.button("🆘 I Need Support Now", use_container_width=True, key="home_btn_support"):
-            st.session_state.current_page = "🆘 Support & Coping"
+            st.session_state.page_selector = "🆘 Support & Coping"
             st.rerun()
 
     try:
