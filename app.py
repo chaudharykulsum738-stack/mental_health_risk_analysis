@@ -1410,22 +1410,29 @@ with st.sidebar:
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
 
+# Persist current page in session state
+if "current_page" not in st.session_state:
+    st.session_state.current_page = PAGES[0]
+
 # Handle navigation from button clicks
-_nav_target = None
 if 'nav_to' in st.session_state:
     _nav_map = {
         'assessment': "📋 Assessment", 'journal': "📝 Journal",
         'support': "🆘 Support & Coping", 'goals': "🎯 Goals",
     }
     if st.session_state['nav_to'] in _nav_map:
-        _nav_target = _nav_map[st.session_state['nav_to']]
+        st.session_state.current_page = _nav_map[st.session_state['nav_to']]
     del st.session_state['nav_to']
 
-_default_index = 0
-if _nav_target and _nav_target in PAGES:
-    _default_index = PAGES.index(_nav_target)
+page = st.sidebar.radio("Go to", PAGES, 
+                         index=PAGES.index(st.session_state.current_page), 
+                         label_visibility="collapsed",
+                         key="page_selector")
 
-page = st.sidebar.radio("Go to", PAGES, index=_default_index, label_visibility="collapsed")
+# Update session state when user manually changes page via sidebar
+if page != st.session_state.current_page:
+    st.session_state.current_page = page
+    st.rerun()
 
 show_user_badge()
 
