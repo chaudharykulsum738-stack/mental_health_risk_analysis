@@ -620,26 +620,31 @@ def delete_all_entries(username):
 def calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection, screen_time,
                              caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     """Balanced 0-100 wellness score. Perfect health = 100. Average health ≈ 60-75."""
+    # Force everything to float to handle strings from Excel/CSV
+    try:
+        stress = float(stress)
+        sleep = float(sleep)
+        anxiety = float(anxiety)
+        exercise = float(exercise)
+        social_connection = float(social_connection)
+        screen_time = float(screen_time)
+        caffeine_intake = float(caffeine_intake)
+        water_intake = float(water_intake)
+        sunlight_exposure = float(sunlight_exposure)
+        work_life_balance = float(work_life_balance)
+    except (ValueError, TypeError):
+        return 0.0
+
     score = 0
-    # Sleep (target 8h) — max 15 pts
     score += min(sleep / 8, 1.0) * 15
-    # Stress (lower is better) — max 15 pts
     score += max(0, (10 - stress) / 10) * 15
-    # Anxiety (lower is better) — max 15 pts
     score += max(0, (10 - anxiety) / 10) * 15
-    # Exercise (target 60 min) — max 10 pts
     score += min(exercise / 60, 1.0) * 10
-    # Social connection (target 8/10) — max 10 pts
     score += min(social_connection / 8, 1.0) * 10
-    # Screen time (target under 4h) — max 10 pts
     score += max(0, (8 - screen_time) / 8) * 10
-    # Caffeine (target under 3 cups) — max 5 pts
     score += max(0, (5 - caffeine_intake) / 5) * 5
-    # Water (target 8 glasses) — max 10 pts
     score += min(water_intake / 8, 1.0) * 10
-    # Sunlight (target 30 min) — max 5 pts
     score += min(sunlight_exposure / 30, 1.0) * 5
-    # Work-life balance (target 7/10) — max 5 pts
     score += min(work_life_balance / 7, 1.0) * 5
     return round(score, 1)
 
@@ -656,25 +661,25 @@ def predict_risk(stress, sleep, anxiety, exercise, mood, social_connection, scre
     else:
         risk = "Low"
     factors = []
-    if stress > 7:
+    if float(stress) > 7:
         factors.append("High stress levels")
-    if sleep < 6:
+    if float(sleep) < 6:
         factors.append("Insufficient sleep")
-    if anxiety > 7:
+    if float(anxiety) > 7:
         factors.append("High anxiety levels")
-    if exercise < 30:
+    if float(exercise) < 30:
         factors.append("Low physical activity")
-    if social_connection < 4:
+    if float(social_connection) < 4:
         factors.append("Low social connection")
-    if screen_time > 8:
+    if float(screen_time) > 8:
         factors.append("Excessive screen time")
-    if caffeine_intake > 5:
+    if float(caffeine_intake) > 5:
         factors.append("High caffeine intake")
-    if water_intake < 4:
+    if float(water_intake) < 4:
         factors.append("Low hydration")
-    if sunlight_exposure < 15:
+    if float(sunlight_exposure) < 15:
         factors.append("Insufficient sunlight exposure")
-    if work_life_balance < 4:
+    if float(work_life_balance) < 4:
         factors.append("Poor work-life balance")
     if not factors:
         factors = ["Good overall wellness indicators"]
