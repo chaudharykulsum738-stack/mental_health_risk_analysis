@@ -465,7 +465,7 @@ def get_goals(username):
     except Exception as e:
         st.error(f"Error loading goals: {e}")
         return None
-        # JOURNAL FUNCTIONS
+# JOURNAL FUNCTIONS
 JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
 
 def save_journal_entry(username, text, sentiment, polarity):
