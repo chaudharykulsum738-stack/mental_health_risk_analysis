@@ -753,7 +753,6 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     styles = getSampleStyleSheet()
     story = []
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
-    textColor=rl_colors.HexColor(C["muted"])
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
@@ -1802,9 +1801,9 @@ elif page == "📂 Bulk Upload":
                 bulk_df = bulk_df.copy()
                 if "date" not in bulk_df.columns:
                     bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
-                                "social_connection", "screen_time", "caffeine_intake",
-                                "water_intake", "sunlight_exposure", "work_life_balance"]
+                numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                            "social_connection", "screen_time", "caffeine_intake",
+                            "water_intake", "sunlight_exposure", "work_life_balance"]
                 for col in numeric_cols:
                     if col in bulk_df.columns:
                         bulk_df[col] = pd.to_numeric(bulk_df[col], errors="coerce").fillna(0)
