@@ -2311,7 +2311,7 @@ elif page == "📄 Report":
 # ═══════════════════════════════════════════════════════════════
 elif page == "🧠 AI Insights":
     require_login()
-    page_header("🧠", "Intelligence", "AI Wellness Insights", 
+    page_header("🧠", "Intelligence", "AI Wellness Insights",
                 "Pattern recognition, predictive analysis, and personalized intelligence for your wellness journey.")
 
     username = st.text_input("👤 Analyze data for", value=st.session_state.get("current_user", "Guest User"), key="ai_username")
@@ -2325,22 +2325,21 @@ elif page == "🧠 AI Insights":
             st.warning("⚠️ scikit-learn is not installed. Run `pip install scikit-learn` to enable full AI features.")
         st.stop()
 
-    # ── AI Narrative ──
+    # AI Narrative
     st.markdown("## 📝 Your Wellness Story")
     narrative = generate_ai_narrative(mine, username)
-card_bg = C["card"]
-border_color = C["border"]
-text_color = C["ink"]
-
-st.markdown(
-    f'<div style="background:{card_bg};border:1px solid {border_color};'
-    f'border-radius:12px;padding:20px;line-height:1.7;font-size:1rem;'
-    f'color:{text_color};">{narrative}</div>',
-    unsafe_allow_html=True
-)    
+    card_bg = C["card"]
+    border_color = C["border"]
+    text_color = C["ink"]
+    st.markdown(
+        f'<div style="background:{card_bg};border:1px solid {border_color};'
+        f'border-radius:12px;padding:20px;line-height:1.7;font-size:1rem;'
+        f'color:{text_color};">{narrative}</div>',
+        unsafe_allow_html=True
+    )
     pulse_divider()
 
-    # ── Trend Analysis ──
+    # Trend Analysis
     trends = detect_trends(mine)
     if trends:
         st.markdown("## 📈 Trend Analysis")
@@ -2361,7 +2360,6 @@ st.markdown(
                 return f"color: {COLOR_HIGH}; font-weight: 600;"
             return f"color: {COLOR_MEDIUM};"
 
-        # Pandas compatibility: try .map() first, fallback to .applymap()
         try:
             styled = trend_df.style.map(color_direction, subset=["Direction"])
         except AttributeError:
@@ -2369,7 +2367,7 @@ st.markdown(
         st.dataframe(styled, use_container_width=True)
         pulse_divider()
 
-    # ── Correlation Insights ──
+    # Correlation Insights
     correlations = find_key_correlations(mine)
     if correlations:
         st.markdown("## 🔗 Hidden Patterns in Your Data")
@@ -2394,7 +2392,7 @@ st.markdown(
                 )
         pulse_divider()
 
-    # ── Anomaly Detection ──
+    # Anomaly Detection
     anomalies = detect_anomalies(mine)
     if anomalies:
         st.markdown("## ⚠️ Recent Anomalies Detected")
@@ -2409,7 +2407,7 @@ st.markdown(
             )
         pulse_divider()
 
-    # ── Predictive Forecast ──
+    # Predictive Forecast
     st.markdown("## 🔮 Predictive Wellness Forecast")
     pred_chart = create_trend_visualization(mine)
     if pred_chart:
@@ -2419,19 +2417,19 @@ st.markdown(
             latest_score = mine.iloc[-1]["wellness_score"]
             diff = prediction - latest_score
             delta_color = "normal" if diff > 0 else "inverse"
-            st.metric("Predicted Next Wellness Score", f"{prediction}/100", 
+            st.metric("Predicted Next Wellness Score", f"{prediction}/100",
                      f"{diff:+.0f} from current", delta_color=delta_color)
     else:
         st.info("Need more data to generate predictions. Keep logging your assessments!")
     pulse_divider()
 
-    # ── Smart Recommendations ──
+    # Smart Recommendations
     st.markdown("## 💡 AI-Generated Recommendations")
     smart_recs = generate_smart_recommendations(mine, trends, correlations, anomalies)
     for rec in smart_recs:
         st.success(rec)
 
-       # ── Factor Importance (Feature Weights) ──
+    # Factor Importance (Feature Weights)
     if len(mine) >= 5 and SKLEARN_AVAILABLE:
         st.markdown("## 🎯 What Drives Your Wellness Score?")
         features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
