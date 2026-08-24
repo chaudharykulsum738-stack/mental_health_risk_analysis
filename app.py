@@ -753,7 +753,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     styles = getSampleStyleSheet()
     story = []
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
-    ink_color = rl_colors.HexColor(COLOR_INK if not st.session_state.dark_mode else "#E8ECF1")
+    ink_color = rl_colors.HexColor("#2D3436" if not st.session_state.dark_mode else "#E8ECF1")
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
