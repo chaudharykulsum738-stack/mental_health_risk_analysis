@@ -617,31 +617,41 @@ def delete_all_entries(username):
     except Exception as e:
         st.error(f"Error clearing entries: {e}")
 
-
-
 def calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection, screen_time,
                              caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
+    """Balanced 0-100 wellness score. Perfect health = 100. Average health ≈ 60-75."""
     score = 0
-    score += (10 - stress) * 4
-    score += min(sleep, 10) * 3
-    score += (10 - anxiety) * 4
-    score += min(exercise, 120) / 2
-    score += social_connection * 2
-    score += max(0, (8 - screen_time)) * 2
-    score += min(caffeine_intake, 3) * 2
-    score += min(water_intake, 10) * 1.5
-    score += min(sunlight_exposure, 120) / 15
-    score += work_life_balance * 2
-    return min(score, 100)
+    # Sleep (target 8h) — max 15 pts
+    score += min(sleep / 8, 1.0) * 15
+    # Stress (lower is better) — max 15 pts
+    score += max(0, (10 - stress) / 10) * 15
+    # Anxiety (lower is better) — max 15 pts
+    score += max(0, (10 - anxiety) / 10) * 15
+    # Exercise (target 60 min) — max 10 pts
+    score += min(exercise / 60, 1.0) * 10
+    # Social connection (target 8/10) — max 10 pts
+    score += min(social_connection / 8, 1.0) * 10
+    # Screen time (target under 4h) — max 10 pts
+    score += max(0, (8 - screen_time) / 8) * 10
+    # Caffeine (target under 3 cups) — max 5 pts
+    score += max(0, (5 - caffeine_intake) / 5) * 5
+    # Water (target 8 glasses) — max 10 pts
+    score += min(water_intake / 8, 1.0) * 10
+    # Sunlight (target 30 min) — max 5 pts
+    score += min(sunlight_exposure / 30, 1.0) * 5
+    # Work-life balance (target 7/10) — max 5 pts
+    score += min(work_life_balance / 7, 1.0) * 5
+    return round(score, 1)
+
 
 def predict_risk(stress, sleep, anxiety, exercise, mood, social_connection, screen_time,
                  caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     wellness_score = calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection,
                                                screen_time, caffeine_intake, water_intake,
                                                sunlight_exposure, work_life_balance)
-    if wellness_score < 40:
+    if wellness_score < 35:
         risk = "High"
-    elif wellness_score < 70:
+    elif wellness_score < 65:
         risk = "Medium"
     else:
         risk = "Low"
