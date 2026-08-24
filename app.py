@@ -24,14 +24,6 @@ except ImportError:
     SKLEARN_AVAILABLE = False
 
 # ═══════════════════════════════════════════════════════════════
-# STREAMLIT RERUN COMPATIBILITY (for older Streamlit versions)
-# ═══════════════════════════════════════════════════════════════
-try:
-    st.rerun
-except AttributeError:
-    st.rerun = st.experimental_rerun
-
-# ═══════════════════════════════════════════════════════════════
 # 🎨 LOGO CONFIGURATION — PUT YOUR LOGO HERE
 # ═══════════════════════════════════════════════════════════════
 LOGO_PATH = "logo.png"  # <-- CHANGE THIS to your image file name
