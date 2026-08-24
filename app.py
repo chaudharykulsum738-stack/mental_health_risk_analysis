@@ -753,11 +753,13 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     styles = getSampleStyleSheet()
     story = []
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
+    ink_color = rl_colors.HexColor("#2D3436" if not st.session_state.dark_mode else "#E8ECF1")
+    muted_color = rl_colors.HexColor(C["muted"])
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
     eyebrow_style = ParagraphStyle('Eyebrow', parent=styles['Normal'], fontSize=10, alignment=1,
-                                    textColor=rl_colors.HexColor(C["muted"]), spaceAfter=24)
+                                    textColor=muted_color, spaceAfter=24)
     story.append(Paragraph("MENTAL HEALTH RISK ANALYSIS", eyebrow_style))
     subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=16,
                                      textColor=ink_color)
@@ -777,7 +779,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
         story.append(Paragraph(f"- {rec}", info_style))
     story.append(Spacer(1, 24))
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
-                                   textColor=rl_colors.HexColor(C["muted"]))
+                                   textColor=muted_color)
     story.append(Paragraph(
         "This report is a self-reflection summary, not a clinical diagnosis. "
         "If you are struggling, please consider speaking with a licensed professional.", footer_style))
@@ -1410,22 +1412,11 @@ with st.sidebar:
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
 
-# Persist current page in session state
 if "current_page" not in st.session_state:
     st.session_state.current_page = PAGES[0]
 
-# Handle navigation from button clicks
-if 'nav_to' in st.session_state:
-    _nav_map = {
-        'assessment': "📋 Assessment", 'journal': "📝 Journal",
-        'support': "🆘 Support & Coping", 'goals': "🎯 Goals",
-    }
-    if st.session_state['nav_to'] in _nav_map:
-        st.session_state.current_page = _nav_map[st.session_state['nav_to']]
-    del st.session_state['nav_to']
-
-page = st.sidebar.radio("Go to", PAGES, 
-                         index=PAGES.index(st.session_state.current_page), 
+page = st.sidebar.radio("Go to", PAGES,
+                         index=PAGES.index(st.session_state.current_page),
                          label_visibility="collapsed",
                          key="page_selector")
 
@@ -1433,8 +1424,6 @@ page = st.sidebar.radio("Go to", PAGES,
 if page != st.session_state.current_page:
     st.session_state.current_page = page
     st.rerun()
-
-show_user_badge()
 
 st.sidebar.markdown("""
 <div class="sidebar-disclaimer">
@@ -1463,15 +1452,15 @@ if page == "🏠 Home":
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("📋 Start New Assessment", use_container_width=True, key="home_btn_assessment"):
-            st.session_state['nav_to'] = 'assessment'
+            st.session_state.current_page = "📋 Assessment"
             st.rerun()
     with col2:
         if st.button("📝 Write in Journal", use_container_width=True, key="home_btn_journal"):
-            st.session_state['nav_to'] = 'journal'
+            st.session_state.current_page = "📝 Journal"
             st.rerun()
     with col3:
         if st.button("🆘 I Need Support Now", use_container_width=True, key="home_btn_support"):
-            st.session_state['nav_to'] = 'support'
+            st.session_state.current_page = "🆘 Support & Coping"
             st.rerun()
 
     try:
