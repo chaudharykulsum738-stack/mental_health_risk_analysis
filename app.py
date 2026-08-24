@@ -758,7 +758,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
     eyebrow_style = ParagraphStyle('Eyebrow', parent=styles['Normal'], fontSize=10, alignment=1,
-                                    textColor=rl_colors.HexColor(COLOR_MUTED if not st.session_state.dark_mode else "#8B95A5"), spaceAfter=24)
+                                    textColor=rl_colors.HexColor(C["muted"]), spaceAfter=24)
     story.append(Paragraph("MENTAL HEALTH RISK ANALYSIS", eyebrow_style))
     subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=16,
                                      textColor=ink_color)
