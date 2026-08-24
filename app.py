@@ -1409,19 +1409,14 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 # Initialize page selector in session state
-if "page_selector" not in st.session_state:
-    st.session_state.page_selector = PAGES[0]
 
 page = st.sidebar.radio("Go to", PAGES, 
-                         index=PAGES.index(st.session_state.page_selector), 
                          label_visibility="collapsed",
-                         key="page_selector")
 
 # Logout button in sidebar
 if st.session_state.get("logged_in"):
     if st.sidebar.button("🚪 Log out", use_container_width=True, key="logout_btn"):
         logout_user()
-        st.session_state.page_selector = PAGES[0]
         st.rerun()
     st.sidebar.markdown("---")
 
@@ -1454,15 +1449,15 @@ if page == "🏠 Home":
     col1, col2, col3 = st.columns(3)
     with col1:
         if st.button("📋 Start New Assessment", use_container_width=True, key="home_btn_assessment"):
-            st.session_state.page_selector = "📋 Assessment"
+            st.session_state.nav_page = "📋 Assessment"
             st.rerun()
     with col2:
         if st.button("📝 Write in Journal", use_container_width=True, key="home_btn_journal"):
-            st.session_state.page_selector = "📝 Journal"
+            st.session_state.nav_page = "📝 Journal"
             st.rerun()
     with col3:
         if st.button("🆘 I Need Support Now", use_container_width=True, key="home_btn_support"):
-            st.session_state.page_selector = "🆘 Support & Coping"
+            st.session_state.nav_page = "🆘 Support & Coping"
             st.rerun()
 
     try:
