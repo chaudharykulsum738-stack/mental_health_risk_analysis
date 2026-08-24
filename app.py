@@ -2251,9 +2251,9 @@ elif page == "🆘 Support & Coping":
 
     pulse_divider()
     st.markdown("### 📞 If You Need to Talk to Someone")
-    st.error("**US: 988 Suicide & Crisis Lifeline** — call or text **988**, available 24/7.")
-    st.warning("**Crisis Text Line** — text **HOME** to **741741** (US & Canada).")
-    st.info("**Outside the US** — search \"[your country] crisis helpline\" or contact local emergency services.")
+    st.error("**India: 14416 Suicide & Crisis Lifeline** — call or text **14416**, available 24/7.")
+    st.warning("**Crisis Text Line** — text **HOME** to **tel:78930-78930** (India).")
+    st.info("**Outside the India** — search \"[your country] crisis helpline\" or contact local emergency services.")
     st.caption(
         "MindTrack is a self-reflection tool, not a diagnostic service or emergency line. "
         "If you are in immediate danger, please contact local emergency services right away."
@@ -2337,7 +2337,8 @@ st.markdown(
     f'border-radius:12px;padding:20px;line-height:1.7;font-size:1rem;'
     f'color:{text_color};">{narrative}</div>',
     unsafe_allow_html=True
-)    pulse_divider()
+)    
+    pulse_divider()
 
     # ── Trend Analysis ──
     trends = detect_trends(mine)
