@@ -2328,8 +2328,16 @@ elif page == "🧠 AI Insights":
     # ── AI Narrative ──
     st.markdown("## 📝 Your Wellness Story")
     narrative = generate_ai_narrative(mine, username)
-    st.markdown(f'<div style="background: {C[\"card\"]}; border: 1px solid {C[\"border\"]}; border-radius: 12px; padding: 20px; line-height: 1.7; font-size: 1rem; color: {C[\"ink\"]};">{narrative}</div>', unsafe_allow_html=True)
-    pulse_divider()
+card_bg = C["card"]
+border_color = C["border"]
+text_color = C["ink"]
+
+st.markdown(
+    f'<div style="background:{card_bg};border:1px solid {border_color};'
+    f'border-radius:12px;padding:20px;line-height:1.7;font-size:1rem;'
+    f'color:{text_color};">{narrative}</div>',
+    unsafe_allow_html=True
+)    pulse_divider()
 
     # ── Trend Analysis ──
     trends = detect_trends(mine)
