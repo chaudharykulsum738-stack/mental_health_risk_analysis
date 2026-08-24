@@ -1466,7 +1466,7 @@ if page == "🏠 Home":
             m4.metric("🔥 Current Streak", f"{current_streak} day{'s' if current_streak != 1 else ''}")
             m5.metric("🏆 Longest Streak", f"{longest_streak} day{'s' if longest_streak != 1 else ''}")
 
-                        this_avg, last_avg = weekly_digest(df_sorted)
+            this_avg, last_avg= weekly_digest(df_sorted)
             if this_avg is not None:
                 st.markdown("#### This Week vs Last Week")
                 delta_txt = f"{this_avg - last_avg:+.0f} vs last week" if last_avg is not None else "No prior week to compare"
