@@ -19,32 +19,71 @@ warnings.filterwarnings('ignore')
 
 try:
     from sklearn.linear_model import LinearRegression
-    from sklearn.preprocessing import StandardScaler
     SKLEARN_AVAILABLE = True
 except ImportError:
     SKLEARN_AVAILABLE = False
 
+# ═══════════════════════════════════════════════════════════════
+# STREAMLIT RERUN COMPATIBILITY (for older Streamlit versions)
+# ═══════════════════════════════════════════════════════════════
+try:
+    st.rerun
+except AttributeError:
+    st.rerun = st.experimental_rerun
 
 # ═══════════════════════════════════════════════════════════════
 # 🎨 LOGO CONFIGURATION — PUT YOUR LOGO HERE
 # ═══════════════════════════════════════════════════════════════
-# Option 1: Local file (save your logo in the same folder as app.py)
 LOGO_PATH = "logo.png"  # <-- CHANGE THIS to your image file name
-
-# Option 2: URL (uncomment below and comment out the line above)
-# LOGO_PATH = "https://your-domain.com/logo.png"
-
-# Set to None if you don't want a logo
-# LOGO_PATH = None
-
+# LOGO_PATH = "https://your-domain.com/logo.png"  # Or use a URL
+# LOGO_PATH = None  # Or disable logo
 
 st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="🧠", layout="wide")
 
-COLOR_INK = "#1B2430"
-COLOR_MUTED = "#5B6B6A"
-COLOR_BG = "#F4F6F5"
-COLOR_CARD = "#FFFFFF"
-COLOR_BORDER = "rgba(27,36,48,0.10)"
+# ═══════════════════════════════════════════════════════════════
+# 🌗 DARK MODE: STATE & COLOR SYSTEM
+# ═══════════════════════════════════════════════════════════════
+if "dark_mode" not in st.session_state:
+    st.session_state.dark_mode = False
+
+def toggle_dark_mode():
+    st.session_state.dark_mode = not st.session_state.dark_mode
+    st.rerun()
+
+# Light mode colors
+L_COLORS = {
+    "ink": "#1B2430",
+    "muted": "#5B6B6A",
+    "bg": "#F4F6F5",
+    "card": "#FFFFFF",
+    "border": "rgba(27,36,48,0.10)",
+    "sidebar_bg": "#1B2430",
+    "sidebar_text": "#EDEFEE",
+    "sidebar_border": "rgba(255,255,255,0.06)",
+    "radio_bg": "rgba(255,255,255,0.035)",
+    "radio_hover": "rgba(255,255,255,0.09)",
+    "grid": "rgba(27,36,48,0.07)",
+}
+
+# Dark mode colors
+D_COLORS = {
+    "ink": "#E8ECF1",
+    "muted": "#8B95A5",
+    "bg": "#0D1117",
+    "card": "#161B22",
+    "border": "rgba(255,255,255,0.08)",
+    "sidebar_bg": "#0D1117",
+    "sidebar_text": "#C9D1D9",
+    "sidebar_border": "rgba(255,255,255,0.08)",
+    "radio_bg": "rgba(255,255,255,0.05)",
+    "radio_hover": "rgba(255,255,255,0.12)",
+    "grid": "rgba(255,255,255,0.06)",
+}
+
+# Pick active palette
+C = D_COLORS if st.session_state.dark_mode else L_COLORS
+
+# Static accent colors (same in both modes)
 COLOR_PRIMARY = "#2F6F62"
 COLOR_PRIMARY_LIGHT = "#4C9A79"
 COLOR_SLATE = "#5C7A8A"
@@ -61,13 +100,20 @@ COLOR_WORKLIFE = "#9B59B6"
 CHART_PALETTE = [COLOR_PRIMARY, COLOR_MEDIUM, COLOR_HIGH, COLOR_SLATE, COLOR_PRIMARY_LIGHT, "#8B5E3C", COLOR_SOCIAL, COLOR_SCREEN, COLOR_CAFFEINE, COLOR_WATER, COLOR_SUNLIGHT, COLOR_WORKLIFE]
 RISK_COLOR_MAP = {"Low": COLOR_GOOD, "Medium": COLOR_MEDIUM, "High": COLOR_HIGH}
 
-st.markdown(f"""
+# ═══════════════════════════════════════════════════════════════
+# 🌗 DYNAMIC CSS INJECTION
+# ═══════════════════════════════════════════════════════════════
+st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+</style>
+""", unsafe_allow_html=True)
 
+css = f"""
+<style>
 :root {{
-    --ink: {COLOR_INK}; --muted: {COLOR_MUTED}; --paper: {COLOR_BG}; --card: {COLOR_CARD};
-    --border: {COLOR_BORDER}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
+    --ink: {C['ink']}; --muted: {C['muted']}; --paper: {C['bg']}; --card: {C['card']};
+    --border: {C['border']}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
     --good: {COLOR_GOOD}; --medium: {COLOR_MEDIUM}; --high: {COLOR_HIGH};
 }}
 
@@ -81,8 +127,11 @@ h1, h2, h3 {{
 }}
 .stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 
-[data-testid="stSidebar"] {{ background: var(--ink); border-right: 1px solid rgba(255,255,255,0.06); }}
-[data-testid="stSidebar"] * {{ color: #EDEFEE !important; }}
+[data-testid="stSidebar"] {{ 
+    background: {C['sidebar_bg']}; 
+    border-right: 1px solid {C['sidebar_border']}; 
+}}
+[data-testid="stSidebar"] * {{ color: {C['sidebar_text']} !important; }}
 .sidebar-brand {{
     font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
     margin: 0.2rem 0 0.1rem 0; display: flex; align-items: center; gap: 8px;
@@ -92,11 +141,11 @@ h1, h2, h3 {{
     text-transform: uppercase; color: var(--primary-light) !important; margin-bottom: 1.5rem;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label {{
-    background: rgba(255,255,255,0.035); border: 1px solid rgba(255,255,255,0.08);
+    background: {C['radio_bg']}; border: 1px solid rgba(255,255,255,0.08);
     border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.15s ease;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label:hover {{
-    background: rgba(255,255,255,0.09); border-color: var(--primary-light);
+    background: {C['radio_hover']}; border-color: var(--primary-light);
 }}
 .sidebar-disclaimer {{
     font-size: 0.68rem !important; color: rgba(237,239,238,0.55) !important;
@@ -143,9 +192,12 @@ h1, h2, h3 {{
 }}
 .stButton > button:hover {{ background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47,111,98,0.25); }}
 .stDownloadButton > button {{
-    background: #fff; color: var(--primary); border: 1.5px solid var(--primary); border-radius: 8px; font-weight: 600;
+    background: var(--card) !important; color: var(--primary) !important; 
+    border: 1.5px solid var(--primary) !important; border-radius: 8px; font-weight: 600;
 }}
-.stDownloadButton > button:hover {{ background: var(--primary); color: #fff; }}
+.stDownloadButton > button:hover {{ 
+    background: var(--primary) !important; color: #fff !important; 
+}}
 
 div[data-testid="stAlert"] {{ border-radius: 10px; border: 1px solid var(--border); }}
 button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
@@ -181,7 +233,7 @@ hr {{ display: none; }}
 
 .login-box {{
     max-width: 400px; margin: 2rem auto; padding: 2rem;
-    background: #fff; border: 1px solid rgba(27,36,48,0.10);
+    background: var(--card); border: 1px solid var(--border);
     border-radius: 14px; text-align: center;
 }}
 .login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
@@ -205,8 +257,38 @@ hr {{ display: none; }}
 .lock-screen h2 {{
     font-family: 'Fraunces', serif; color: var(--ink);
 }}
+
+/* Dark mode: dataframe/table styling */
+[data-testid="stDataFrame"] {{
+    background: var(--card) !important;
+}}
+[data-testid="stDataFrame"] td {{
+    color: var(--ink) !important;
+}}
+[data-testid="stDataFrame"] th {{
+    color: var(--ink) !important;
+    background: var(--paper) !important;
+}}
+
+/* Dark mode: input fields */
+input, textarea, .stTextInput > div > div > input {{
+    background: var(--card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border) !important;
+}}
+.stTextArea textarea {{
+    background: var(--card) !important;
+    color: var(--ink) !important;
+    border: 1px solid var(--border) !important;
+}}
+
+/* Dark mode: select slider */
+.stSlider > div > div > div {{
+    color: var(--ink) !important;
+}}
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(css, unsafe_allow_html=True)
 
 
 
@@ -236,6 +318,9 @@ def page_header(icon, eyebrow, title, subtitle=None):
     pulse_divider()
 
 
+# ═══════════════════════════════════════════════════════════════
+# DATABASE SETUP
+# ═══════════════════════════════════════════════════════════════
 DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
@@ -260,7 +345,6 @@ def init_db():
                 water_intake REAL, sunlight_exposure REAL, work_life_balance REAL
             )
         """)
-        # Migrate old schema: add new columns if they don't exist
         new_cols = [
             ("social_connection", "REAL"),
             ("screen_time", "REAL"),
@@ -273,7 +357,7 @@ def init_db():
             try:
                 cur.execute(f"ALTER TABLE user_history ADD COLUMN {col_name} {col_type}")
             except sqlite3.OperationalError:
-                pass  # Column already exists
+                pass
         cur.execute("""
             CREATE TABLE IF NOT EXISTS predictions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -288,7 +372,6 @@ def init_db():
                 target_sunlight REAL, target_worklife REAL, updated_at TEXT
             )
         """)
-        # Migrate old goals schema
         new_goal_cols = [
             ("target_social", "REAL"),
             ("target_screen_max", "REAL"),
@@ -300,7 +383,7 @@ def init_db():
             try:
                 cur.execute(f"ALTER TABLE goals ADD COLUMN {col_name} {col_type}")
             except sqlite3.OperationalError:
-                pass  # Column already exists
+                pass
         conn.commit()
         conn.close()
     except Exception as e:
@@ -663,12 +746,12 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     styles = getSampleStyleSheet()
     story = []
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
-    ink_color = rl_colors.HexColor(COLOR_INK)
+    ink_color = rl_colors.HexColor(COLOR_INK if not st.session_state.dark_mode else "#E8ECF1")
     title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
                                   alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
     eyebrow_style = ParagraphStyle('Eyebrow', parent=styles['Normal'], fontSize=10, alignment=1,
-                                    textColor=rl_colors.HexColor(COLOR_MUTED), spaceAfter=24)
+                                    textColor=rl_colors.HexColor(COLOR_MUTED if not st.session_state.dark_mode else "#8B95A5"), spaceAfter=24)
     story.append(Paragraph("MENTAL HEALTH RISK ANALYSIS", eyebrow_style))
     subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=16,
                                      textColor=ink_color)
@@ -688,7 +771,7 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
         story.append(Paragraph(f"- {rec}", info_style))
     story.append(Spacer(1, 24))
     footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
-                                   textColor=rl_colors.HexColor(COLOR_MUTED))
+                                   textColor=rl_colors.HexColor(COLOR_MUTED if not st.session_state.dark_mode else "#8B95A5"))
     story.append(Paragraph(
         "This report is a self-reflection summary, not a clinical diagnosis. "
         "If you are struggling, please consider speaking with a licensed professional.", footer_style))
@@ -761,14 +844,21 @@ def get_prediction_data():
 
 def style_plot(fig):
     fig.update_layout(
-        paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(27,36,48,0.02)",
-        font={"color": COLOR_INK, "family": "Inter, sans-serif"},
-        title_font={"family": "Fraunces, serif", "color": COLOR_INK, "size": 17},
+        paper_bgcolor="rgba(0,0,0,0)", 
+        plot_bgcolor="rgba(27,36,48,0.02)" if not st.session_state.dark_mode else "rgba(0,0,0,0)",
+        font={"color": C['ink'], "family": "Inter, sans-serif"},
+        title_font={"family": "Fraunces, serif", "color": C['ink'], "size": 17},
         margin=dict(l=20, r=20, t=50, b=20),
-        legend={"font": {"color": COLOR_MUTED}},
+        legend={"font": {"color": C['muted']}},
     )
-    fig.update_xaxes(gridcolor="rgba(27,36,48,0.07)", color=COLOR_MUTED)
-    fig.update_yaxes(gridcolor="rgba(27,36,48,0.07)", color=COLOR_MUTED)
+    fig.update_xaxes(
+        gridcolor=C['grid'], 
+        color=C['muted']
+    )
+    fig.update_yaxes(
+        gridcolor=C['grid'], 
+        color=C['muted']
+    )
     return fig
 
 def create_wellness_radar(sleep, stress, anxiety, exercise, mood, social_connection, screen_time,
@@ -791,8 +881,8 @@ def create_wellness_radar(sleep, stress, anxiety, exercise, mood, social_connect
     fig.update_layout(
         title="Wellness Profile (11 Dimensions)",
         polar=dict(bgcolor="rgba(0,0,0,0)",
-                   radialaxis=dict(visible=True, range=[0, 10], tickfont=dict(color=COLOR_MUTED)),
-                   angularaxis=dict(tickfont=dict(color=COLOR_INK))),
+                   radialaxis=dict(visible=True, range=[0, 10], tickfont=dict(color=C['muted'])),
+                   angularaxis=dict(tickfont=dict(color=C['ink']))),
         showlegend=False,
     )
     return style_plot(fig)
@@ -858,13 +948,13 @@ def gauge_figure(value, title, value_range=(0, 100), steps=None):
         ]
     fig = go.Figure(go.Indicator(
         mode="gauge+number", value=value, domain={'x': [0, 1], 'y': [0, 1]},
-        title={'text': title, 'font': {'size': 20, 'color': COLOR_INK, 'family': 'Fraunces, serif'}},
-        number={'font': {'color': COLOR_INK, 'family': 'IBM Plex Mono, monospace'}},
-        gauge={'axis': {'range': list(value_range), 'tickwidth': 1, 'tickcolor': COLOR_MUTED},
+        title={'text': title, 'font': {'size': 20, 'color': C['ink'], 'family': 'Fraunces, serif'}},
+        number={'font': {'color': C['ink'], 'family': 'IBM Plex Mono, monospace'}},
+        gauge={'axis': {'range': list(value_range), 'tickwidth': 1, 'tickcolor': C['muted']},
                'bar': {'color': COLOR_PRIMARY}, 'bgcolor': "rgba(0,0,0,0)",
-               'borderwidth': 1, 'bordercolor': COLOR_BORDER, 'steps': steps}
+               'borderwidth': 1, 'bordercolor': C['border'], 'steps': steps}
     ))
-    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': COLOR_INK})
+    fig.update_layout(paper_bgcolor='rgba(0,0,0,0)', font={'color': C['ink']})
     return fig
 
 def risk_badge(risk):
@@ -1021,9 +1111,6 @@ def create_multi_metric_trend(df):
         legend=dict(orientation="h", yanchor="bottom", y=-0.3, xanchor="center", x=0.5)
     )
     return style_plot(fig)
-
-
-
 # ═══════════════════════════════════════════════════════════════
 # 🤖 AI WELLNESS INSIGHTS ENGINE
 # ═══════════════════════════════════════════════════════════════
@@ -1050,6 +1137,7 @@ def detect_trends(df, window=5):
                 }
     return trends
 
+
 def find_key_correlations(df):
     """Find the strongest correlations between wellness factors."""
     if len(df) < 5:
@@ -1075,6 +1163,7 @@ def find_key_correlations(df):
                 })
     return sorted(pairs, key=lambda x: abs(x["correlation"]), reverse=True)[:5]
 
+
 def detect_anomalies(df):
     """Detect recent outliers using Z-score analysis."""
     if len(df) < 5:
@@ -1099,6 +1188,7 @@ def detect_anomalies(df):
                     })
     return anomalies
 
+
 def predict_next_wellness(df):
     """Predict next wellness score using simple time-series regression."""
     if len(df) < 5 or not SKLEARN_AVAILABLE:
@@ -1119,6 +1209,7 @@ def predict_next_wellness(df):
     last_row = df[available].iloc[-1].fillna(df[available].median()).values.reshape(1, -1)
     prediction = model.predict(last_row)[0]
     return round(np.clip(prediction, 0, 100), 1)
+
 
 def generate_smart_recommendations(df, trends, correlations, anomalies):
     """Generate context-aware, data-driven recommendations."""
@@ -1144,6 +1235,7 @@ def generate_smart_recommendations(df, trends, correlations, anomalies):
     if not recs:
         recs.append("✅ Your wellness patterns look stable. Keep maintaining your healthy habits!")
     return recs
+
 
 def generate_ai_narrative(df, username):
     """Generate a natural language summary of the user's wellness state."""
@@ -1188,6 +1280,7 @@ def generate_ai_narrative(df, username):
         paragraphs.append(f"⚠️ **Attention needed:** Your recent {sev['metric'].replace('_', ' ')} shows a significant {sev['direction']} compared to your usual pattern.")
     return "\n\n".join(paragraphs)
 
+
 def create_trend_visualization(df):
     """Create an AI trend prediction chart."""
     if len(df) < 5 or not SKLEARN_AVAILABLE:
@@ -1223,7 +1316,7 @@ def create_trend_visualization(df):
         line=dict(color=COLOR_MEDIUM, width=2, dash="dash"),
         marker=dict(symbol="diamond", size=10)
     ))
-    fig.add_vline(x=hist_dates[-1], line_dash="dot", line_color=COLOR_MUTED,
+    fig.add_vline(x=hist_dates[-1], line_dash="dot", line_color=C['muted'],
                   annotation_text="Today")
     fig.update_layout(
         title="Wellness Score Trajectory + 3-Day AI Forecast",
@@ -1231,6 +1324,7 @@ def create_trend_visualization(df):
         hovermode="x unified"
     )
     return style_plot(fig)
+
 
 def create_correlation_network(df):
     """Create a network-style visualization of factor correlations."""
@@ -1261,9 +1355,9 @@ def create_correlation_network(df):
     for node, (x, y) in positions.items():
         fig.add_trace(go.Scatter(
             x=[x], y=[y], mode="markers+text",
-            marker=dict(size=30, color=COLOR_PRIMARY, line=dict(color=COLOR_INK, width=2)),
+            marker=dict(size=30, color=COLOR_PRIMARY, line=dict(color=C['ink'], width=2)),
             text=node.replace("_", " ").title(), textposition="top center",
-            textfont=dict(size=10, color=COLOR_INK),
+            textfont=dict(size=10, color=C['ink']),
             hovertemplate=f"<b>{node.replace('_', ' ').title()}</b><extra></extra>",
             showlegend=False
         ))
@@ -1278,15 +1372,16 @@ def create_correlation_network(df):
     return fig
 
 
+# ═══════════════════════════════════════════════════════════════
+# PAGE LIST & SIDEBAR NAVIGATION
+# ═══════════════════════════════════════════════════════════════
 PAGES = [
     "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
     "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
     "🆘 Support & Coping", "📄 Report", "🧠 AI Insights", "📊 Admin"
 ]
 
-# ═══════════════════════════════════════════════════════════════
-# SIDEBAR — WITH LOGO SUPPORT
-# ═══════════════════════════════════════════════════════════════
+# Build sidebar — FIXED: no nested st.sidebar calls inside with st.sidebar
 with st.sidebar:
     # Logo display
     if LOGO_PATH:
@@ -1296,7 +1391,13 @@ with st.sidebar:
             elif os.path.exists(LOGO_PATH):
                 st.image(LOGO_PATH, width=180)
         except Exception:
-            pass  # Silently skip if logo fails to load
+            pass
+
+    # Dark mode toggle — FIXED: uses st.button (not st.sidebar.button) inside with st.sidebar
+    toggle_icon = "🌙" if not st.session_state.dark_mode else "☀️"
+    toggle_text = "Dark Mode" if not st.session_state.dark_mode else "Light Mode"
+    if st.button(f"{toggle_icon} {toggle_text}", use_container_width=True, key="dark_mode_toggle"):
+        toggle_dark_mode()
 
     st.markdown("""
     <div class="sidebar-brand">🧠 MindTrack</div>
@@ -1314,7 +1415,6 @@ if 'nav_to' in st.session_state:
         _nav_target = _nav_map[st.session_state['nav_to']]
     del st.session_state['nav_to']
 
-# Compute default index for radio based on nav target
 _default_index = 0
 if _nav_target and _nav_target in PAGES:
     _default_index = PAGES.index(_nav_target)
@@ -1329,7 +1429,6 @@ MindTrack supports self-reflection and is not a diagnostic or emergency tool.<br
 In crisis (US)? Call or text <b>988</b> — or see Support & Coping.
 </div>
 """, unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════
 # HOME PAGE
 # ═══════════════════════════════════════════════════════════════
@@ -1419,7 +1518,6 @@ elif page == "📋 Assessment":
     page_header("📋", "Daily Check-in", "Mental Health Assessment",
                 "A comprehensive 11-factor wellness check to understand how you are doing today.")
 
-    # IMPORTANT: Wrapped in st.form so inputs register properly before submit
     with st.form("assessment_form"):
         username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="assessment_username")
         entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date(), key="assessment_date")
@@ -2054,7 +2152,7 @@ elif page == "📓 My Journals":
                           title="Polarity Over Time", color_discrete_sequence=[COLOR_PRIMARY])
             fig.add_scatter(x=df_chart["date"], y=df_chart["polarity_smooth"],
                             mode="lines", name="Trend", line=dict(color=COLOR_MEDIUM, width=2))
-            fig.add_hline(y=0, line_dash="dot", line_color=COLOR_MUTED, annotation_text="Neutral")
+            fig.add_hline(y=0, line_dash="dot", line_color=C['muted'], annotation_text="Neutral")
             st.plotly_chart(style_plot(fig), use_container_width=True)
 
         pulse_divider()
@@ -2230,7 +2328,7 @@ elif page == "🧠 AI Insights":
     # ── AI Narrative ──
     st.markdown("## 📝 Your Wellness Story")
     narrative = generate_ai_narrative(mine, username)
-    st.markdown(f'<div style="background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; line-height: 1.7; font-size: 1rem; color: var(--ink);">{narrative}</div>', unsafe_allow_html=True)
+    st.markdown(f'<div style="background: {C[\"card\"]}; border: 1px solid {C[\"border\"]}; border-radius: 12px; padding: 20px; line-height: 1.7; font-size: 1rem; color: {C[\"ink\"]};">{narrative}</div>', unsafe_allow_html=True)
     pulse_divider()
 
     # ── Trend Analysis ──
@@ -2240,7 +2338,7 @@ elif page == "🧠 AI Insights":
         trend_df_data = []
         for metric, data in trends.items():
             trend_df_data.append({
-                                "Metric": metric.replace("_", " ").title(),
+                "Metric": metric.replace("_", " ").title(),
                 "Direction": data["direction"].capitalize(),
                 "Slope": round(data["slope"], 3),
                 "Reliability (R²)": round(data["r2"], 2),
@@ -2254,7 +2352,12 @@ elif page == "🧠 AI Insights":
                 return f"color: {COLOR_HIGH}; font-weight: 600;"
             return f"color: {COLOR_MEDIUM};"
 
-        st.dataframe(trend_df.style.map(color_direction, subset=["Direction"]), use_container_width=True)
+        # Pandas compatibility: try .map() first, fallback to .applymap()
+        try:
+            styled = trend_df.style.map(color_direction, subset=["Direction"])
+        except AttributeError:
+            styled = trend_df.style.applymap(color_direction, subset=["Direction"])
+        st.dataframe(styled, use_container_width=True)
         pulse_divider()
 
     # ── Correlation Insights ──
@@ -2276,7 +2379,7 @@ elif page == "🧠 AI Insights":
                 st.markdown(
                     f"{emoji} **{corr['factor_a'].replace('_', ' ').title()}** ↔ "
                     f"**{corr['factor_b'].replace('_', ' ').title()}**  <br>"
-                    f"<span style='font-family: IBM Plex Mono; font-size: 0.8rem; color: var(--muted);'>"
+                    f"<span style='font-family: IBM Plex Mono; font-size: 0.8rem; color: {C['muted']};'>"
                     f"r = {corr['correlation']} ({corr['strength']} {corr['direction']})</span>",
                     unsafe_allow_html=True
                 )
@@ -2319,7 +2422,7 @@ elif page == "🧠 AI Insights":
     for rec in smart_recs:
         st.success(rec)
 
-    # ── Factor Importance (Feature Weights) ──
+       # ── Factor Importance (Feature Weights) ──
     if len(mine) >= 5 and SKLEARN_AVAILABLE:
         st.markdown("## 🎯 What Drives Your Wellness Score?")
         features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
