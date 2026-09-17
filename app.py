@@ -668,44 +668,32 @@ def show_login_page():
     # Beautiful auth page CSS (scoped, additive — doesn't touch your global theme)
     st.markdown("""
     <style>
-      .auth-wrap{
-        max-width:520px;margin:24px auto 8px;padding:34px 34px 28px;
-        background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
-        backdrop-filter: blur(10px);
-        border-radius:22px;
-        box-shadow: 0 20px 60px rgba(23, 43, 77, .12),
-                    0 2px 6px  rgba(23, 43, 77, .06);
-        border: 1px solid rgba(23,43,77,.06);
-      }
       .auth-hero{
-        display:flex;align-items:center;gap:14px;margin-bottom:6px;
+        max-width:640px;margin:14px auto 6px;padding:22px 26px;
+        background: linear-gradient(135deg,#6C63FF15,#5AB0B015);
+        border-radius:18px;
+        border: 1px solid rgba(108,99,255,.18);
+        display:flex;align-items:center;gap:16px;
       }
       .auth-logo{
-        width:56px;height:56px;border-radius:16px;
+        width:56px;height:56px;border-radius:16px;flex:none;
         background: linear-gradient(135deg,#6C63FF,#5AB0B0);
         display:flex;align-items:center;justify-content:center;
         font-size:28px;color:#fff;box-shadow:0 8px 22px rgba(108,99,255,.35);
       }
-      .auth-title{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin:0;}
-      .auth-sub{color:#5B667A;margin:2px 0 18px;font-size:.98rem;}
-      .auth-toggle{
-        display:flex;background:#F1F3F8;border-radius:12px;padding:4px;margin-bottom:16px;
-      }
-      .auth-toggle button{
-        flex:1;border:0;background:transparent;padding:10px 12px;border-radius:9px;
-        font-weight:600;color:#5B667A;cursor:pointer;
-      }
-      .auth-toggle .active{ background:#fff;color:#1F2937;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+      .auth-title{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin:0;}
+      .auth-sub{color:#5B667A;margin:2px 0 0;font-size:.95rem;}
       .auth-note{color:#6B7280;font-size:.85rem;margin-top:10px;text-align:center;}
       .auth-badge{
         display:inline-block;padding:3px 10px;border-radius:999px;
-        background:#EEF2FF;color:#4338CA;font-size:.78rem;font-weight:600;
-        margin-left:8px;
+        background:#EEF2FF;color:#4338CA;font-size:.75rem;font-weight:700;
+        margin-left:8px;vertical-align:middle;
       }
+      /* dark-mode friendliness */
+      [data-theme="dark"] .auth-sub, [data-theme="dark"] .auth-note { color:#B7C0CE; }
     </style>
     """, unsafe_allow_html=True)
 
-    st.markdown('<div class="auth-wrap">', unsafe_allow_html=True)
     st.markdown("""
       <div class="auth-hero">
         <div class="auth-logo">🧠</div>
@@ -767,8 +755,6 @@ def show_login_page():
                         st.error(msg)
         st.markdown("<p class='auth-note'>Already have an account? Click <b>Sign In</b>.</p>",
                     unsafe_allow_html=True)
-
-    st.markdown("</div>", unsafe_allow_html=True)
 
 def show_user_badge():
     if st.session_state.get("logged_in") and st.session_state.get("current_user"):
