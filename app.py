@@ -42,52 +42,53 @@ def toggle_dark_mode():
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
-# Light mode colors
+# 🎨 VIBRANT NEON & GRADIENT COLOR SYSTEM
+# Light mode colors (Modern bright)
 L_COLORS = {
-    "ink": "#1B2430",
-    "muted": "#5B6B6A",
-    "bg": "#F4F6F5",
+    "ink": "#0A0E27",
+    "muted": "#6B7280",
+    "bg": "#F8F9FF",
     "card": "#FFFFFF",
-    "border": "rgba(27,36,48,0.10)",
-    "sidebar_bg": "#1B2430",
-    "sidebar_text": "#EDEFEE",
-    "sidebar_border": "rgba(255,255,255,0.06)",
-    "radio_bg": "rgba(255,255,255,0.035)",
-    "radio_hover": "rgba(255,255,255,0.09)",
-    "grid": "rgba(27,36,48,0.07)",
+    "border": "rgba(99, 102, 241, 0.15)",
+    "sidebar_bg": "#0A0E27",
+    "sidebar_text": "#F3F4F6",
+    "sidebar_border": "rgba(99, 102, 241, 0.3)",
+    "radio_bg": "rgba(99, 102, 241, 0.08)",
+    "radio_hover": "rgba(99, 102, 241, 0.15)",
+    "grid": "rgba(99, 102, 241, 0.08)",
 }
 
-# Dark mode colors
+# Dark mode colors (Deep space + neon)
 D_COLORS = {
-    "ink": "#E8ECF1",
-    "muted": "#8B95A5",
-    "bg": "#0D1117",
-    "card": "#161B22",
-    "border": "rgba(255,255,255,0.08)",
-    "sidebar_bg": "#0D1117",
-    "sidebar_text": "#C9D1D9",
-    "sidebar_border": "rgba(255,255,255,0.08)",
-    "radio_bg": "rgba(255,255,255,0.05)",
-    "radio_hover": "rgba(255,255,255,0.12)",
-    "grid": "rgba(255,255,255,0.06)",
+    "ink": "#F0F4FF",
+    "muted": "#A5B4FC",
+    "bg": "#0D0E1A",
+    "card": "#1A1B2E",
+    "border": "rgba(124, 58, 255, 0.3)",
+    "sidebar_bg": "#0A0B15",
+    "sidebar_text": "#E0E7FF",
+    "sidebar_border": "rgba(124, 58, 255, 0.4)",
+    "radio_bg": "rgba(124, 58, 255, 0.15)",
+    "radio_hover": "rgba(124, 58, 255, 0.25)",
+    "grid": "rgba(124, 58, 255, 0.1)",
 }
 
 # Pick active palette
 C = D_COLORS if st.session_state.dark_mode else L_COLORS
 
-# Static accent colors (same in both modes)
-COLOR_PRIMARY = "#2F6F62"
-COLOR_PRIMARY_LIGHT = "#4C9A79"
-COLOR_SLATE = "#5C7A8A"
-COLOR_GOOD = "#4C9A79"
-COLOR_MEDIUM = "#D9A441"
-COLOR_HIGH = "#C1554A"
-COLOR_SOCIAL = "#7B68EE"
-COLOR_SCREEN = "#FF6B6B"
-COLOR_CAFFEINE = "#8B6914"
-COLOR_WATER = "#4A90D9"
-COLOR_SUNLIGHT = "#F4A460"
-COLOR_WORKLIFE = "#9B59B6"
+# 🌈 NEON ACCENT COLORS - CRAZY VIBRANT
+COLOR_PRIMARY = "#7C3AFF"          # Electric Purple
+COLOR_PRIMARY_LIGHT = "#A78BFA"    # Soft Purple
+COLOR_SLATE = "#60A5FA"            # Sky Blue
+COLOR_GOOD = "#34D399"             # Neon Mint
+COLOR_MEDIUM = "#FBBF24"           # Vibrant Gold
+COLOR_HIGH = "#F87171"             # Hot Pink Red
+COLOR_SOCIAL = "#C084FC"           # Magenta
+COLOR_SCREEN = "#FF006E"           # Hot Pink
+COLOR_CAFFEINE = "#FFA500"         # Bright Orange
+COLOR_WATER = "#00D9FF"            # Cyan
+COLOR_SUNLIGHT = "#FFD700"         # Golden Yellow
+COLOR_WORKLIFE = "#FF10F0"         # Neon Magenta
 
 CHART_PALETTE = [COLOR_PRIMARY, COLOR_MEDIUM, COLOR_HIGH, COLOR_SLATE, COLOR_PRIMARY_LIGHT, "#8B5E3C", COLOR_SOCIAL, COLOR_SCREEN, COLOR_CAFFEINE, COLOR_WATER, COLOR_SUNLIGHT, COLOR_WORKLIFE]
 RISK_COLOR_MAP = {"Low": COLOR_GOOD, "Medium": COLOR_MEDIUM, "High": COLOR_HIGH}
@@ -103,41 +104,92 @@ st.markdown("""
 
 css = f"""
 <style>
+@keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-12px); }} }}
+@keyframes glow {{ 0%, 100% {{ filter: drop-shadow(0 0 10px rgba(124, 58, 255, 0.5)); }} 50% {{ filter: drop-shadow(0 0 25px rgba(124, 58, 255, 0.8)); }} }}
+@keyframes shimmer {{ 0% {{ background-position: -1000px 0; }} 100% {{ background-position: 1000px 0; }} }}
+@keyframes slideIn {{ 0% {{ opacity: 0; transform: translateY(20px); }} 100% {{ opacity: 1; transform: translateY(0); }} }}
+@keyframes colorPulse {{ 0%, 100% {{ box-shadow: 0 0 20px rgba(124, 58, 255, 0.4); }} 50% {{ box-shadow: 0 0 40px rgba(0, 217, 255, 0.5); }} }}
+
 :root {{
     --ink: {C['ink']}; --muted: {C['muted']}; --paper: {C['bg']}; --card: {C['card']};
     --border: {C['border']}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
     --good: {COLOR_GOOD}; --medium: {COLOR_MEDIUM}; --high: {COLOR_HIGH};
 }}
 
+* {{ box-sizing: border-box; }}
 html, body, [class*="css"] {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }}
-.stApp {{ background: var(--paper); }}
+.stApp {{ 
+    background: linear-gradient(135deg, {C['bg']} 0%, #1a0a2e 100%);
+    background-attachment: fixed;
+    color: {C['ink']};
+}}
 .main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1200px; }}
 
-h1, h2, h3 {{
-    font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important;
-    font-weight: 600 !important; letter-spacing: -0.01em;
+h1, h2, h3, h4, h5, h6 {{
+    font-family: 'Fraunces', Georgia, serif !important;
+    color: {C['ink']} !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em;
 }}
-.stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 
-[data-testid="stSidebar"] {{ 
-    background: {C['sidebar_bg']}; 
-    border-right: 1px solid {C['sidebar_border']}; 
+.stMarkdown, .stMarkdown p {{
+    color: {C['ink']} !important;
+    font-size: 1rem !important;
 }}
-[data-testid="stSidebar"] * {{ color: {C['sidebar_text']} !important; }}
+
+label, .stCaption {{
+    color: {C['muted']} !important;
+    font-weight: 500 !important;
+}}
+
+[data-testid="stSidebar"] {{
+    background: linear-gradient(180deg, {C['sidebar_bg']} 0%, #1a0a2e 100%) !important;
+    border-right: 2px solid {COLOR_PRIMARY} !important;
+    box-shadow: inset -15px 0 40px rgba(124, 58, 255, 0.15) !important;
+}}
+[data-testid="stSidebar"] * {{
+    color: {C['sidebar_text']} !important;
+}}
 .sidebar-brand {{
-    font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
-    margin: 0.2rem 0 0.1rem 0; display: flex; align-items: center; gap: 8px;
+    font-family: 'Fraunces', serif !important;
+    font-size: 1.6rem !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_WATER}) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    background-clip: text !important;
+    margin: 0.2rem 0 0.1rem 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    animation: float 3s ease-in-out infinite !important;
 }}
 .sidebar-tagline {{
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--primary-light) !important; margin-bottom: 1.5rem;
+    font-family: 'IBM Plex Mono', monospace !important;
+    font-size: 0.7rem !important;
+    letter-spacing: 0.15em !important;
+    text-transform: uppercase !important;
+    color: {COLOR_WATER} !important;
+    margin-bottom: 1.5rem !important;
+    text-shadow: 0 0 15px rgba(0, 217, 255, 0.5) !important;
+    font-weight: 700 !important;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label {{
-    background: {C['radio_bg']}; border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.15s ease;
+    background: rgba(124, 58, 255, 0.15) !important;
+    backdrop-filter: blur(8px) !important;
+    border: 2px solid {COLOR_SLATE} !important;
+    border-radius: 12px !important;
+    padding: 11px 16px !important;
+    margin-bottom: 8px !important;
+    transition: all 0.25s ease !important;
+    cursor: pointer !important;
+    font-weight: 600 !important;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label:hover {{
-    background: {C['radio_hover']}; border-color: var(--primary-light);
+    background: rgba(124, 58, 255, 0.25) !important;
+    border-color: {COLOR_PRIMARY} !important;
+    box-shadow: 0 0 20px rgba(124, 58, 255, 0.4) !important;
+    transform: translateX(6px) !important;
 }}
 .sidebar-disclaimer {{
     font-size: 0.68rem !important; color: rgba(237,239,238,0.55) !important;
@@ -155,46 +207,175 @@ h1, h2, h3 {{
 .pulse-divider {{ color: var(--primary); opacity: 0.55; height: 18px; margin: 1.2rem 0 1.6rem 0; }}
 .pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
 
-.hero-wrap {{ text-align: center; padding: 2.6rem 0 1.6rem 0; }}
-.hero-icon {{ font-size: 3.2rem; }}
-.hero-title {{ font-family: 'Fraunces', serif; font-size: 2.6rem; margin: 0.25rem 0 0.35rem 0; color: var(--ink); font-weight: 700; }}
+.hero-wrap {{ 
+    text-align: center; 
+    padding: 3rem 2rem;
+    background: linear-gradient(135deg, rgba(124, 58, 255, 0.1), rgba(0, 217, 255, 0.05));
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 2px solid {COLOR_PRIMARY};
+    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.2);
+    margin-bottom: 1.5rem;
+}}
+.hero-icon {{ 
+    font-size: 3.6rem;
+    animation: float 4s ease-in-out infinite;
+    filter: drop-shadow(0 0 15px rgba(124, 58, 255, 0.4));
+}}
+.hero-title {{ 
+    font-family: 'Fraunces', serif; 
+    font-size: 2.8rem; 
+    margin: 0.25rem 0 0.35rem 0; 
+    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_WATER});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 800;
+    text-shadow: 0 0 25px rgba(124, 58, 255, 0.3);
+}}
 .hero-tagline {{
-    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.10em; text-transform: uppercase;
-    font-size: 0.82rem; color: var(--primary); font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace; 
+    letter-spacing: 0.10em; 
+    text-transform: uppercase;
+    font-size: 0.82rem; 
+    color: {COLOR_WATER};
+    font-weight: 700;
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
 }}
 
 [data-testid="stMetric"] {{
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px 18px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    background: rgba(26, 27, 46, 0.7) !important;
+    backdrop-filter: blur(15px) saturate(200%) !important;
+    border: 2px solid {COLOR_PRIMARY} !important;
+    border-radius: 16px !important;
+    padding: 20px 24px !important;
+    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.25), inset 0 1px 2px rgba(255,255,255,0.15) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    animation: slideIn 0.6s ease-out !important;
+}}
+[data-testid="stMetric"]:hover {{
+    transform: translateY(-8px) scale(1.02) !important;
+    box-shadow: 0 16px 48px rgba(124, 58, 255, 0.4), 0 0 30px rgba(0, 217, 255, 0.3) !important;
+    border-color: {COLOR_WATER} !important;
 }}
 [data-testid="stMetricLabel"] {{
-    font-family: 'IBM Plex Mono', monospace !important; text-transform: uppercase;
-    font-size: 0.70rem !important; letter-spacing: 0.06em; color: var(--muted) !important;
+    font-family: 'IBM Plex Mono', monospace !important;
+    text-transform: uppercase !important;
+    font-size: 0.75rem !important;
+    letter-spacing: 0.08em !important;
+    color: {COLOR_WATER} !important;
+    font-weight: 700 !important;
+    text-shadow: 0 0 15px rgba(0, 217, 255, 0.4) !important;
 }}
-[data-testid="stMetricValue"] {{ font-family: 'Fraunces', serif !important; color: var(--ink) !important; }}
+[data-testid="stMetricValue"] {{
+    font-family: 'Fraunces', serif !important;
+    color: {COLOR_PRIMARY} !important;
+    font-size: 2.4rem !important;
+    font-weight: 800 !important;
+    text-shadow: 0 0 20px rgba(124, 58, 255, 0.5), 0 0 40px rgba(124, 58, 255, 0.2) !important;
+}}
 .feature-card {{
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 22px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    background: rgba(26, 27, 46, 0.7) !important;
+    backdrop-filter: blur(15px) saturate(200%) !important;
+    border: 2px solid {COLOR_SLATE} !important;
+    border-radius: 16px !important;
+    padding: 24px !important;
+    box-shadow: 0 8px 32px rgba(96, 165, 250, 0.15), inset 0 1px 2px rgba(255,255,255,0.12) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}}
+.feature-card:hover {{
+    transform: translateY(-10px) !important;
+    border-color: {COLOR_PRIMARY} !important;
+    box-shadow: 0 16px 48px rgba(124, 58, 255, 0.3), 0 0 25px rgba(60, 165, 250, 0.2) !important;
 }}
 
 .stButton > button {{
-    background: var(--primary); color: #fff; border: none; border-radius: 8px;
-    padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
-    box-shadow: 0 1px 2px rgba(27,36,48,0.12); transition: all 0.15s ease;
+    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SLATE}) !important;
+    color: #fff !important;
+    border: 2px solid {COLOR_PRIMARY} !important;
+    border-radius: 12px !important;
+    padding: 12px 28px !important;
+    font-weight: 700 !important;
+    font-family: 'Inter', sans-serif !important;
+    font-size: 0.95rem !important;
+    box-shadow: 0 0 25px rgba(124, 58, 255, 0.5), 0 4px 15px rgba(124, 58, 255, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+    letter-spacing: 0.5px !important;
 }}
-.stButton > button:hover {{ background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47,111,98,0.25); }}
+.stButton > button:hover {{
+    transform: translateY(-4px) scale(1.08) !important;
+    box-shadow: 0 0 40px rgba(124, 58, 255, 0.7), 0 12px 35px rgba(124, 58, 255, 0.4), 0 0 20px rgba(0, 217, 255, 0.3) !important;
+    background: linear-gradient(135deg, {COLOR_WATER}, {COLOR_PRIMARY}) !important;
+    border-color: {COLOR_WATER} !important;
+}}
+.stButton > button:active {{
+    transform: translateY(-2px) scale(1.05) !important;
+    box-shadow: 0 0 50px rgba(124, 58, 255, 0.9) !important;
+}}
 .stDownloadButton > button {{
-    background: var(--card) !important; color: var(--primary) !important; 
-    border: 1.5px solid var(--primary) !important; border-radius: 8px; font-weight: 600;
+    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SLATE}) !important;
+    color: white !important;
+    border: 2px solid {COLOR_PRIMARY} !important;
+    border-radius: 12px !important;
+    font-weight: 700 !important;
+    box-shadow: 0 0 25px rgba(124, 58, 255, 0.4) !important;
 }}
-.stDownloadButton > button:hover {{ 
-    background: var(--primary) !important; color: #fff !important; 
+.stDownloadButton > button:hover {{
+    background: linear-gradient(135deg, {COLOR_WATER}, {COLOR_PRIMARY}) !important;
+    color: white !important;
+    box-shadow: 0 0 40px rgba(124, 58, 255, 0.6) !important;
 }}
 
-div[data-testid="stAlert"] {{ border-radius: 10px; border: 1px solid var(--border); }}
-button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
-button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--primary); }}
-[data-testid="stSlider"] [role="slider"] {{ background-color: var(--primary) !important; }}
+.stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {{
+    background: rgba(26, 27, 46, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    border: 2px solid {COLOR_SLATE} !important;
+    border-radius: 10px !important;
+    padding: 12px 16px !important;
+    color: {C['ink']} !important;
+    font-size: 0.95rem !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(96, 165, 250, 0.1) !important;
+}}
+.stTextInput input::placeholder, .stNumberInput input::placeholder, .stTextArea textarea::placeholder {{
+    color: rgba(160, 174, 192, 0.6) !important;
+}}
+.stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus, .stTextArea textarea:focus {{
+    background: rgba(26, 27, 46, 0.9) !important;
+    border-color: {COLOR_PRIMARY} !important;
+    outline: none !important;
+    box-shadow: 0 0 25px rgba(124, 58, 255, 0.4), 0 0 40px rgba(124, 58, 255, 0.2) !important;
+}}
+
+div[data-testid="stAlert"] {{
+    border-radius: 14px !important;
+    border: 2px solid {COLOR_PRIMARY} !important;
+    background: rgba(26, 27, 46, 0.7) !important;
+    backdrop-filter: blur(10px) !important;
+    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.15) !important;
+}}
+div[data-testid="stAlert"] p {{
+    color: {C['ink']} !important;
+    font-weight: 500 !important;
+}}
+
+button[data-baseweb="tab"] {{
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 700 !important;
+    color: {C['muted']} !important;
+    transition: all 0.3s ease !important;
+}}
+button[data-baseweb="tab"][aria-selected="true"] {{
+    color: {COLOR_PRIMARY} !important;
+    border-bottom-color: {COLOR_PRIMARY} !important;
+    text-shadow: 0 0 10px rgba(124, 58, 255, 0.3) !important;
+}}
+
+[data-testid="stSlider"] [role="slider"] {{
+    background-color: {COLOR_PRIMARY} !important;
+    box-shadow: 0 0 15px rgba(124, 58, 255, 0.3) !important;
+}}
+
 hr {{ display: none; }}
 
 .streak-badge {{
@@ -203,19 +384,25 @@ hr {{ display: none; }}
     padding: 4px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 600;
 }}
 
-.breathing-circle-wrap {{ display: flex; justify-content: center; padding: 1.8rem 0; }}
+.breathing-circle-wrap {{
+    display: flex !important;
+    justify-content: center !important;
+    padding: 2rem 0 !important;
+}}
 .breathing-circle {{
-    width: 140px; height: 140px; border-radius: 50%;
-    background: radial-gradient(circle, var(--primary-light), var(--primary));
-    animation: breathe 16s ease-in-out infinite;
-    box-shadow: 0 0 40px rgba(47,111,98,0.35);
+    width: 160px !important;
+    height: 160px !important;
+    border-radius: 50% !important;
+    background: radial-gradient(circle, {COLOR_PRIMARY_LIGHT}, {COLOR_PRIMARY}) !important;
+    animation: breathe 16s ease-in-out infinite !important;
+    box-shadow: 0 0 50px rgba(124, 58, 255, 0.5), 0 0 80px rgba(124, 58, 255, 0.3) !important;
 }}
 @keyframes breathe {{
-    0%   {{ transform: scale(0.7);  opacity: 0.8; }}
-    25%  {{ transform: scale(1.15); opacity: 1;   }}
-    50%  {{ transform: scale(1.15); opacity: 1;   }}
-    75%  {{ transform: scale(0.7);  opacity: 0.8; }}
-    100% {{ transform: scale(0.7);  opacity: 0.8; }}
+    0%   {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
+    25%  {{ transform: scale(1.1); opacity: 1; box-shadow: 0 0 60px rgba(124, 58, 255, 0.6); }}
+    50%  {{ transform: scale(1.1); opacity: 1; box-shadow: 0 0 60px rgba(124, 58, 255, 0.6); }}
+    75%  {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
+    100% {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
 }}
 
 .entry-row {{
@@ -224,11 +411,22 @@ hr {{ display: none; }}
 }}
 
 .login-box {{
-    max-width: 400px; margin: 2rem auto; padding: 2rem;
-    background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; text-align: center;
+    max-width: 400px !important;
+    margin: 2rem auto !important;
+    padding: 2.5rem !important;
+    background: rgba(26, 27, 46, 0.7) !important;
+    backdrop-filter: blur(15px) !important;
+    border: 2px solid {COLOR_PRIMARY} !important;
+    border-radius: 16px !important;
+    text-align: center !important;
+    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.2), inset 0 1px 2px rgba(255,255,255,0.1) !important;
 }}
-.login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
+.login-icon {{
+    font-size: 3.2rem !important;
+    margin-bottom: 1rem !important;
+    color: {COLOR_PRIMARY} !important;
+    animation: float 4s ease-in-out infinite !important;
+}}
 .login-title {{
     font-family: 'Fraunces', serif; font-size: 1.6rem;
     color: var(--ink); margin-bottom: 0.3rem;
@@ -376,6 +574,16 @@ def init_db():
                 cur.execute(f"ALTER TABLE goals ADD COLUMN {col_name} {col_type}")
             except sqlite3.OperationalError:
                 pass
+        # NEW: users table for email + hashed password authentication
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS users (
+                email TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                password_hash TEXT NOT NULL,
+                salt TEXT NOT NULL,
+                created_at TEXT NOT NULL
+            )
+        """)
         conn.commit()
         conn.close()
     except Exception as e:
@@ -544,14 +752,100 @@ def init_login_state():
         st.session_state.logged_in = False
     if "current_user" not in st.session_state:
         st.session_state.current_user = None
+    if "current_email" not in st.session_state:
+        st.session_state.current_email = None
+    if "auth_mode" not in st.session_state:
+        st.session_state.auth_mode = "signin"  # "signin" | "signup"
 
-def login_user(username):
+
+# ── password hashing (stdlib only — no extra deps) ─────────────────────────
+def _hash_password(password: str, salt: str) -> str:
+    import hashlib
+    return hashlib.pbkdf2_hmac(
+        "sha256", password.encode("utf-8"), salt.encode("utf-8"), 200_000
+    ).hex()
+
+
+def _make_salt() -> str:
+    import secrets
+    return secrets.token_hex(16)
+
+
+def is_valid_email(email: str) -> bool:
+    """Reject fake / malformed emails. Accepts most real-world formats."""
+    import re
+    if not email or len(email) > 254:
+        return False
+    pattern = r"^[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}$"
+    if not re.match(pattern, email):
+        return False
+    # extra guard: reject obvious junk like a@a or test@test
+    local, _, domain = email.partition("@")
+    if len(local) < 2 or "." not in domain:
+        return False
+    junk_domains = {"test.com", "example.com", "abc.com", "aaa.com", "a.com"}
+    return domain.lower() not in junk_domains
+
+
+def register_user(email: str, name: str, password: str) -> tuple[bool, str]:
+    init_db()
+    email = email.strip().lower()
+    name = name.strip()
+    if not is_valid_email(email):
+        return False, "Please enter a valid, real-looking email address."
+    if len(name) < 2:
+        return False, "Name must be at least 2 characters."
+    if len(password) < 6:
+        return False, "Password must be at least 6 characters."
+    try:
+        conn = get_connection()
+        row = conn.execute("SELECT email FROM users WHERE email=?", (email,)).fetchone()
+        if row:
+            conn.close()
+            return False, "An account with this email already exists. Please sign in."
+        salt = _make_salt()
+        pw_hash = _hash_password(password, salt)
+        conn.execute(
+            "INSERT INTO users(email, name, password_hash, salt, created_at) VALUES (?,?,?,?,?)",
+            (email, name, pw_hash, salt, datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+        )
+        conn.commit()
+        conn.close()
+        return True, "Account created! You can sign in now."
+    except Exception as e:
+        return False, f"Could not create account: {e}"
+
+
+def authenticate_user(email: str, password: str) -> tuple[bool, str, str]:
+    """Returns (ok, message, name)."""
+    init_db()
+    email = (email or "").strip().lower()
+    if not email or not password:
+        return False, "Please enter both email and password.", ""
+    try:
+        conn = get_connection()
+        row = conn.execute(
+            "SELECT name, password_hash, salt FROM users WHERE email=?", (email,)
+        ).fetchone()
+        conn.close()
+        if not row:
+            return False, "No account found with this email. Please sign up.", ""
+        if _hash_password(password, row["salt"]) != row["password_hash"]:
+            return False, "Incorrect password. Please try again.", ""
+        return True, "Welcome back!", row["name"]
+    except Exception as e:
+        return False, f"Login error: {e}", ""
+
+
+def login_user(email: str, name: str):
     st.session_state.logged_in = True
-    st.session_state.current_user = username.strip()
+    st.session_state.current_email = email.strip().lower()
+    st.session_state.current_user = name.strip()
 
 def logout_user():
     st.session_state.logged_in = False
     st.session_state.current_user = None
+    st.session_state.current_email = None
 
 def require_login():
     init_login_state()
@@ -568,29 +862,119 @@ def require_login():
 
 def show_login_page():
     init_login_state()
+
+    # Beautiful auth page CSS (scoped, additive — doesn't touch your global theme)
     st.markdown("""
-    <div class="login-box">
-        <div class="login-icon">🧠</div>
-        <div class="login-title">MindTrack</div>
-        <div class="login-sub">Sign in to access your wellness dashboard</div>
-    </div>
+    <style>
+      .auth-wrap{
+        max-width:520px;margin:24px auto 8px;padding:34px 34px 28px;
+        background: linear-gradient(180deg, rgba(255,255,255,.9), rgba(255,255,255,.75));
+        backdrop-filter: blur(10px);
+        border-radius:22px;
+        box-shadow: 0 20px 60px rgba(23, 43, 77, .12),
+                    0 2px 6px  rgba(23, 43, 77, .06);
+        border: 1px solid rgba(23,43,77,.06);
+      }
+      .auth-hero{
+        display:flex;align-items:center;gap:14px;margin-bottom:6px;
+      }
+      .auth-logo{
+        width:56px;height:56px;border-radius:16px;
+        background: linear-gradient(135deg,#6C63FF,#5AB0B0);
+        display:flex;align-items:center;justify-content:center;
+        font-size:28px;color:#fff;box-shadow:0 8px 22px rgba(108,99,255,.35);
+      }
+      .auth-title{font-size:1.75rem;font-weight:800;letter-spacing:-.02em;margin:0;}
+      .auth-sub{color:#5B667A;margin:2px 0 18px;font-size:.98rem;}
+      .auth-toggle{
+        display:flex;background:#F1F3F8;border-radius:12px;padding:4px;margin-bottom:16px;
+      }
+      .auth-toggle button{
+        flex:1;border:0;background:transparent;padding:10px 12px;border-radius:9px;
+        font-weight:600;color:#5B667A;cursor:pointer;
+      }
+      .auth-toggle .active{ background:#fff;color:#1F2937;box-shadow:0 2px 8px rgba(0,0,0,.06);}
+      .auth-note{color:#6B7280;font-size:.85rem;margin-top:10px;text-align:center;}
+      .auth-badge{
+        display:inline-block;padding:3px 10px;border-radius:999px;
+        background:#EEF2FF;color:#4338CA;font-size:.78rem;font-weight:600;
+        margin-left:8px;
+      }
+    </style>
     """, unsafe_allow_html=True)
-    with st.form("login_form"):
-        username = st.text_input("Your name", placeholder="Enter your name", key="login_username_input")
-        submitted = st.form_submit_button("Sign In", use_container_width=True)
-        if submitted:
-            if username and username.strip():
-                login_user(username)
-                st.success(f"Welcome, {username.strip()}! 🎉")
-                st.rerun()
-            else:
-                st.error("Please enter your name.")
+
+    st.markdown('<div class="auth-wrap">', unsafe_allow_html=True)
+    st.markdown("""
+      <div class="auth-hero">
+        <div class="auth-logo">🧠</div>
+        <div>
+          <p class="auth-title">MindTrack <span class="auth-badge">Secure</span></p>
+          <p class="auth-sub">Sign in with your email to access your private wellness dashboard.</p>
+        </div>
+      </div>
+    """, unsafe_allow_html=True)
+
+    # Sign in / Sign up toggle
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("🔐  Sign In", use_container_width=True,
+                     type=("primary" if st.session_state.auth_mode == "signin" else "secondary")):
+            st.session_state.auth_mode = "signin"; st.rerun()
+    with c2:
+        if st.button("✨  Create Account", use_container_width=True,
+                     type=("primary" if st.session_state.auth_mode == "signup" else "secondary")):
+            st.session_state.auth_mode = "signup"; st.rerun()
+
+    st.write("")
+
+    if st.session_state.auth_mode == "signin":
+        with st.form("signin_form", clear_on_submit=False):
+            email = st.text_input("📧 Email", placeholder="you@example.com", key="signin_email")
+            pw    = st.text_input("🔑 Password", type="password", placeholder="••••••••", key="signin_pw")
+            ok = st.form_submit_button("Sign In →", use_container_width=True)
+            if ok:
+                success, msg, name = authenticate_user(email, pw)
+                if success:
+                    login_user(email, name)
+                    st.success(f"Welcome back, {name}! 🎉")
+                    st.rerun()
+                else:
+                    st.error(msg)
+        st.markdown("<p class='auth-note'>New here? Click <b>Create Account</b> above.</p>",
+                    unsafe_allow_html=True)
+    else:
+        with st.form("signup_form", clear_on_submit=False):
+            name  = st.text_input("👤 Full name", placeholder="Alex Kumar", key="signup_name")
+            email = st.text_input("📧 Email", placeholder="you@example.com", key="signup_email")
+            pw    = st.text_input("🔑 Password (min 6 chars)", type="password",
+                                  placeholder="••••••••", key="signup_pw")
+            pw2   = st.text_input("🔁 Confirm password", type="password",
+                                  placeholder="••••••••", key="signup_pw2")
+            ok = st.form_submit_button("Create my account →", use_container_width=True)
+            if ok:
+                if pw != pw2:
+                    st.error("Passwords do not match.")
+                else:
+                    success, msg = register_user(email, name, pw)
+                    if success:
+                        # Auto sign-in for a smooth first-time experience
+                        login_user(email, name)
+                        st.success(f"Account created — welcome, {name.strip()}! 🎉")
+                        st.rerun()
+                    else:
+                        st.error(msg)
+        st.markdown("<p class='auth-note'>Already have an account? Click <b>Sign In</b>.</p>",
+                    unsafe_allow_html=True)
+
+    st.markdown("</div>", unsafe_allow_html=True)
 
 def show_user_badge():
     if st.session_state.get("logged_in") and st.session_state.get("current_user"):
+        email = st.session_state.get("current_email", "")
         st.sidebar.markdown(f"""
         <div style="margin-bottom: 10px;">
             <span class="user-pill">👤 {st.session_state.current_user}</span>
+            <div style="font-size:.78rem;color:#6B7280;margin-top:4px;">{email}</div>
         </div>
         """, unsafe_allow_html=True)
 
