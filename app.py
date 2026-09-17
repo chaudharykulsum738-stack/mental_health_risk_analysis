@@ -28,7 +28,7 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════
 LOGO_PATH = "logo.png"
 
-st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="logo.png", layout="wide")
+st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="l", layout="wide")
 
 # ═══════════════════════════════════════════════════════════════
 # 🌗 DARK MODE: STATE & COLOR SYSTEM
