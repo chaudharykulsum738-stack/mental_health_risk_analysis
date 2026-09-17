@@ -42,53 +42,52 @@ def toggle_dark_mode():
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
-# 🎨 VIBRANT NEON & GRADIENT COLOR SYSTEM
-# Light mode colors (Modern bright)
+# Light mode colors
 L_COLORS = {
-    "ink": "#0A0E27",
-    "muted": "#6B7280",
-    "bg": "#F8F9FF",
+    "ink": "#1B2430",
+    "muted": "#5B6B6A",
+    "bg": "#F4F6F5",
     "card": "#FFFFFF",
-    "border": "rgba(99, 102, 241, 0.15)",
-    "sidebar_bg": "#0A0E27",
-    "sidebar_text": "#F3F4F6",
-    "sidebar_border": "rgba(99, 102, 241, 0.3)",
-    "radio_bg": "rgba(99, 102, 241, 0.08)",
-    "radio_hover": "rgba(99, 102, 241, 0.15)",
-    "grid": "rgba(99, 102, 241, 0.08)",
+    "border": "rgba(27,36,48,0.10)",
+    "sidebar_bg": "#1B2430",
+    "sidebar_text": "#EDEFEE",
+    "sidebar_border": "rgba(255,255,255,0.06)",
+    "radio_bg": "rgba(255,255,255,0.035)",
+    "radio_hover": "rgba(255,255,255,0.09)",
+    "grid": "rgba(27,36,48,0.07)",
 }
 
-# Dark mode colors (Deep space + neon)
+# Dark mode colors
 D_COLORS = {
-    "ink": "#F0F4FF",
-    "muted": "#A5B4FC",
-    "bg": "#0D0E1A",
-    "card": "#1A1B2E",
-    "border": "rgba(124, 58, 255, 0.3)",
-    "sidebar_bg": "#0A0B15",
-    "sidebar_text": "#E0E7FF",
-    "sidebar_border": "rgba(124, 58, 255, 0.4)",
-    "radio_bg": "rgba(124, 58, 255, 0.15)",
-    "radio_hover": "rgba(124, 58, 255, 0.25)",
-    "grid": "rgba(124, 58, 255, 0.1)",
+    "ink": "#E8ECF1",
+    "muted": "#8B95A5",
+    "bg": "#0D1117",
+    "card": "#161B22",
+    "border": "rgba(255,255,255,0.08)",
+    "sidebar_bg": "#0D1117",
+    "sidebar_text": "#C9D1D9",
+    "sidebar_border": "rgba(255,255,255,0.08)",
+    "radio_bg": "rgba(255,255,255,0.05)",
+    "radio_hover": "rgba(255,255,255,0.12)",
+    "grid": "rgba(255,255,255,0.06)",
 }
 
 # Pick active palette
 C = D_COLORS if st.session_state.dark_mode else L_COLORS
 
-# 🌈 NEON ACCENT COLORS - CRAZY VIBRANT
-COLOR_PRIMARY = "#7C3AFF"          # Electric Purple
-COLOR_PRIMARY_LIGHT = "#A78BFA"    # Soft Purple
-COLOR_SLATE = "#60A5FA"            # Sky Blue
-COLOR_GOOD = "#34D399"             # Neon Mint
-COLOR_MEDIUM = "#FBBF24"           # Vibrant Gold
-COLOR_HIGH = "#F87171"             # Hot Pink Red
-COLOR_SOCIAL = "#C084FC"           # Magenta
-COLOR_SCREEN = "#FF006E"           # Hot Pink
-COLOR_CAFFEINE = "#FFA500"         # Bright Orange
-COLOR_WATER = "#00D9FF"            # Cyan
-COLOR_SUNLIGHT = "#FFD700"         # Golden Yellow
-COLOR_WORKLIFE = "#FF10F0"         # Neon Magenta
+# Static accent colors (same in both modes)
+COLOR_PRIMARY = "#2F6F62"
+COLOR_PRIMARY_LIGHT = "#4C9A79"
+COLOR_SLATE = "#5C7A8A"
+COLOR_GOOD = "#4C9A79"
+COLOR_MEDIUM = "#D9A441"
+COLOR_HIGH = "#C1554A"
+COLOR_SOCIAL = "#7B68EE"
+COLOR_SCREEN = "#FF6B6B"
+COLOR_CAFFEINE = "#8B6914"
+COLOR_WATER = "#4A90D9"
+COLOR_SUNLIGHT = "#F4A460"
+COLOR_WORKLIFE = "#9B59B6"
 
 CHART_PALETTE = [COLOR_PRIMARY, COLOR_MEDIUM, COLOR_HIGH, COLOR_SLATE, COLOR_PRIMARY_LIGHT, "#8B5E3C", COLOR_SOCIAL, COLOR_SCREEN, COLOR_CAFFEINE, COLOR_WATER, COLOR_SUNLIGHT, COLOR_WORKLIFE]
 RISK_COLOR_MAP = {"Low": COLOR_GOOD, "Medium": COLOR_MEDIUM, "High": COLOR_HIGH}
@@ -104,92 +103,41 @@ st.markdown("""
 
 css = f"""
 <style>
-@keyframes float {{ 0%, 100% {{ transform: translateY(0px); }} 50% {{ transform: translateY(-12px); }} }}
-@keyframes glow {{ 0%, 100% {{ filter: drop-shadow(0 0 10px rgba(124, 58, 255, 0.5)); }} 50% {{ filter: drop-shadow(0 0 25px rgba(124, 58, 255, 0.8)); }} }}
-@keyframes shimmer {{ 0% {{ background-position: -1000px 0; }} 100% {{ background-position: 1000px 0; }} }}
-@keyframes slideIn {{ 0% {{ opacity: 0; transform: translateY(20px); }} 100% {{ opacity: 1; transform: translateY(0); }} }}
-@keyframes colorPulse {{ 0%, 100% {{ box-shadow: 0 0 20px rgba(124, 58, 255, 0.4); }} 50% {{ box-shadow: 0 0 40px rgba(0, 217, 255, 0.5); }} }}
-
 :root {{
     --ink: {C['ink']}; --muted: {C['muted']}; --paper: {C['bg']}; --card: {C['card']};
     --border: {C['border']}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
     --good: {COLOR_GOOD}; --medium: {COLOR_MEDIUM}; --high: {COLOR_HIGH};
 }}
 
-* {{ box-sizing: border-box; }}
 html, body, [class*="css"] {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }}
-.stApp {{ 
-    background: linear-gradient(135deg, {C['bg']} 0%, #1a0a2e 100%);
-    background-attachment: fixed;
-    color: {C['ink']};
-}}
+.stApp {{ background: var(--paper); }}
 .main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1200px; }}
 
-h1, h2, h3, h4, h5, h6 {{
-    font-family: 'Fraunces', Georgia, serif !important;
-    color: {C['ink']} !important;
-    font-weight: 700 !important;
-    letter-spacing: -0.01em;
+h1, h2, h3 {{
+    font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important;
+    font-weight: 600 !important; letter-spacing: -0.01em;
 }}
+.stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 
-.stMarkdown, .stMarkdown p {{
-    color: {C['ink']} !important;
-    font-size: 1rem !important;
+[data-testid="stSidebar"] {{ 
+    background: {C['sidebar_bg']}; 
+    border-right: 1px solid {C['sidebar_border']}; 
 }}
-
-label, .stCaption {{
-    color: {C['muted']} !important;
-    font-weight: 500 !important;
-}}
-
-[data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, {C['sidebar_bg']} 0%, #1a0a2e 100%) !important;
-    border-right: 2px solid {COLOR_PRIMARY} !important;
-    box-shadow: inset -15px 0 40px rgba(124, 58, 255, 0.15) !important;
-}}
-[data-testid="stSidebar"] * {{
-    color: {C['sidebar_text']} !important;
-}}
+[data-testid="stSidebar"] * {{ color: {C['sidebar_text']} !important; }}
 .sidebar-brand {{
-    font-family: 'Fraunces', serif !important;
-    font-size: 1.6rem !important;
-    font-weight: 800 !important;
-    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_WATER}) !important;
-    -webkit-background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    background-clip: text !important;
-    margin: 0.2rem 0 0.1rem 0 !important;
-    display: flex !important;
-    align-items: center !important;
-    gap: 8px !important;
-    animation: float 3s ease-in-out infinite !important;
+    font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
+    margin: 0.2rem 0 0.1rem 0; display: flex; align-items: center; gap: 8px;
 }}
 .sidebar-tagline {{
-    font-family: 'IBM Plex Mono', monospace !important;
-    font-size: 0.7rem !important;
-    letter-spacing: 0.15em !important;
-    text-transform: uppercase !important;
-    color: {COLOR_WATER} !important;
-    margin-bottom: 1.5rem !important;
-    text-shadow: 0 0 15px rgba(0, 217, 255, 0.5) !important;
-    font-weight: 700 !important;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--primary-light) !important; margin-bottom: 1.5rem;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label {{
-    background: rgba(124, 58, 255, 0.15) !important;
-    backdrop-filter: blur(8px) !important;
-    border: 2px solid {COLOR_SLATE} !important;
-    border-radius: 12px !important;
-    padding: 11px 16px !important;
-    margin-bottom: 8px !important;
-    transition: all 0.25s ease !important;
-    cursor: pointer !important;
-    font-weight: 600 !important;
+    background: {C['radio_bg']}; border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.15s ease;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label:hover {{
-    background: rgba(124, 58, 255, 0.25) !important;
-    border-color: {COLOR_PRIMARY} !important;
-    box-shadow: 0 0 20px rgba(124, 58, 255, 0.4) !important;
-    transform: translateX(6px) !important;
+    background: {C['radio_hover']}; border-color: var(--primary-light);
 }}
 .sidebar-disclaimer {{
     font-size: 0.68rem !important; color: rgba(237,239,238,0.55) !important;
@@ -207,175 +155,46 @@ label, .stCaption {{
 .pulse-divider {{ color: var(--primary); opacity: 0.55; height: 18px; margin: 1.2rem 0 1.6rem 0; }}
 .pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
 
-.hero-wrap {{ 
-    text-align: center; 
-    padding: 3rem 2rem;
-    background: linear-gradient(135deg, rgba(124, 58, 255, 0.1), rgba(0, 217, 255, 0.05));
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    border: 2px solid {COLOR_PRIMARY};
-    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.2);
-    margin-bottom: 1.5rem;
-}}
-.hero-icon {{ 
-    font-size: 3.6rem;
-    animation: float 4s ease-in-out infinite;
-    filter: drop-shadow(0 0 15px rgba(124, 58, 255, 0.4));
-}}
-.hero-title {{ 
-    font-family: 'Fraunces', serif; 
-    font-size: 2.8rem; 
-    margin: 0.25rem 0 0.35rem 0; 
-    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_WATER});
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    font-weight: 800;
-    text-shadow: 0 0 25px rgba(124, 58, 255, 0.3);
-}}
+.hero-wrap {{ text-align: center; padding: 2.6rem 0 1.6rem 0; }}
+.hero-icon {{ font-size: 3.2rem; }}
+.hero-title {{ font-family: 'Fraunces', serif; font-size: 2.6rem; margin: 0.25rem 0 0.35rem 0; color: var(--ink); font-weight: 700; }}
 .hero-tagline {{
-    font-family: 'IBM Plex Mono', monospace; 
-    letter-spacing: 0.10em; 
-    text-transform: uppercase;
-    font-size: 0.82rem; 
-    color: {COLOR_WATER};
-    font-weight: 700;
-    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5);
+    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.10em; text-transform: uppercase;
+    font-size: 0.82rem; color: var(--primary); font-weight: 600;
 }}
 
 [data-testid="stMetric"] {{
-    background: rgba(26, 27, 46, 0.7) !important;
-    backdrop-filter: blur(15px) saturate(200%) !important;
-    border: 2px solid {COLOR_PRIMARY} !important;
-    border-radius: 16px !important;
-    padding: 20px 24px !important;
-    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.25), inset 0 1px 2px rgba(255,255,255,0.15) !important;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    animation: slideIn 0.6s ease-out !important;
-}}
-[data-testid="stMetric"]:hover {{
-    transform: translateY(-8px) scale(1.02) !important;
-    box-shadow: 0 16px 48px rgba(124, 58, 255, 0.4), 0 0 30px rgba(0, 217, 255, 0.3) !important;
-    border-color: {COLOR_WATER} !important;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
 }}
 [data-testid="stMetricLabel"] {{
-    font-family: 'IBM Plex Mono', monospace !important;
-    text-transform: uppercase !important;
-    font-size: 0.75rem !important;
-    letter-spacing: 0.08em !important;
-    color: {COLOR_WATER} !important;
-    font-weight: 700 !important;
-    text-shadow: 0 0 15px rgba(0, 217, 255, 0.4) !important;
+    font-family: 'IBM Plex Mono', monospace !important; text-transform: uppercase;
+    font-size: 0.70rem !important; letter-spacing: 0.06em; color: var(--muted) !important;
 }}
-[data-testid="stMetricValue"] {{
-    font-family: 'Fraunces', serif !important;
-    color: {COLOR_PRIMARY} !important;
-    font-size: 2.4rem !important;
-    font-weight: 800 !important;
-    text-shadow: 0 0 20px rgba(124, 58, 255, 0.5), 0 0 40px rgba(124, 58, 255, 0.2) !important;
-}}
+[data-testid="stMetricValue"] {{ font-family: 'Fraunces', serif !important; color: var(--ink) !important; }}
 .feature-card {{
-    background: rgba(26, 27, 46, 0.7) !important;
-    backdrop-filter: blur(15px) saturate(200%) !important;
-    border: 2px solid {COLOR_SLATE} !important;
-    border-radius: 16px !important;
-    padding: 24px !important;
-    box-shadow: 0 8px 32px rgba(96, 165, 250, 0.15), inset 0 1px 2px rgba(255,255,255,0.12) !important;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-}}
-.feature-card:hover {{
-    transform: translateY(-10px) !important;
-    border-color: {COLOR_PRIMARY} !important;
-    box-shadow: 0 16px 48px rgba(124, 58, 255, 0.3), 0 0 25px rgba(60, 165, 250, 0.2) !important;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
 }}
 
 .stButton > button {{
-    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SLATE}) !important;
-    color: #fff !important;
-    border: 2px solid {COLOR_PRIMARY} !important;
-    border-radius: 12px !important;
-    padding: 12px 28px !important;
-    font-weight: 700 !important;
-    font-family: 'Inter', sans-serif !important;
-    font-size: 0.95rem !important;
-    box-shadow: 0 0 25px rgba(124, 58, 255, 0.5), 0 4px 15px rgba(124, 58, 255, 0.2) !important;
-    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-    letter-spacing: 0.5px !important;
+    background: var(--primary); color: #fff; border: none; border-radius: 8px;
+    padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
+    box-shadow: 0 1px 2px rgba(27,36,48,0.12); transition: all 0.15s ease;
 }}
-.stButton > button:hover {{
-    transform: translateY(-4px) scale(1.08) !important;
-    box-shadow: 0 0 40px rgba(124, 58, 255, 0.7), 0 12px 35px rgba(124, 58, 255, 0.4), 0 0 20px rgba(0, 217, 255, 0.3) !important;
-    background: linear-gradient(135deg, {COLOR_WATER}, {COLOR_PRIMARY}) !important;
-    border-color: {COLOR_WATER} !important;
-}}
-.stButton > button:active {{
-    transform: translateY(-2px) scale(1.05) !important;
-    box-shadow: 0 0 50px rgba(124, 58, 255, 0.9) !important;
-}}
+.stButton > button:hover {{ background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47,111,98,0.25); }}
 .stDownloadButton > button {{
-    background: linear-gradient(135deg, {COLOR_PRIMARY}, {COLOR_SLATE}) !important;
-    color: white !important;
-    border: 2px solid {COLOR_PRIMARY} !important;
-    border-radius: 12px !important;
-    font-weight: 700 !important;
-    box-shadow: 0 0 25px rgba(124, 58, 255, 0.4) !important;
+    background: var(--card) !important; color: var(--primary) !important; 
+    border: 1.5px solid var(--primary) !important; border-radius: 8px; font-weight: 600;
 }}
-.stDownloadButton > button:hover {{
-    background: linear-gradient(135deg, {COLOR_WATER}, {COLOR_PRIMARY}) !important;
-    color: white !important;
-    box-shadow: 0 0 40px rgba(124, 58, 255, 0.6) !important;
+.stDownloadButton > button:hover {{ 
+    background: var(--primary) !important; color: #fff !important; 
 }}
 
-.stTextInput input, .stNumberInput input, .stSelectbox select, .stTextArea textarea {{
-    background: rgba(26, 27, 46, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    border: 2px solid {COLOR_SLATE} !important;
-    border-radius: 10px !important;
-    padding: 12px 16px !important;
-    color: {C['ink']} !important;
-    font-size: 0.95rem !important;
-    transition: all 0.3s ease !important;
-    box-shadow: 0 4px 15px rgba(96, 165, 250, 0.1) !important;
-}}
-.stTextInput input::placeholder, .stNumberInput input::placeholder, .stTextArea textarea::placeholder {{
-    color: rgba(160, 174, 192, 0.6) !important;
-}}
-.stTextInput input:focus, .stNumberInput input:focus, .stSelectbox select:focus, .stTextArea textarea:focus {{
-    background: rgba(26, 27, 46, 0.9) !important;
-    border-color: {COLOR_PRIMARY} !important;
-    outline: none !important;
-    box-shadow: 0 0 25px rgba(124, 58, 255, 0.4), 0 0 40px rgba(124, 58, 255, 0.2) !important;
-}}
-
-div[data-testid="stAlert"] {{
-    border-radius: 14px !important;
-    border: 2px solid {COLOR_PRIMARY} !important;
-    background: rgba(26, 27, 46, 0.7) !important;
-    backdrop-filter: blur(10px) !important;
-    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.15) !important;
-}}
-div[data-testid="stAlert"] p {{
-    color: {C['ink']} !important;
-    font-weight: 500 !important;
-}}
-
-button[data-baseweb="tab"] {{
-    font-family: 'Inter', sans-serif !important;
-    font-weight: 700 !important;
-    color: {C['muted']} !important;
-    transition: all 0.3s ease !important;
-}}
-button[data-baseweb="tab"][aria-selected="true"] {{
-    color: {COLOR_PRIMARY} !important;
-    border-bottom-color: {COLOR_PRIMARY} !important;
-    text-shadow: 0 0 10px rgba(124, 58, 255, 0.3) !important;
-}}
-
-[data-testid="stSlider"] [role="slider"] {{
-    background-color: {COLOR_PRIMARY} !important;
-    box-shadow: 0 0 15px rgba(124, 58, 255, 0.3) !important;
-}}
-
+div[data-testid="stAlert"] {{ border-radius: 10px; border: 1px solid var(--border); }}
+button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
+button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--primary); }}
+[data-testid="stSlider"] [role="slider"] {{ background-color: var(--primary) !important; }}
 hr {{ display: none; }}
 
 .streak-badge {{
@@ -384,25 +203,19 @@ hr {{ display: none; }}
     padding: 4px 14px; font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem; font-weight: 600;
 }}
 
-.breathing-circle-wrap {{
-    display: flex !important;
-    justify-content: center !important;
-    padding: 2rem 0 !important;
-}}
+.breathing-circle-wrap {{ display: flex; justify-content: center; padding: 1.8rem 0; }}
 .breathing-circle {{
-    width: 160px !important;
-    height: 160px !important;
-    border-radius: 50% !important;
-    background: radial-gradient(circle, {COLOR_PRIMARY_LIGHT}, {COLOR_PRIMARY}) !important;
-    animation: breathe 16s ease-in-out infinite !important;
-    box-shadow: 0 0 50px rgba(124, 58, 255, 0.5), 0 0 80px rgba(124, 58, 255, 0.3) !important;
+    width: 140px; height: 140px; border-radius: 50%;
+    background: radial-gradient(circle, var(--primary-light), var(--primary));
+    animation: breathe 16s ease-in-out infinite;
+    box-shadow: 0 0 40px rgba(47,111,98,0.35);
 }}
 @keyframes breathe {{
-    0%   {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
-    25%  {{ transform: scale(1.1); opacity: 1; box-shadow: 0 0 60px rgba(124, 58, 255, 0.6); }}
-    50%  {{ transform: scale(1.1); opacity: 1; box-shadow: 0 0 60px rgba(124, 58, 255, 0.6); }}
-    75%  {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
-    100% {{ transform: scale(0.75); opacity: 0.9; box-shadow: 0 0 40px rgba(124, 58, 255, 0.3); }}
+    0%   {{ transform: scale(0.7);  opacity: 0.8; }}
+    25%  {{ transform: scale(1.15); opacity: 1;   }}
+    50%  {{ transform: scale(1.15); opacity: 1;   }}
+    75%  {{ transform: scale(0.7);  opacity: 0.8; }}
+    100% {{ transform: scale(0.7);  opacity: 0.8; }}
 }}
 
 .entry-row {{
@@ -411,22 +224,11 @@ hr {{ display: none; }}
 }}
 
 .login-box {{
-    max-width: 400px !important;
-    margin: 2rem auto !important;
-    padding: 2.5rem !important;
-    background: rgba(26, 27, 46, 0.7) !important;
-    backdrop-filter: blur(15px) !important;
-    border: 2px solid {COLOR_PRIMARY} !important;
-    border-radius: 16px !important;
-    text-align: center !important;
-    box-shadow: 0 8px 32px rgba(124, 58, 255, 0.2), inset 0 1px 2px rgba(255,255,255,0.1) !important;
+    max-width: 400px; margin: 2rem auto; padding: 2rem;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 14px; text-align: center;
 }}
-.login-icon {{
-    font-size: 3.2rem !important;
-    margin-bottom: 1rem !important;
-    color: {COLOR_PRIMARY} !important;
-    animation: float 4s ease-in-out infinite !important;
-}}
+.login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
 .login-title {{
     font-family: 'Fraunces', serif; font-size: 1.6rem;
     color: var(--ink); margin-bottom: 0.3rem;
