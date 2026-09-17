@@ -26,11 +26,9 @@ except ImportError:
 # ═══════════════════════════════════════════════════════════════
 # 🎨 LOGO CONFIGURATION — PUT YOUR LOGO HERE
 # ═══════════════════════════════════════════════════════════════
-LOGO_PATH = "logo.png"  # <-- CHANGE THIS to your image file name
-# LOGO_PATH = "https://your-domain.com/logo.png"  # Or use a URL
-# LOGO_PATH = None  # Or disable logo
+LOGO_PATH = "logo.png"
 
-st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="🧠", layout="wide")
+st.set_page_config(page_title="MindTrack | Wellness Intelligence", page_icon="logo.png", layout="wide")
 
 # ═══════════════════════════════════════════════════════════════
 # 🌗 DARK MODE: STATE & COLOR SYSTEM
