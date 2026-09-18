@@ -1557,18 +1557,8 @@ PAGES = [
 ]
 
 # Build sidebar — FIXED: no nested st.sidebar calls inside with st.sidebar
-with st.sidebar:
-    # Logo display
-    if LOGO_PATH:
-        try:
-            if LOGO_PATH.startswith("http"):
-                st.image(LOGO_PATH, width=180)
-            elif os.path.exists(LOGO_PATH):
-                st.image(LOGO_PATH, width=180)
-        except Exception:
-            pass
+with st.sidebar:    
 
-    # Dark mode toggle — FIXED: uses st.button (not st.sidebar.button) inside with st.sidebar
     toggle_icon = "🌙" if not st.session_state.dark_mode else "☀️"
     toggle_text = "Dark Mode" if not st.session_state.dark_mode else "Light Mode"
     if st.button(f"{toggle_icon} {toggle_text}", use_container_width=True, key="dark_mode_toggle"):
