@@ -316,6 +316,36 @@ DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
 
+# ── SQL schema file: auto-saved next to the database so you always have it ──
+USERS_SCHEMA_SQL = """-- MindTrack: Users table (accounts created via Sign Up)
+-- Rows are saved by Python (register_user), NOT inserted here directly,
+-- because passwords are hashed (PBKDF2-SHA256, 200k iterations) before storage.
+
+CREATE TABLE IF NOT EXISTS users (
+    email         TEXT PRIMARY KEY,          -- normalized to lowercase in the app
+    name          TEXT NOT NULL,             -- display name
+    password_hash TEXT NOT NULL,             -- never store plain passwords!
+    salt          TEXT NOT NULL,             -- random per-user salt (hex, 32 chars)
+    created_at    TEXT NOT NULL              -- 'YYYY-MM-DD HH:MM:SS'
+);
+
+-- ── Useful queries ──
+-- All accounts, newest first:
+-- SELECT email, name, created_at FROM users ORDER BY created_at DESC;
+
+-- Delete an account:
+-- DELETE FROM users WHERE email = 'alex@example.com';
+"""
+
+def write_users_schema_sql():
+    """Saves the users table schema as a .sql file in the data/ folder."""
+    sql_path = os.path.join(DATA_DIR, "users_schema.sql")
+    try:
+        with open(sql_path, "w", encoding="utf-8") as f:
+            f.write(USERS_SCHEMA_SQL)
+    except Exception:
+        pass  # non-critical: never break the app over the schema file
+
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -327,30 +357,15 @@ def init_db():
     try:
         conn = get_connection()
         cur = conn.cursor()
-
-        # =========================
-        # USER HISTORY TABLE
-        # =========================
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT,
-                date TEXT,
-                mood TEXT,
-                sleep_hours REAL,
-                stress_level REAL,
-                anxiety_level REAL,
-                exercise_minutes REAL,
-                social_connection REAL,
-                screen_time REAL,
-                caffeine_intake REAL,
-                water_intake REAL,
-                sunlight_exposure REAL,
-                work_life_balance REAL
+                username TEXT, date TEXT, mood TEXT, sleep_hours REAL,
+                stress_level REAL, anxiety_level REAL, exercise_minutes REAL,
+                social_connection REAL, screen_time REAL, caffeine_intake REAL,
+                water_intake REAL, sunlight_exposure REAL, work_life_balance REAL
             )
         """)
-
-        # Add newer wellness columns to existing databases
         new_cols = [
             ("social_connection", "REAL"),
             ("screen_time", "REAL"),
@@ -359,49 +374,25 @@ def init_db():
             ("sunlight_exposure", "REAL"),
             ("work_life_balance", "REAL"),
         ]
-
         for col_name, col_type in new_cols:
             try:
-                cur.execute(
-                    f"ALTER TABLE user_history ADD COLUMN {col_name} {col_type}"
-                )
+                cur.execute(f"ALTER TABLE user_history ADD COLUMN {col_name} {col_type}")
             except sqlite3.OperationalError:
-                # Column already exists
                 pass
-
-        # =========================
-        # PREDICTIONS TABLE
-        # =========================
         cur.execute("""
             CREATE TABLE IF NOT EXISTS predictions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                username TEXT,
-                date TEXT,
-                risk_level TEXT,
-                wellness_score REAL,
-                factors TEXT
+                username TEXT, date TEXT, risk_level TEXT, wellness_score REAL, factors TEXT
             )
         """)
-
-        # =========================
-        # GOALS TABLE
-        # =========================
         cur.execute("""
             CREATE TABLE IF NOT EXISTS goals (
                 username TEXT PRIMARY KEY,
-                target_sleep REAL,
-                target_exercise REAL,
-                target_stress_max REAL,
-                target_social REAL,
-                target_screen_max REAL,
-                target_water REAL,
-                target_sunlight REAL,
-                target_worklife REAL,
-                updated_at TEXT
+                target_sleep REAL, target_exercise REAL, target_stress_max REAL,
+                target_social REAL, target_screen_max REAL, target_water REAL,
+                target_sunlight REAL, target_worklife REAL, updated_at TEXT
             )
         """)
-
-        # Add newer goal columns to existing databases
         new_goal_cols = [
             ("target_social", "REAL"),
             ("target_screen_max", "REAL"),
@@ -409,99 +400,73 @@ def init_db():
             ("target_sunlight", "REAL"),
             ("target_worklife", "REAL"),
         ]
-
         for col_name, col_type in new_goal_cols:
             try:
-                cur.execute(
-                    f"ALTER TABLE goals ADD COLUMN {col_name} {col_type}"
-                )
+                cur.execute(f"ALTER TABLE goals ADD COLUMN {col_name} {col_type}")
             except sqlite3.OperationalError:
-                # Column already exists
                 pass
-
-        # =========================
-        # USERS TABLE
-        # Authentication:
-        # email + hashed password
-        # =========================
+        # NEW: users table for email + hashed password authentication
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL UNIQUE,
-                username TEXT,
+                email TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
                 password_hash TEXT NOT NULL,
                 salt TEXT NOT NULL,
                 created_at TEXT NOT NULL
             )
         """)
-
         conn.commit()
+        write_users_schema_sql()
         conn.close()
-
     except Exception as e:
         st.error(f"Database initialization error: {e}")
         raise
 
 
-def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level,
-                      exercise_minutes, social_connection, screen_time,
-                      caffeine_intake, water_intake, sunlight_exposure,
-                      work_life_balance, entry_date=None):
+def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                      social_connection, screen_time, caffeine_intake, water_intake,
+                      sunlight_exposure, work_life_balance, entry_date=None):
+    try:
+        init_db()
+        if entry_date is None:
+            date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        else:
+            date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
 
-    email = st.session_state["current_email"]
-
-    if entry_date is None:
-        date_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    else:
-        date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
-
-    conn = get_connection()
-
-    conn.execute("""
-        INSERT INTO user_history (
-            user_email, username, date, mood, sleep_hours,
-            stress_level, anxiety_level, exercise_minutes,
-            social_connection, screen_time,
-            caffeine_intake, water_intake,
-            sunlight_exposure, work_life_balance
+        conn = get_connection()
+        conn.execute(
+            """INSERT INTO user_history
+               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                social_connection, screen_time, caffeine_intake, water_intake,
+                sunlight_exposure, work_life_balance)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+             social_connection, screen_time, caffeine_intake, water_intake,
+             sunlight_exposure, work_life_balance),
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    """, (
-        email, username, date_str, mood,
-        sleep_hours, stress_level, anxiety_level,
-        exercise_minutes, social_connection,
-        screen_time, caffeine_intake,
-        water_intake, sunlight_exposure,
-        work_life_balance
-    ))
-
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error saving assessment: {e}")
+        return False
 
 
 def save_prediction(username, risk_level, wellness_score, factors):
-
-    email = st.session_state["current_email"]
-
-    conn = get_connection()
-
-    conn.execute("""
-        INSERT INTO predictions (
-            user_email, username, date,
-            risk_level, wellness_score, factors
+    try:
+        init_db()
+        conn = get_connection()
+        conn.execute(
+            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
+               VALUES (?, ?, ?, ?, ?)""",
+            (username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), risk_level, wellness_score, str(factors)),
         )
-        VALUES (?, ?, ?, ?, ?, ?)
-    """, (
-        email,
-        username,
-        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-        risk_level,
-        wellness_score,
-        str(factors)
-    ))
-
-    conn.commit()
-    conn.close()
+        conn.commit()
+        conn.close()
+        return True
+    except Exception as e:
+        st.error(f"Error saving prediction: {e}")
+        return False
 
 
 def save_goals(username, target_sleep, target_exercise, target_stress_max,
@@ -2700,9 +2665,6 @@ elif page == "🧠 AI Insights":
 # ═══════════════════════════════════════════════════════════════
 elif page == "📊 Admin":
     require_login()
-    if st.session_state["current_email"] != "chaudhary738@gmail.com":
-        st.error("Access denied.")
-        st.stop()
     page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
 
     st.markdown("## 📁 Data Management")
