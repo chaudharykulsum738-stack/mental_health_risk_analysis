@@ -2632,6 +2632,9 @@ elif page == "🧠 AI Insights":
 # ═══════════════════════════════════════════════════════════════
 # ADMIN PAGE
 # ═══════════════════════════════════════════════════════════════
+if st.session_state.get("current_email") != "YOUR-ADMIN-EMAIL@gmail.com":
+    st.warning("Admin access only.")
+    st.stop()
 elif page == "📊 Admin":
     require_login()
     page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
