@@ -2632,8 +2632,7 @@ elif page == "🧠 AI Insights":
 # ═══════════════════════════════════════════════════════════════
 # ADMIN PAGE
 # ═══════════════════════════════════════════════════════════════
-if st.session_state.get("current_email") != "YOUR-ADMIN-EMAIL@gmail.com":
-    st.warning("Admin access only.")
+if st.session_state.get("current_email") != "chaudhary738@gmail.com":
     st.stop()
 elif page == "📊 Admin":
     require_login()
