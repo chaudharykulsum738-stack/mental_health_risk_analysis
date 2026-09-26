@@ -2665,53 +2665,79 @@ elif page == "🧠 AI Insights":
 # ═══════════════════════════════════════════════════════════════
 elif page == "📊 Admin":
     require_login()
-    page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
 
-    st.markdown("## 📁 Data Management")
-    st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`.")
-    init_db()
-
-    col1, col2 = st.columns(2)
-    with col1:
-        try:
-            conn = get_connection()
-            df_history = pd.read_sql_query("SELECT * FROM user_history", conn)
-            conn.close()
-            st.markdown("### 👥 User History Data")
-            st.dataframe(df_history, use_container_width=True)
-            st.metric("Total Entries", len(df_history))
-            if not df_history.empty:
-                st.download_button("📥 Download Patient History (Excel)",
-                                    data=export_to_excel(df_history, sheet_name="Patient History"),
-                                    file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                    key="admin_dl_history")
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-
-    with col2:
-        try:
-            conn = get_connection()
-            df_predictions = pd.read_sql_query("SELECT * FROM predictions", conn)
-            conn.close()
-            st.markdown("### 🤖 Predictions Data")
-            st.dataframe(df_predictions, use_container_width=True)
-            st.metric("Total Predictions", len(df_predictions))
-            if not df_predictions.empty:
-                st.download_button("📥 Download Predictions (Excel)",
-                                    data=export_to_excel(df_predictions, sheet_name="Predictions"),
-                                    file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
-                                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-                                    key="admin_dl_predictions")
-        except Exception as e:
-            st.error(f"❌ Error: {e}")
-
-    pulse_divider()
-    st.markdown("### 🎯 Saved Goals")
+    # Admin-only password gate. Configure ADMIN_PASSWORD in Streamlit secrets or environment.
     try:
-        conn = get_connection()
-        df_goals = pd.read_sql_query("SELECT * FROM goals", conn)
-        conn.close()
-        st.dataframe(df_goals, use_container_width=True)
-    except Exception as e:
-        st.error(f"❌ Error: {e}")
+        admin_password = st.secrets.get("ADMIN_PASSWORD", "")
+    except Exception:
+        admin_password = ""
+    admin_password = admin_password or os.getenv("ADMIN_PASSWORD", "")
+
+    if not admin_password:
+        st.error("Admin access is locked. The app owner must set ADMIN_PASSWORD in Streamlit secrets or the deployment environment.")
+    elif not st.session_state.get("admin_authenticated", False):
+        page_header("🔐", "Restricted Access", "Admin Login", "Enter the owner password to access the Admin Dashboard.")
+        with st.form("admin_login_form"):
+            entered_password = st.text_input("Owner password", type="password")
+            submitted = st.form_submit_button("Unlock Admin Dashboard", use_container_width=True)
+        if submitted:
+            import hmac
+            if hmac.compare_digest(entered_password, str(admin_password)):
+                st.session_state["admin_authenticated"] = True
+                st.rerun()
+            else:
+                st.error("Incorrect password. Access denied.")
+    else:
+        if st.button("🔒 Lock Admin Dashboard", key="admin_lock_button"):
+            st.session_state["admin_authenticated"] = False
+            st.rerun()
+        page_header("📊", "Back Office", "Admin Dashboard", "Manage and export the underlying data.")
+
+        st.markdown("## 📁 Data Management")
+        st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`.")
+        init_db()
+
+        col1, col2 = st.columns(2)
+        with col1:
+            try:
+                conn = get_connection()
+                df_history = pd.read_sql_query("SELECT * FROM user_history", conn)
+                conn.close()
+                st.markdown("### 👥 User History Data")
+                st.dataframe(df_history, use_container_width=True)
+                st.metric("Total Entries", len(df_history))
+                if not df_history.empty:
+                    st.download_button("📥 Download Patient History (Excel)",
+                                        data=export_to_excel(df_history, sheet_name="Patient History"),
+                                        file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        key="admin_dl_history")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+
+        with col2:
+            try:
+                conn = get_connection()
+                df_predictions = pd.read_sql_query("SELECT * FROM predictions", conn)
+                conn.close()
+                st.markdown("### 🤖 Predictions Data")
+                st.dataframe(df_predictions, use_container_width=True)
+                st.metric("Total Predictions", len(df_predictions))
+                if not df_predictions.empty:
+                    st.download_button("📥 Download Predictions (Excel)",
+                                        data=export_to_excel(df_predictions, sheet_name="Predictions"),
+                                        file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                                        key="admin_dl_predictions")
+            except Exception as e:
+                st.error(f"❌ Error: {e}")
+
+        pulse_divider()
+        st.markdown("### 🎯 Saved Goals")
+        try:
+            conn = get_connection()
+            df_goals = pd.read_sql_query("SELECT * FROM goals", conn)
+            conn.close()
+            st.dataframe(df_goals, use_container_width=True)
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
