@@ -415,17 +415,6 @@ def init_db():
                 created_at TEXT NOT NULL
             )
         """)
-        
-        # NEW: login history table to track user login times
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS login_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT,
-                name TEXT,
-                login_time TEXT,
-                FOREIGN KEY (email) REFERENCES users(email)
-            )
-        """)
         conn.commit()
         write_users_schema_sql()
         conn.close()
@@ -680,40 +669,10 @@ def authenticate_user(email: str, password: str) -> tuple[bool, str, str]:
         return False, f"Login error: {e}", ""
 
 
-def save_login_history(email: str, name: str):
-    """Save login to history table"""
-    try:
-        init_db()
-        conn = get_connection()
-        conn.execute(
-            "INSERT INTO login_history (email, name, login_time) VALUES (?, ?, ?)",
-            (email.strip().lower(), name.strip(), datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        pass  # Silent fail - don't break login
-
-def get_login_history(email: str):
-    """Get all login times for a user"""
-    try:
-        init_db()
-        conn = get_connection()
-        df = pd.read_sql_query(
-            "SELECT * FROM login_history WHERE email=? ORDER BY login_time DESC LIMIT 10",
-            conn,
-            params=(email.strip().lower(),)
-        )
-        conn.close()
-        return df
-    except Exception:
-        return pd.DataFrame()
-
 def login_user(email: str, name: str):
     st.session_state.logged_in = True
     st.session_state.current_email = email.strip().lower()
     st.session_state.current_user = name.strip()
-    save_login_history(email, name)  # Track login
 
 def logout_user():
     st.session_state.logged_in = False
@@ -836,17 +795,6 @@ def show_user_badge():
             <div style="font-size:.78rem;color:#6B7280;margin-top:4px;">{email}</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        # Show login history
-        with st.sidebar.expander("📋 Login History"):
-            login_history = get_login_history(email)
-            if not login_history.empty:
-                st.write("**Recent Logins:**")
-                for idx, row in login_history.iterrows():
-                    st.caption(f"🔐 {row['login_time']}")
-                st.caption(f"Total logins: **{len(login_history)}**")
-            else:
-                st.caption("No login history yet")
 
 def delete_entry(entry_id):
     try:
