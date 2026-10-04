@@ -106,25 +106,44 @@ css = f"""
     --ink: {C['ink']}; --muted: {C['muted']}; --paper: {C['bg']}; --card: {C['card']};
     --border: {C['border']}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
     --good: {COLOR_GOOD}; --medium: {COLOR_MEDIUM}; --high: {COLOR_HIGH};
+    --grad: linear-gradient(135deg, #2F6F62, #3A8576);
 }}
 
 html, body, [class*="css"] {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }}
 
+/* Signature gradient ribbon across the very top of the app */
+.stApp::before {{
+    content: ""; position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 999999;
+    background: linear-gradient(90deg, #2F6F62, #4C9A79, #7B68EE, #D9A441, #2F6F62);
+}}
+
 /* Aurora-tinted app background */
 .stApp {{
     background:
-        radial-gradient(1100px 520px at 88% -10%, rgba(76,154,121,0.10), transparent 60%),
-        radial-gradient(900px 480px at -10% 22%, rgba(123,104,238,0.07), transparent 55%),
+        radial-gradient(1100px 520px at 88% -10%, rgba(76,154,121,0.12), transparent 60%),
+        radial-gradient(900px 480px at -10% 22%, rgba(123,104,238,0.08), transparent 55%),
         var(--paper);
 }}
-.main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1300px; }}
+.main .block-container {{
+    padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1300px;
+    animation: fadeUp 0.4s ease both;
+}}
 
 h1, h2, h3 {{
     font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important;
     font-weight: 600 !important; letter-spacing: -0.015em;
 }}
-.stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 
+/* Gradient accent underline under section headings */
+.main h2 {{
+    position: relative; padding-bottom: 10px !important; margin-bottom: 14px !important;
+}}
+.main h2::after {{
+    content: ""; position: absolute; left: 0; bottom: 0; width: 56px; height: 3.5px;
+    border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--primary-light));
+}}
+
+.stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 ::selection {{ background: rgba(76,154,121,0.28); }}
 
 /* Custom scrollbar */
@@ -138,23 +157,44 @@ h1, h2, h3 {{
 
 /* ── Sidebar ── */
 [data-testid="stSidebar"] {{
-    background: linear-gradient(180deg, #182230 0%, #14201c 58%, #0F1A16 100%);
-    border-right: 1px solid rgba(255,255,255,0.07);
+    background: linear-gradient(180deg, #1B2838 0%, #152420 55%, #101B17 100%);
+    border-right: 1px solid rgba(255,255,255,0.08);
 }}
 [data-testid="stSidebar"] * {{ color: #E6EBE9 !important; }}
-.sidebar-brand-row {{ display: flex; align-items: center; gap: 10px; margin: 0.3rem 0 0.2rem 0; }}
+[data-testid="stSidebar"] .stButton > button {{
+    background: rgba(255,255,255,0.07) !important; box-shadow: none !important;
+    border: 1px solid rgba(255,255,255,0.10) !important; text-align: left !important;
+}}
+[data-testid="stSidebar"] .stButton > button:hover {{
+    background: rgba(255,255,255,0.14) !important; transform: none !important;
+    border-color: rgba(127,209,176,0.4) !important;
+}}
+.sidebar-brand-row {{ display: flex; align-items: center; gap: 10px; margin: 0.35rem 0 0.25rem 0; }}
 .sidebar-logo {{
-    width: 42px; height: 42px; border-radius: 13px; flex: none;
+    width: 44px; height: 44px; border-radius: 14px; flex: none;
     background: linear-gradient(135deg, #4C9A79, #2F6F62);
     display: flex; align-items: center; justify-content: center;
-    font-size: 21px; box-shadow: 0 6px 16px rgba(47,111,98,0.45);
+    font-size: 22px; box-shadow: 0 6px 18px rgba(47,111,98,0.50), inset 0 1px 0 rgba(255,255,255,0.25);
 }}
 .sidebar-brand {{
-    font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 700; color: #fff !important;
+    font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
+    letter-spacing: -0.01em;
 }}
 .sidebar-tagline {{
     font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: #7FD1B0 !important; margin-bottom: 1.4rem;
+    text-transform: uppercase; color: #7FD1B0 !important; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 8px;
+}}
+.ui-badge {{
+    background: rgba(127,209,176,0.15); border: 1px solid rgba(127,209,176,0.45);
+    color: #7FD1B0 !important; padding: 1px 8px; border-radius: 999px; font-size: 0.58rem;
+    letter-spacing: 0.08em;
+}}
+/* "MENU" label above the nav */
+[data-testid="stSidebar"] div[role="radiogroup"]::before {{
+    content: "MENU"; display: block; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; color: rgba(230,235,233,0.40) !important;
+    margin: 0 0 8px 4px;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label {{
     background: rgba(255,255,255,0.04); border: 1px solid transparent;
@@ -164,11 +204,11 @@ h1, h2, h3 {{
     background: rgba(255,255,255,0.09); transform: translateX(3px);
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label:has(input[aria-checked="true"]) {{
-    background: linear-gradient(90deg, rgba(76,154,121,0.30), rgba(76,154,121,0.10)) !important;
-    border-color: rgba(127,209,176,0.5) !important;
-    box-shadow: inset 3px 0 0 #4C9A79;
+    background: linear-gradient(90deg, rgba(76,154,121,0.32), rgba(76,154,121,0.10)) !important;
+    border-color: rgba(127,209,176,0.55) !important;
+    box-shadow: inset 3px 0 0 #4C9A79, 0 2px 10px rgba(76,154,121,0.20);
 }}
-[data-testid="stSidebar"] div[role="radiogroup"] label p {{ font-weight: 500; font-size: 0.92rem; }}
+[data-testid="stSidebar"] div[role="radiogroup"] label p {{ font-weight: 500; font-size: 0.93rem; }}
 .sidebar-disclaimer {{
     font-size: 0.68rem !important; color: rgba(230,235,233,0.55) !important;
     margin-top: 16px; line-height: 1.5; padding: 12px 14px;
@@ -179,68 +219,96 @@ h1, h2, h3 {{
 /* ── Page header ── */
 .page-header {{ display: flex; align-items: center; gap: 16px; margin-bottom: 0.2rem; }}
 .page-header-icon {{
-    font-size: 1.5rem; width: 58px; height: 58px; flex: none;
+    font-size: 1.55rem; width: 60px; height: 60px; flex: none;
     display: flex; align-items: center; justify-content: center;
-    background: linear-gradient(135deg, rgba(76,154,121,0.16), rgba(47,111,98,0.10));
-    border: 1px solid rgba(76,154,121,0.30); border-radius: 16px;
-    box-shadow: 0 4px 14px rgba(47,111,98,0.15);
+    background: linear-gradient(135deg, rgba(76,154,121,0.18), rgba(47,111,98,0.10));
+    border: 1px solid rgba(76,154,121,0.32); border-radius: 17px;
+    box-shadow: 0 4px 16px rgba(47,111,98,0.18);
 }}
 .page-eyebrow {{
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.70rem; letter-spacing: 0.15em;
-    text-transform: uppercase; color: var(--primary); font-weight: 600; margin-bottom: 3px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--primary); font-weight: 600; margin-bottom: 5px;
+    display: inline-block; background: rgba(76,154,121,0.10);
+    border: 1px solid rgba(76,154,121,0.25); padding: 3px 11px; border-radius: 999px;
 }}
-.page-title {{ margin: 0 !important; font-size: 2.15rem !important; }}
-.page-subtitle {{ color: var(--muted) !important; font-size: 1rem; margin-top: 4px !important; }}
+.page-title {{ margin: 6px 0 0 0 !important; font-size: 2.35rem !important; }}
+.page-subtitle {{ color: var(--muted) !important; font-size: 1rem; margin-top: 5px !important; }}
 
 .pulse-divider {{ height: 20px; margin: 1.3rem 0 1.7rem 0; }}
 .pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
 
-/* ── Hero card ── */
+/* ── Hero card: animated gradient + floating blobs ── */
 .hero-wrap {{ padding: 0 0 1.2rem 0; }}
 .hero-card {{
     position: relative; overflow: hidden; text-align: center;
-    padding: 3rem 2rem 2.6rem 2rem; border-radius: 22px;
-    background: linear-gradient(135deg, #24483F 0%, #2F6F62 45%, #3A8576 100%);
-    border: 1px solid rgba(255,255,255,0.12);
-    box-shadow: 0 18px 45px rgba(24,48,42,0.35);
+    padding: 3.2rem 2rem 2.8rem 2rem; border-radius: 24px;
+    background: linear-gradient(120deg, #1E3D36 0%, #2F6F62 40%, #3E8E7B 70%, #2F6F62 100%);
+    background-size: 220% 220%; animation: heroShift 10s ease infinite;
+    border: 1px solid rgba(255,255,255,0.14);
+    box-shadow: 0 20px 50px rgba(24,48,42,0.40);
+}}
+@keyframes heroShift {{
+    0%, 100% {{ background-position: 0% 50%; }}
+    50% {{ background-position: 100% 50%; }}
 }}
 .hero-card::before, .hero-card::after {{ content: ""; position: absolute; border-radius: 50%; }}
 .hero-card::before {{
-    width: 260px; height: 260px; top: -110px; right: -60px;
-    background: radial-gradient(circle, rgba(127,209,176,0.35), transparent 65%);
+    width: 280px; height: 280px; top: -120px; right: -60px;
+    background: radial-gradient(circle, rgba(127,209,176,0.40), transparent 65%);
+    animation: blobFloat 7s ease-in-out infinite;
 }}
 .hero-card::after {{
-    width: 220px; height: 220px; bottom: -100px; left: -40px;
-    background: radial-gradient(circle, rgba(123,104,238,0.28), transparent 65%);
+    width: 240px; height: 240px; bottom: -110px; left: -40px;
+    background: radial-gradient(circle, rgba(123,104,238,0.30), transparent 65%);
+    animation: blobFloat 9s ease-in-out infinite reverse;
+}}
+@keyframes blobFloat {{
+    0%, 100% {{ transform: translate(0,0) scale(1); }}
+    50% {{ transform: translate(-18px, 14px) scale(1.08); }}
+}}
+.hero-chip {{
+    position: relative; z-index: 1; display: inline-block;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem; letter-spacing: 0.2em;
+    text-transform: uppercase; color: #B9E8D2; background: rgba(255,255,255,0.10);
+    border: 1px solid rgba(255,255,255,0.22); padding: 4px 14px; border-radius: 999px;
+    margin-bottom: 1rem;
 }}
 .hero-icon {{
-    position: relative; z-index: 1; font-size: 2.6rem;
-    width: 84px; height: 84px; margin: 0 auto 0.6rem auto;
+    position: relative; z-index: 1; font-size: 2.4rem;
+    width: 88px; height: 88px; margin: 0 auto 0.7rem auto;
     display: flex; align-items: center; justify-content: center;
-    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
-    border-radius: 24px; backdrop-filter: blur(6px);
+    background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.25);
+    border-radius: 26px; backdrop-filter: blur(6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    animation: floaty 5s ease-in-out infinite;
+}}
+@keyframes floaty {{
+    0%, 100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-9px); }}
 }}
 .hero-title {{
     position: relative; z-index: 1;
-    font-family: 'Fraunces', serif; font-size: 2.7rem; margin: 0.2rem 0 0.4rem 0;
-    color: #fff; font-weight: 700; text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+    font-family: 'Fraunces', serif; font-size: 2.9rem; margin: 0.2rem 0 0.45rem 0;
+    color: #fff; font-weight: 700; text-shadow: 0 2px 14px rgba(0,0,0,0.28);
 }}
 .hero-tagline {{
     position: relative; z-index: 1;
-    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase;
-    font-size: 0.80rem; color: #B9E8D2; font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.13em; text-transform: uppercase;
+    font-size: 0.8rem; color: #C9F0DD; font-weight: 600;
 }}
 
 /* ── Metric & feature cards ── */
 [data-testid="stMetric"], .feature-card {{
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
     padding: 18px 20px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    border-top: 3px solid transparent;
+    border-image: linear-gradient(90deg, rgba(76,154,121,0.55), rgba(76,154,121,0.05)) 1;
     transition: transform 0.18s ease, box-shadow 0.18s ease;
     animation: fadeUp 0.45s ease both;
 }}
 [data-testid="stMetric"]:hover, .feature-card:hover {{
     transform: translateY(-3px);
-    box-shadow: 0 10px 24px rgba(27,36,48,0.10);
+    box-shadow: 0 12px 28px rgba(27,36,48,0.11);
 }}
 @keyframes fadeUp {{
     from {{ opacity: 0; transform: translateY(10px); }}
@@ -248,22 +316,30 @@ h1, h2, h3 {{
 }}
 [data-testid="stMetricLabel"] {{
     font-family: 'IBM Plex Mono', monospace !important; text-transform: uppercase;
-    font-size: 0.68rem !important; letter-spacing: 0.07em; color: var(--muted) !important;
+    font-size: 0.66rem !important; letter-spacing: 0.08em; color: var(--muted) !important;
 }}
 [data-testid="stMetricValue"] {{
-    font-family: 'Fraunces', serif !important; color: var(--ink) !important; font-size: 1.9rem !important;
+    font-family: 'Fraunces', serif !important; color: var(--ink) !important; font-size: 2rem !important;
 }}
 
-/* ── Buttons ── */
+/* ── Buttons with shine sweep ── */
 .stButton > button {{
     background: linear-gradient(135deg, #2F6F62, #3A8576); color: #fff; border: none;
     border-radius: 10px; padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
-    box-shadow: 0 2px 6px rgba(47,111,98,0.30); transition: all 0.18s ease;
+    box-shadow: 0 2px 8px rgba(47,111,98,0.32); transition: all 0.18s ease;
+    position: relative; overflow: hidden;
+}}
+.stButton > button::after {{
+    content: ""; position: absolute; top: 0; left: -90%; width: 45%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.40), transparent);
+    transform: skewX(-20deg);
 }}
 .stButton > button:hover {{
     background: linear-gradient(135deg, #3A8576, #4C9A79);
-    transform: translateY(-2px); box-shadow: 0 8px 18px rgba(47,111,98,0.35);
+    transform: translateY(-2px); box-shadow: 0 9px 20px rgba(47,111,98,0.38);
 }}
+.stButton > button:hover::after {{ animation: shine 0.8s ease; }}
+@keyframes shine {{ to {{ left: 140%; }} }}
 .stButton > button:active {{ transform: translateY(0); }}
 .stDownloadButton > button {{
     background: var(--card) !important; color: var(--primary) !important;
@@ -275,13 +351,46 @@ h1, h2, h3 {{
     transform: translateY(-2px);
 }}
 
-/* ── Alerts & tabs ── */
+/* ── Alerts ── */
 div[data-testid="stAlert"] {{
     border-radius: 12px; border: 1px solid var(--border);
     box-shadow: 0 1px 3px rgba(27,36,48,0.04);
 }}
-button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
-button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--primary); }}
+
+/* ── PILL TABS ── */
+[data-baseweb="tab-list"] {{
+    gap: 6px; background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 5px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+}}
+button[data-baseweb="tab"] {{
+    font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted);
+    border-radius: 8px; height: auto; padding: 7px 16px;
+}}
+button[data-baseweb="tab"][aria-selected="true"] {{
+    background: linear-gradient(135deg, #2F6F62, #3A8576); color: #fff !important;
+}}
+
+/* ── Chart & dataframe cards ── */
+[data-testid="stPlotlyChart"], [data-testid="stVegaLiteChart"] {{
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 12px 8px 4px 8px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    margin-bottom: 14px;
+}}
+[data-testid="stDataFrame"] {{
+    background: var(--card) !important; border: 1px solid var(--border) !important;
+    border-radius: 14px !important; padding: 6px;
+}}
+
+/* ── Inputs / selectboxes ── */
+input, textarea, .stTextInput > div > div > input, .stTextArea textarea {{
+    background: var(--card) !important; color: var(--ink) !important;
+    border: 1px solid var(--border) !important; border-radius: 10px !important;
+}}
+[data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within,
+[data-baseweb="select"]:focus-within {{
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(76,154,121,0.15) !important;
+}}
 
 /* ── Widgets ── */
 [data-testid="stSlider"] [role="slider"] {{
@@ -292,7 +401,7 @@ hr {{ display: none; }}
     background: var(--card); border: 1px solid var(--border) !important; border-radius: 12px !important;
 }}
 [data-testid="stFileUploader"] {{
-    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px; padding: 6px;
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px; padding: 8px;
 }}
 
 .streak-badge {{
@@ -324,13 +433,12 @@ hr {{ display: none; }}
 .login-box {{
     max-width: 400px; margin: 2rem auto; padding: 2rem;
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 16px; text-align: center;
-    box-shadow: 0 8px 30px rgba(27,36,48,0.08);
+    border-radius: 18px; text-align: center;
+    box-shadow: 0 10px 34px rgba(27,36,48,0.10);
 }}
 .login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
 .login-title {{
-    font-family: 'Fraunces', serif; font-size: 1.6rem;
-    color: var(--ink); margin-bottom: 0.3rem;
+    font-family: 'Fraunces', serif; font-size: 1.6rem; color: var(--ink); margin-bottom: 0.3rem;
 }}
 .login-sub {{ color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }}
 .user-pill {{
@@ -343,25 +451,15 @@ hr {{ display: none; }}
 .lock-screen {{ text-align: center; padding: 3rem 1rem; }}
 .lock-screen h2 {{ font-family: 'Fraunces', serif; color: var(--ink); }}
 
-/* Login/auth page polish */
-.auth-hero {{ border-radius: 20px !important; box-shadow: 0 8px 26px rgba(108,99,255,0.14); }}
+/* Auth page polish */
+.auth-hero {{
+    border-radius: 20px !important; box-shadow: 0 10px 30px rgba(108,99,255,0.16) !important;
+    border: 1px solid rgba(108,99,255,0.25) !important;
+}}
 
 /* Dark mode: dataframe/table styling */
-[data-testid="stDataFrame"] {{ background: var(--card) !important; }}
 [data-testid="stDataFrame"] td {{ color: var(--ink) !important; }}
 [data-testid="stDataFrame"] th {{ color: var(--ink) !important; background: var(--paper) !important; }}
-
-/* Dark mode: input fields */
-input, textarea, .stTextInput > div > div > input {{
-    background: var(--card) !important;
-    color: var(--ink) !important;
-    border: 1px solid var(--border) !important;
-}}
-.stTextArea textarea {{
-    background: var(--card) !important;
-    color: var(--ink) !important;
-    border: 1px solid var(--border) !important;
-}}
 .stSlider > div > div > div {{ color: var(--ink) !important; }}
 </style>
 """
@@ -1693,7 +1791,7 @@ with st.sidebar:
       <div class="sidebar-logo">🧠</div>
       <div class="sidebar-brand">MindTrack</div>
     </div>
-    <div class="sidebar-tagline">Wellness Intelligence</div>
+    <div class="sidebar-tagline">Wellness Intelligence <span class="ui-badge">UI 3.0</span></div>
     """, unsafe_allow_html=True)
 
 # Initialize page selector in session state
@@ -1735,6 +1833,7 @@ if page == "🏠 Home":
     st.markdown(f"""
     <div class="hero-wrap">
       <div class="hero-card">
+        <div class="hero-chip">✦ Your daily wellness companion</div>
         <div class="hero-icon">🧠</div>
         <div class="hero-title">MindTrack</div>
         <div class="hero-tagline">Welcome back, {st.session_state.current_user}</div>
