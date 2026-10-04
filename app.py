@@ -2065,20 +2065,18 @@ elif page == "🎯 Goals":
 elif page == "📂 Bulk Upload":
     require_login()
     page_header("📂", "Batch Processing", "Bulk Upload & Analyze", "Upload an Excel file to analyze many records at once.")
-    
     st.write(
         "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
         "instead of entering them one by one in the Assessment page."
     )
-    
+
     REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
-                         "social_connection", "screen_time", "caffeine_intake", "water_intake",
-                         "sunlight_exposure", "work_life_balance"]
-    
+                        "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                        "sunlight_exposure", "work_life_balance"]
+
     with st.expander("📋 Expected file format / download a template"):
         st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
         st.caption("`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. A `date` column is optional.")
-        
         template_df = pd.DataFrame([{
             "username": "John Doe", "mood": "Good", "sleep_hours": 7,
             "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
@@ -2091,16 +2089,16 @@ elif page == "📂 Bulk Upload":
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key="bulk_dl_template"
         )
-    
+
     uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"], key="bulk_uploader")
-    
+
     if uploaded_file is not None:
         try:
             bulk_df = pd.read_excel(uploaded_file)
         except Exception as e:
             bulk_df = None
             st.error(f"❌ Could not read that file: {e}")
-        
+
         if bulk_df is not None:
             missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
             if missing_cols:
@@ -2112,14 +2110,12 @@ elif page == "📂 Bulk Upload":
                 bulk_df = bulk_df.copy()
                 if "date" not in bulk_df.columns:
                     bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                
                 numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
                             "social_connection", "screen_time", "caffeine_intake",
                             "water_intake", "sunlight_exposure", "work_life_balance"]
                 for col in numeric_cols:
                     if col in bulk_df.columns:
                         bulk_df[col] = pd.to_numeric(bulk_df[col], errors="coerce").fillna(0)
-                
                 risk_levels, wellness_scores, factor_lists = [], [], []
                 for _, row in bulk_df.iterrows():
                     risk, factors, wellness = predict_risk(
@@ -2132,22 +2128,22 @@ elif page == "📂 Bulk Upload":
                     risk_levels.append(risk)
                     wellness_scores.append(wellness)
                     factor_lists.append(", ".join(factors))
-                
+
                 bulk_df["wellness_score"] = wellness_scores
                 bulk_df["risk_level"] = risk_levels
                 bulk_df["factors"] = factor_lists
-                
+
                 st.success(f"✅ Analyzed {len(bulk_df)} records.")
-                
+
                 m1, m2, m3, m4 = st.columns(4)
                 m1.metric("Total Records", len(bulk_df))
                 m2.metric("Avg Wellness", f"{bulk_df['wellness_score'].mean():.0f}/100")
                 m3.metric("High Risk", int((bulk_df["risk_level"] == "High").sum()))
                 m4.metric("Low Risk", int((bulk_df["risk_level"] == "Low").sum()))
-                
+
                 st.markdown("### 📊 Results")
                 st.dataframe(bulk_df, use_container_width=True)
-                
+
                 c1, c2 = st.columns(2)
                 with c1:
                     risk_counts = bulk_df["risk_level"].value_counts().reset_index()
@@ -2155,12 +2151,11 @@ elif page == "📂 Bulk Upload":
                     fig_risk = px.bar(risk_counts, x="Risk", y="Count", color="Risk",
                                        title="Risk Level Distribution", color_discrete_map=RISK_COLOR_MAP)
                     st.plotly_chart(style_plot(fig_risk), use_container_width=True)
-                
                 with c2:
                     fig_hist = px.histogram(bulk_df, x="wellness_score", nbins=15, title="Wellness Score Distribution",
                                              color_discrete_sequence=[COLOR_PRIMARY])
                     st.plotly_chart(style_plot(fig_hist), use_container_width=True)
-                
+
                 st.markdown("### 📥 Export or Save")
                 dl_col, save_col = st.columns(2)
                 with dl_col:
@@ -2193,6 +2188,8 @@ elif page == "📂 Bulk Upload":
                         conn.commit()
                         conn.close()
                         st.success(f"✅ Added {len(bulk_df)} records to the backend. They will now show up in Dashboard and Admin.")
+
+
 
 # ═══════════════════════════════════════════════════════════════
 # 📈 DASHBOARD PAGE
