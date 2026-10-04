@@ -37,11 +37,11 @@ DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
 # ═══════════════════════════════════════════════════════════════
 # 🎨 LOGO CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
-LOGO_PATH = None  # Set to "logo.png" or URL if you have a logo
+LOGO_PATH = logo.png  # Set to "logo.png" or URL if you have a logo
 
 st.set_page_config(
     page_title="MindTrack | Wellness Intelligence",
-    page_icon="🧠",
+    page_icon="",
     layout="wide"
 )
 
