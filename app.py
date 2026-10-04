@@ -2190,7 +2190,6 @@ elif page == "📂 Bulk Upload":
                         st.success(f"✅ Added {len(bulk_df)} records to the backend. They will now show up in Dashboard and Admin.")
 
 
-
 # ═══════════════════════════════════════════════════════════════
 # 📈 DASHBOARD PAGE
 # ═══════════════════════════════════════════════════════════════
