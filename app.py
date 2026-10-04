@@ -109,92 +109,191 @@ css = f"""
 }}
 
 html, body, [class*="css"] {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }}
-.stApp {{ background: var(--paper); }}
-.main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1200px; }}
+
+/* Aurora-tinted app background */
+.stApp {{
+    background:
+        radial-gradient(1100px 520px at 88% -10%, rgba(76,154,121,0.10), transparent 60%),
+        radial-gradient(900px 480px at -10% 22%, rgba(123,104,238,0.07), transparent 55%),
+        var(--paper);
+}}
+.main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1300px; }}
 
 h1, h2, h3 {{
     font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important;
-    font-weight: 600 !important; letter-spacing: -0.01em;
+    font-weight: 600 !important; letter-spacing: -0.015em;
 }}
 .stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
 
-[data-testid="stSidebar"] {{ 
-    background: {C['sidebar_bg']}; 
-    border-right: 1px solid {C['sidebar_border']}; 
+::selection {{ background: rgba(76,154,121,0.28); }}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {{ width: 10px; height: 10px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{
+    background: rgba(127,140,150,0.35); border-radius: 8px;
+    border: 2px solid transparent; background-clip: content-box;
 }}
-[data-testid="stSidebar"] * {{ color: {C['sidebar_text']} !important; }}
+::-webkit-scrollbar-thumb:hover {{ background: rgba(127,140,150,0.60); background-clip: content-box; border: 2px solid transparent; }}
+
+/* ── Sidebar ── */
+[data-testid="stSidebar"] {{
+    background: linear-gradient(180deg, #182230 0%, #14201c 58%, #0F1A16 100%);
+    border-right: 1px solid rgba(255,255,255,0.07);
+}}
+[data-testid="stSidebar"] * {{ color: #E6EBE9 !important; }}
+.sidebar-brand-row {{ display: flex; align-items: center; gap: 10px; margin: 0.3rem 0 0.2rem 0; }}
+.sidebar-logo {{
+    width: 42px; height: 42px; border-radius: 13px; flex: none;
+    background: linear-gradient(135deg, #4C9A79, #2F6F62);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 21px; box-shadow: 0 6px 16px rgba(47,111,98,0.45);
+}}
 .sidebar-brand {{
-    font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
-    margin: 0.2rem 0 0.1rem 0; display: flex; align-items: center; gap: 8px;
+    font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 700; color: #fff !important;
 }}
 .sidebar-tagline {{
     font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--primary-light) !important; margin-bottom: 1.5rem;
+    text-transform: uppercase; color: #7FD1B0 !important; margin-bottom: 1.4rem;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label {{
-    background: {C['radio_bg']}; border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 8px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.15s ease;
+    background: rgba(255,255,255,0.04); border: 1px solid transparent;
+    border-radius: 10px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.18s ease;
 }}
 [data-testid="stSidebar"] div[role="radiogroup"] label:hover {{
-    background: {C['radio_hover']}; border-color: var(--primary-light);
+    background: rgba(255,255,255,0.09); transform: translateX(3px);
 }}
+[data-testid="stSidebar"] div[role="radiogroup"] label:has(input[aria-checked="true"]) {{
+    background: linear-gradient(90deg, rgba(76,154,121,0.30), rgba(76,154,121,0.10)) !important;
+    border-color: rgba(127,209,176,0.5) !important;
+    box-shadow: inset 3px 0 0 #4C9A79;
+}}
+[data-testid="stSidebar"] div[role="radiogroup"] label p {{ font-weight: 500; font-size: 0.92rem; }}
 .sidebar-disclaimer {{
-    font-size: 0.68rem !important; color: rgba(237,239,238,0.55) !important;
-    margin-top: 16px; line-height: 1.45; padding-top: 14px; border-top: 1px solid rgba(255,255,255,0.08);
+    font-size: 0.68rem !important; color: rgba(230,235,233,0.55) !important;
+    margin-top: 16px; line-height: 1.5; padding: 12px 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
 }}
 
-.page-header {{ display: flex; align-items: flex-start; gap: 16px; margin-bottom: 0.2rem; }}
-.page-header-icon {{ font-size: 2.2rem; line-height: 1; margin-top: 2px; }}
-.page-eyebrow {{
-    font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--primary); font-weight: 600; margin-bottom: 2px;
+/* ── Page header ── */
+.page-header {{ display: flex; align-items: center; gap: 16px; margin-bottom: 0.2rem; }}
+.page-header-icon {{
+    font-size: 1.5rem; width: 58px; height: 58px; flex: none;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, rgba(76,154,121,0.16), rgba(47,111,98,0.10));
+    border: 1px solid rgba(76,154,121,0.30); border-radius: 16px;
+    box-shadow: 0 4px 14px rgba(47,111,98,0.15);
 }}
-.page-title {{ margin: 0 !important; font-size: 2.05rem !important; }}
+.page-eyebrow {{
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.70rem; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--primary); font-weight: 600; margin-bottom: 3px;
+}}
+.page-title {{ margin: 0 !important; font-size: 2.15rem !important; }}
 .page-subtitle {{ color: var(--muted) !important; font-size: 1rem; margin-top: 4px !important; }}
-.pulse-divider {{ color: var(--primary); opacity: 0.55; height: 18px; margin: 1.2rem 0 1.6rem 0; }}
+
+.pulse-divider {{ height: 20px; margin: 1.3rem 0 1.7rem 0; }}
 .pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
 
-.hero-wrap {{ text-align: center; padding: 2.6rem 0 1.6rem 0; }}
-.hero-icon {{ font-size: 3.2rem; }}
-.hero-title {{ font-family: 'Fraunces', serif; font-size: 2.6rem; margin: 0.25rem 0 0.35rem 0; color: var(--ink); font-weight: 700; }}
+/* ── Hero card ── */
+.hero-wrap {{ padding: 0 0 1.2rem 0; }}
+.hero-card {{
+    position: relative; overflow: hidden; text-align: center;
+    padding: 3rem 2rem 2.6rem 2rem; border-radius: 22px;
+    background: linear-gradient(135deg, #24483F 0%, #2F6F62 45%, #3A8576 100%);
+    border: 1px solid rgba(255,255,255,0.12);
+    box-shadow: 0 18px 45px rgba(24,48,42,0.35);
+}}
+.hero-card::before, .hero-card::after {{ content: ""; position: absolute; border-radius: 50%; }}
+.hero-card::before {{
+    width: 260px; height: 260px; top: -110px; right: -60px;
+    background: radial-gradient(circle, rgba(127,209,176,0.35), transparent 65%);
+}}
+.hero-card::after {{
+    width: 220px; height: 220px; bottom: -100px; left: -40px;
+    background: radial-gradient(circle, rgba(123,104,238,0.28), transparent 65%);
+}}
+.hero-icon {{
+    position: relative; z-index: 1; font-size: 2.6rem;
+    width: 84px; height: 84px; margin: 0 auto 0.6rem auto;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.22);
+    border-radius: 24px; backdrop-filter: blur(6px);
+}}
+.hero-title {{
+    position: relative; z-index: 1;
+    font-family: 'Fraunces', serif; font-size: 2.7rem; margin: 0.2rem 0 0.4rem 0;
+    color: #fff; font-weight: 700; text-shadow: 0 2px 12px rgba(0,0,0,0.25);
+}}
 .hero-tagline {{
-    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.10em; text-transform: uppercase;
-    font-size: 0.82rem; color: var(--primary); font-weight: 600;
+    position: relative; z-index: 1;
+    font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase;
+    font-size: 0.80rem; color: #B9E8D2; font-weight: 600;
 }}
 
-[data-testid="stMetric"] {{
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 16px 18px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+/* ── Metric & feature cards ── */
+[data-testid="stMetric"], .feature-card {{
+    background: var(--card); border: 1px solid var(--border); border-radius: 16px;
+    padding: 18px 20px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    animation: fadeUp 0.45s ease both;
+}}
+[data-testid="stMetric"]:hover, .feature-card:hover {{
+    transform: translateY(-3px);
+    box-shadow: 0 10px 24px rgba(27,36,48,0.10);
+}}
+@keyframes fadeUp {{
+    from {{ opacity: 0; transform: translateY(10px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
 }}
 [data-testid="stMetricLabel"] {{
     font-family: 'IBM Plex Mono', monospace !important; text-transform: uppercase;
-    font-size: 0.70rem !important; letter-spacing: 0.06em; color: var(--muted) !important;
+    font-size: 0.68rem !important; letter-spacing: 0.07em; color: var(--muted) !important;
 }}
-[data-testid="stMetricValue"] {{ font-family: 'Fraunces', serif !important; color: var(--ink) !important; }}
-.feature-card {{
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
-    padding: 22px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+[data-testid="stMetricValue"] {{
+    font-family: 'Fraunces', serif !important; color: var(--ink) !important; font-size: 1.9rem !important;
 }}
 
+/* ── Buttons ── */
 .stButton > button {{
-    background: var(--primary); color: #fff; border: none; border-radius: 8px;
-    padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
-    box-shadow: 0 1px 2px rgba(27,36,48,0.12); transition: all 0.15s ease;
+    background: linear-gradient(135deg, #2F6F62, #3A8576); color: #fff; border: none;
+    border-radius: 10px; padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
+    box-shadow: 0 2px 6px rgba(47,111,98,0.30); transition: all 0.18s ease;
 }}
-.stButton > button:hover {{ background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 10px rgba(47,111,98,0.25); }}
+.stButton > button:hover {{
+    background: linear-gradient(135deg, #3A8576, #4C9A79);
+    transform: translateY(-2px); box-shadow: 0 8px 18px rgba(47,111,98,0.35);
+}}
+.stButton > button:active {{ transform: translateY(0); }}
 .stDownloadButton > button {{
-    background: var(--card) !important; color: var(--primary) !important; 
-    border: 1.5px solid var(--primary) !important; border-radius: 8px; font-weight: 600;
+    background: var(--card) !important; color: var(--primary) !important;
+    border: 1.5px solid var(--primary) !important; border-radius: 10px; font-weight: 600;
+    transition: all 0.18s ease;
 }}
-.stDownloadButton > button:hover {{ 
-    background: var(--primary) !important; color: #fff !important; 
+.stDownloadButton > button:hover {{
+    background: linear-gradient(135deg, #2F6F62, #3A8576) !important; color: #fff !important;
+    transform: translateY(-2px);
 }}
 
-div[data-testid="stAlert"] {{ border-radius: 10px; border: 1px solid var(--border); }}
+/* ── Alerts & tabs ── */
+div[data-testid="stAlert"] {{
+    border-radius: 12px; border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(27,36,48,0.04);
+}}
 button[data-baseweb="tab"] {{ font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted); }}
 button[data-baseweb="tab"][aria-selected="true"] {{ color: var(--primary); }}
-[data-testid="stSlider"] [role="slider"] {{ background-color: var(--primary) !important; }}
+
+/* ── Widgets ── */
+[data-testid="stSlider"] [role="slider"] {{
+    background-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(76,154,121,0.18);
+}}
 hr {{ display: none; }}
+[data-testid="stExpander"] {{
+    background: var(--card); border: 1px solid var(--border) !important; border-radius: 12px !important;
+}}
+[data-testid="stFileUploader"] {{
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px; padding: 6px;
+}}
 
 .streak-badge {{
     display: inline-flex; align-items: center; gap: 6px; background: rgba(217,164,65,0.12);
@@ -218,48 +317,39 @@ hr {{ display: none; }}
 }}
 
 .entry-row {{
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
     padding: 10px 16px; margin-bottom: 8px;
 }}
 
 .login-box {{
     max-width: 400px; margin: 2rem auto; padding: 2rem;
     background: var(--card); border: 1px solid var(--border);
-    border-radius: 14px; text-align: center;
+    border-radius: 16px; text-align: center;
+    box-shadow: 0 8px 30px rgba(27,36,48,0.08);
 }}
 .login-icon {{ font-size: 3rem; margin-bottom: 0.5rem; }}
 .login-title {{
     font-family: 'Fraunces', serif; font-size: 1.6rem;
     color: var(--ink); margin-bottom: 0.3rem;
 }}
-.login-sub {{
-    color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem;
-}}
+.login-sub {{ color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; }}
 .user-pill {{
     display: inline-flex; align-items: center; gap: 6px;
-    background: rgba(47,111,98,0.10); border: 1px solid rgba(47,111,98,0.25);
+    background: rgba(47,111,98,0.12); border: 1px solid rgba(47,111,98,0.30);
     color: var(--primary); border-radius: 999px;
     padding: 5px 14px; font-family: 'IBM Plex Mono', monospace;
     font-size: 0.8rem; font-weight: 600;
 }}
-.lock-screen {{
-    text-align: center; padding: 3rem 1rem;
-}}
-.lock-screen h2 {{
-    font-family: 'Fraunces', serif; color: var(--ink);
-}}
+.lock-screen {{ text-align: center; padding: 3rem 1rem; }}
+.lock-screen h2 {{ font-family: 'Fraunces', serif; color: var(--ink); }}
+
+/* Login/auth page polish */
+.auth-hero {{ border-radius: 20px !important; box-shadow: 0 8px 26px rgba(108,99,255,0.14); }}
 
 /* Dark mode: dataframe/table styling */
-[data-testid="stDataFrame"] {{
-    background: var(--card) !important;
-}}
-[data-testid="stDataFrame"] td {{
-    color: var(--ink) !important;
-}}
-[data-testid="stDataFrame"] th {{
-    color: var(--ink) !important;
-    background: var(--paper) !important;
-}}
+[data-testid="stDataFrame"] {{ background: var(--card) !important; }}
+[data-testid="stDataFrame"] td {{ color: var(--ink) !important; }}
+[data-testid="stDataFrame"] th {{ color: var(--ink) !important; background: var(--paper) !important; }}
 
 /* Dark mode: input fields */
 input, textarea, .stTextInput > div > div > input {{
@@ -272,11 +362,7 @@ input, textarea, .stTextInput > div > div > input {{
     color: var(--ink) !important;
     border: 1px solid var(--border) !important;
 }}
-
-/* Dark mode: select slider */
-.stSlider > div > div > div {{
-    color: var(--ink) !important;
-}}
+.stSlider > div > div > div {{ color: var(--ink) !important; }}
 </style>
 """
 st.markdown(css, unsafe_allow_html=True)
@@ -284,11 +370,18 @@ st.markdown(css, unsafe_allow_html=True)
 
 
 def pulse_divider():
-    st.markdown("""
+    st.markdown(f"""
     <div class="pulse-divider">
         <svg viewBox="0 0 400 24" preserveAspectRatio="none">
+            <defs>
+                <linearGradient id="pulseGrad" x1="0" y1="0" x2="1" y2="0">
+                    <stop offset="0%" stop-color="{COLOR_PRIMARY_LIGHT}" stop-opacity="0.1"/>
+                    <stop offset="50%" stop-color="{COLOR_PRIMARY}"/>
+                    <stop offset="100%" stop-color="{COLOR_PRIMARY_LIGHT}" stop-opacity="0.1"/>
+                </linearGradient>
+            </defs>
             <polyline points="0,12 150,12 165,2 180,22 195,4 210,12 400,12"
-                      fill="none" stroke="currentColor" stroke-width="2"
+                      fill="none" stroke="url(#pulseGrad)" stroke-width="2.5"
                       stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
     </div>
@@ -1596,7 +1689,10 @@ with st.sidebar:
         toggle_dark_mode()
 
     st.markdown("""
-    <div class="sidebar-brand">🧠 MindTrack</div>
+    <div class="sidebar-brand-row">
+      <div class="sidebar-logo">🧠</div>
+      <div class="sidebar-brand">MindTrack</div>
+    </div>
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
 
@@ -1638,9 +1734,11 @@ if page == "🏠 Home":
         st.stop()
     st.markdown(f"""
     <div class="hero-wrap">
+      <div class="hero-card">
         <div class="hero-icon">🧠</div>
         <div class="hero-title">MindTrack</div>
         <div class="hero-tagline">Welcome back, {st.session_state.current_user}</div>
+      </div>
     </div>
     """, unsafe_allow_html=True)
     pulse_divider()
