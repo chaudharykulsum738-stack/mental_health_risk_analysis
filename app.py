@@ -1791,7 +1791,7 @@ with st.sidebar:
       <div class="sidebar-logo">🧠</div>
       <div class="sidebar-brand">MindTrack</div>
     </div>
-    <div class="sidebar-tagline">Wellness Intelligence <span class="ui-badge">UI 3.0</span></div>
+    <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
 
 # Initialize page selector in session state
