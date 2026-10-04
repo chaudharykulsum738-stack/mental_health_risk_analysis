@@ -1581,12 +1581,12 @@ def create_correlation_network(df):
     return fig
 
 # ═══════════════════════════════════════════════════════════════
-# 🧭 NAVIGATION
+# 🧭 NAVIGATION (SAFE - handles corrupted session state)
 # ═══════════════════════════════════════════════════════════════
 PAGES = [
-    "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
-    "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
-    "🆘 Support & Coping", "📄 Report", "🧠 AI Insights", "📊 Admin"
+    " Home", "📋 Assessment", " Risk Prediction", "🎯 Goals",
+    "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
+    "🆘 Support & Coping", " Report", "🧠 AI Insights", "📊 Admin"
 ]
 
 with st.sidebar:
@@ -1603,11 +1603,19 @@ with st.sidebar:
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
     
-    if "nav_page" not in st.session_state:
+    # ✅ SAFE: Initialize with fallback
+    if "nav_page" not in st.session_state or st.session_state.nav_page not in PAGES:
+        st.session_state.nav_page = PAGES[0]
+    
+    # ✅ SAFE: Get index with fallback
+    try:
+        safe_index = PAGES.index(st.session_state.nav_page)
+    except ValueError:
+        safe_index = 0
         st.session_state.nav_page = PAGES[0]
     
     page = st.sidebar.radio("Go to", PAGES,
-                           index=PAGES.index(st.session_state.nav_page),
+                           index=safe_index,
                            label_visibility="collapsed")
     
     if page != st.session_state.nav_page:
@@ -1623,15 +1631,11 @@ with st.sidebar:
     show_user_badge()
     
     st.sidebar.markdown("""
-    <div style="font-size: 0.68rem !important; color: rgba(230,235,233,0.55) !important;
-                margin-top: 16px; line-height: 1.5; padding: 12px 14px;
-                background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
-                border-radius: 10px;">
+    <div class="sidebar-disclaimer">
         MindTrack supports self-reflection and is not a diagnostic or emergency tool.<br>
-        In crisis? Call <b>988</b> (US) or <b>14416</b> (India).
+        In crisis (US)? Call or text <b>988</b> — or see Support & Coping.
     </div>
     """, unsafe_allow_html=True)
-
 # ═══════════════════════════════════════════════════════════════
 # 🏠 HOME PAGE
 # ═══════════════════════════════════════════════════════════════
