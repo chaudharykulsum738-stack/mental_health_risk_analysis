@@ -3082,7 +3082,33 @@ elif page == "📊 Admin":
             st.error(f"❌ Error loading users: {e}")
         
         pulse_divider()
-        
+                        with st.expander("🧹 Wipe User Data (Keep Account)"):
+                    st.warning("⚠️ This will delete ALL assessments, predictions, goals, and journals for this user, but their login account will remain active.")
+                    wipe_name = st.text_input("Enter the user's exact name to wipe data for:", key="admin_wipe_name")
+                    
+                    if st.button("🧹 Wipe Data Only", type="secondary", key="admin_wipe_btn"):
+                        if not wipe_name:
+                            st.error("Please enter a name.")
+                        else:
+                            try:
+                                conn = get_connection()
+                                # Delete data ONLY (do NOT delete from 'users' table)
+                                conn.execute("DELETE FROM user_history WHERE username=?", (wipe_name,))
+                                conn.execute("DELETE FROM predictions WHERE username=?", (wipe_name,))
+                                conn.execute("DELETE FROM goals WHERE username=?", (wipe_name,))
+                                conn.commit()
+                                conn.close()
+                                
+                                # Wipe from Journal CSV
+                                if os.path.exists(JOURNAL_CSV):
+                                    df_j = pd.read_csv(JOURNAL_CSV)
+                                    df_j = df_j[df_j["username"].astype(str) != str(wipe_name)]
+                                    df_j.to_csv(JOURNAL_CSV, index=False)
+                                
+                                st.success(f"✅ All data for **{wipe_name}** has been wiped! Their account is still active.")
+                                st.rerun()
+                            except Exception as e:
+                                st.error(f"❌ Error wiping data: {e}")
         # ═══════════════════════════════════════════════════════════════
         # 🔐 LOGIN HISTORY
         # ═══════════════════════════════════════════════════════════════
