@@ -2986,6 +2986,7 @@ elif page == "🧠 AI Insights":
 elif page == "📊 Admin":
     require_login()
     
+    # Admin-only password gate
     try:
         admin_password = st.secrets.get("ADMIN_PASSWORD", "")
     except Exception:
@@ -3001,12 +3002,14 @@ elif page == "📊 Admin":
             submitted = st.form_submit_button("Unlock Admin Dashboard", use_container_width=True)
         
         if submitted:
+            import hmac
             if hmac.compare_digest(entered_password, str(admin_password)):
                 st.session_state["admin_authenticated"] = True
                 st.rerun()
             else:
                 st.error("Incorrect password. Access denied.")
     else:
+        # Authenticated Admin View
         if st.button("🔒 Lock Admin Dashboard", key="admin_lock_button"):
             st.session_state["admin_authenticated"] = False
             st.rerun()
@@ -3014,7 +3017,7 @@ elif page == "📊 Admin":
         page_header("📊", "Back Office", "Admin Dashboard", "Manage users, data, and view system information.")
         
         # ═══════════════════════════════════════════════════════════════
-        # 👥 USER MANAGEMENT (WITH COMPLETE DATA DELETION)
+        # 👥 USER MANAGEMENT
         # ═══════════════════════════════════════════════════════════════
         st.markdown("## 👥 User Management")
         st.caption("View and manage all registered accounts")
@@ -3030,6 +3033,7 @@ elif page == "📊 Admin":
                 st.dataframe(users_df, use_container_width=True)
                 st.metric("Total Registered Users", len(users_df))
                 
+                # Expander 1: View Details
                 with st.expander("🔍 View User Details"):
                     selected_email = st.selectbox("Select user", users_df["email"].tolist(), key="admin_user_select")
                     if selected_email:
@@ -3046,17 +3050,18 @@ elif page == "📊 Admin":
                             st.caption(f"Password Hash: {user_data['password_hash'][:30]}...")
                             st.caption(f"Salt: {user_data['salt'][:20]}...")
                 
+                # Expander 2: DELETE USER ACCOUNT (Removes everything)
                 with st.expander("🗑️ Delete User Account"):
-                    st.warning("⚠️ This will permanently delete the user account and ALL their data (History, Predictions, Goals, and Journals)!")
+                    st.warning("⚠️ This will permanently delete the user account AND all their data (History, Predictions, Goals, Journals)!")
                     delete_email = st.selectbox("Select user to delete", users_df["email"].tolist(), key="admin_delete_user")
                     
                     if st.button("🗑️ Delete User & All Data", type="primary", key="admin_delete_btn"):
                         try:
-                            # 1. Safely get the username associated with this email
+                            # Safely get the username associated with this email
                             target_name = users_df[users_df["email"] == delete_email]["name"].iloc[0]
                             
                             conn = get_connection()
-                            # 2. Delete from SQL tables
+                            # 1. Delete from SQL tables
                             conn.execute("DELETE FROM users WHERE email=?", (delete_email,))
                             conn.execute("DELETE FROM user_history WHERE username=?", (target_name,))
                             conn.execute("DELETE FROM predictions WHERE username=?", (target_name,))
@@ -3064,26 +3069,23 @@ elif page == "📊 Admin":
                             conn.commit()
                             conn.close()
                             
-                            # 3. Delete from Journal CSV
+                            # 2. Delete from Journal CSV
                             if os.path.exists(JOURNAL_CSV):
                                 try:
                                     df_j = pd.read_csv(JOURNAL_CSV)
-                                    # Keep only rows that DO NOT match the deleted user's name
                                     df_j = df_j[df_j["username"].astype(str) != str(target_name)]
                                     df_j.to_csv(JOURNAL_CSV, index=False)
                                 except Exception:
-                                    pass # Skip if CSV is empty or locked
+                                    pass
                             
                             st.success(f"✅ User **{delete_email}** ({target_name}) and all associated data deleted successfully!")
                             st.rerun()
                         except Exception as e:
                             st.error(f"❌ Error deleting user: {e}")
-        except Exception as e:
-            st.error(f"❌ Error loading users: {e}")
-        
-        pulse_divider()
-                        with st.expander("🧹 Wipe User Data (Keep Account)"):
-                    st.warning("⚠️ This will delete ALL assessments, predictions, goals, and journals for this user, but their login account will remain active.")
+
+                # Expander 3: WIPE USER DATA ONLY (Keeps account active)
+                with st.expander("🧹 Wipe User Data (Keep Account Active)"):
+                    st.warning("⚠️ This will delete ALL assessments, predictions, goals, and journals for this user, but their login account will remain active so they can start fresh.")
                     wipe_name = st.text_input("Enter the user's exact name to wipe data for:", key="admin_wipe_name")
                     
                     if st.button("🧹 Wipe Data Only", type="secondary", key="admin_wipe_btn"):
@@ -3101,14 +3103,23 @@ elif page == "📊 Admin":
                                 
                                 # Wipe from Journal CSV
                                 if os.path.exists(JOURNAL_CSV):
-                                    df_j = pd.read_csv(JOURNAL_CSV)
-                                    df_j = df_j[df_j["username"].astype(str) != str(wipe_name)]
-                                    df_j.to_csv(JOURNAL_CSV, index=False)
+                                    try:
+                                        df_j = pd.read_csv(JOURNAL_CSV)
+                                        df_j = df_j[df_j["username"].astype(str) != str(wipe_name)]
+                                        df_j.to_csv(JOURNAL_CSV, index=False)
+                                    except Exception:
+                                        pass
                                 
-                                st.success(f"✅ All data for **{wipe_name}** has been wiped! Their account is still active.")
+                                st.success(f"✅ All data for **{wipe_name}** has been wiped! Their account is still active and they can log in.")
                                 st.rerun()
                             except Exception as e:
                                 st.error(f"❌ Error wiping data: {e}")
+                                
+        except Exception as e:
+            st.error(f"❌ Error loading users: {e}")
+        
+        pulse_divider()
+        
         # ═══════════════════════════════════════════════════════════════
         # 🔐 LOGIN HISTORY
         # ═══════════════════════════════════════════════════════════════
