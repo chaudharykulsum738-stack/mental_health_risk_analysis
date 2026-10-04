@@ -2207,10 +2207,20 @@ elif page == "📈 Dashboard":
     if history_df.empty:
         st.info("📭 No data available yet! Complete an assessment first.")
     else:
-        filter_col1, filter_col2, filter_col3 = st.columns([1.3, 1.2, 1])
-        with filter_col1:
-            users = ["All Users"] + sorted(history_df["username"].dropna().astype(str).unique().tolist())
-            selected_user = st.selectbox("Filter by user", users, key="dash_user_filter")
+    is_admin = st.session_state.get("admin_authenticated", False)
+    current_user = st.session_state.get("current_user", "Guest User")
+    filter_col1, filter_col2, filter_col3 = st.columns([1.3, 1.2, 1])
+    with filter_col1:
+        if is_admin:
+            users = ["All Users", current_user] + sorted(
+                [u for u in history_df["username"].dropna().astype(str).unique().tolist()
+                if u != current_user]
+        )
+        selected_user = st.selectbox("Filter by user", users, key="dash_user_filter")
+    else:
+        # Regular users ONLY see their own data
+        selected_user = current_user
+        st.info(f"🔒 Viewing data for: **{current_user}**")
         with filter_col2:
             min_date = history_df["date"].min().date()
             max_date = history_df["date"].max().date()
