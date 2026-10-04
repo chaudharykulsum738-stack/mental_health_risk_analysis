@@ -3013,7 +3013,9 @@ elif page == "📊 Admin":
         
         page_header("📊", "Back Office", "Admin Dashboard", "Manage users, data, and view system information.")
         
-        # User Management Section
+        # ═══════════════════════════════════════════════════════════════
+        # 👥 USER MANAGEMENT (WITH COMPLETE DATA DELETION)
+        # ═══════════════════════════════════════════════════════════════
         st.markdown("## 👥 User Management")
         st.caption("View and manage all registered accounts")
         
@@ -3045,34 +3047,45 @@ elif page == "📊 Admin":
                             st.caption(f"Salt: {user_data['salt'][:20]}...")
                 
                 with st.expander("🗑️ Delete User Account"):
-                    st.warning("⚠️ This will permanently delete the user account and all their data!")
+                    st.warning("⚠️ This will permanently delete the user account and ALL their data (History, Predictions, Goals, and Journals)!")
                     delete_email = st.selectbox("Select user to delete", users_df["email"].tolist(), key="admin_delete_user")
-                    if st.button("🗑️ Delete User", key="admin_delete_btn"):
+                    
+                    if st.button("🗑️ Delete User & All Data", type="primary", key="admin_delete_btn"):
                         try:
+                            # 1. Safely get the username associated with this email
+                            target_name = users_df[users_df["email"] == delete_email]["name"].iloc[0]
+                            
                             conn = get_connection()
-                            # Delete user account
+                            # 2. Delete from SQL tables
                             conn.execute("DELETE FROM users WHERE email=?", (delete_email,))
-                            # Delete user's history
-                            conn.execute("DELETE FROM user_history WHERE username=?", 
-                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
-                            # Delete user's predictions
-                            conn.execute("DELETE FROM predictions WHERE username=?", 
-                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
-                            # Delete user's goals
-                            conn.execute("DELETE FROM goals WHERE username=?", 
-                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
+                            conn.execute("DELETE FROM user_history WHERE username=?", (target_name,))
+                            conn.execute("DELETE FROM predictions WHERE username=?", (target_name,))
+                            conn.execute("DELETE FROM goals WHERE username=?", (target_name,))
                             conn.commit()
                             conn.close()
-                            st.success(f"✅ User {delete_email} deleted successfully!")
+                            
+                            # 3. Delete from Journal CSV
+                            if os.path.exists(JOURNAL_CSV):
+                                try:
+                                    df_j = pd.read_csv(JOURNAL_CSV)
+                                    # Keep only rows that DO NOT match the deleted user's name
+                                    df_j = df_j[df_j["username"].astype(str) != str(target_name)]
+                                    df_j.to_csv(JOURNAL_CSV, index=False)
+                                except Exception:
+                                    pass # Skip if CSV is empty or locked
+                            
+                            st.success(f"✅ User **{delete_email}** ({target_name}) and all associated data deleted successfully!")
                             st.rerun()
                         except Exception as e:
-                            st.error(f"Error deleting user: {e}")
+                            st.error(f"❌ Error deleting user: {e}")
         except Exception as e:
             st.error(f"❌ Error loading users: {e}")
         
         pulse_divider()
         
-        # Login History Section
+        # ═══════════════════════════════════════════════════════════════
+        # 🔐 LOGIN HISTORY
+        # ═══════════════════════════════════════════════════════════════
         st.markdown("## 🔐 Login History")
         st.caption("Recent login activity")
         
@@ -3092,8 +3105,10 @@ elif page == "📊 Admin":
             st.info("Login history table not yet created. Logins will be tracked after the next login.")
         
         pulse_divider()
-        
-        # Data Management Section
+    
+        # ═══════════════════════════════════════════════════════════════
+        # 📁 DATA MANAGEMENT
+        # ═══════════════════════════════════════════════════════════════
         st.markdown("## 📁 Data Management")
         st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`")
         
@@ -3147,7 +3162,9 @@ elif page == "📊 Admin":
         
         pulse_divider()
         
-        # Database Info
+        # ═══════════════════════════════════════════════════════════════
+        # ℹ️ DATABASE INFO
+        # ═══════════════════════════════════════════════════════════════
         st.markdown("### ℹ️ Database Information")
         if os.path.exists(DB_PATH):
             st.info(f"**Database Location:** `{os.path.abspath(DB_PATH)}`")
@@ -3156,5 +3173,3 @@ elif page == "📊 Admin":
         else:
             st.warning("Database not found. It will be created on first use.")
 
-
-# Due to length, I'll continue with the remaining pages in the next part
