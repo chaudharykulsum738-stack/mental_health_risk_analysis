@@ -2064,35 +2064,63 @@ elif page == "🎯 Goals":
 # ═══════════════════════════════════════════════════════════════
 elif page == "📂 Bulk Upload":
     require_login()
-    page_header("📂", "Batch Processing", "Bulk Upload & Analyze", "Upload an Excel file to analyze many records at once.")
+    page_header("📂", "Batch Processing", "Bulk Upload & Analyze",
+                "Upload an Excel file to analyze many records at once.")
+
     st.write(
         "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
         "instead of entering them one by one in the Assessment page."
     )
 
-    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
-                        "social_connection", "screen_time", "caffeine_intake", "water_intake",
-                        "sunlight_exposure", "work_life_balance"]
+    REQUIRED_COLUMNS = [
+        "username", "mood", "sleep_hours", "stress_level", "anxiety_level",
+        "exercise_minutes", "social_connection", "screen_time",
+        "caffeine_intake", "water_intake", "sunlight_exposure",
+        "work_life_balance"
+    ]
 
     with st.expander("📋 Expected file format / download a template"):
-        st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
-        st.caption("`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. A `date` column is optional.")
+        st.write(
+            f"Your Excel file must contain these columns: "
+            f"`{'`, `'.join(REQUIRED_COLUMNS)}`"
+        )
+
+        st.caption(
+            "`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. "
+            "A `date` column is optional."
+        )
+
         template_df = pd.DataFrame([{
-            "username": "John Doe", "mood": "Good", "sleep_hours": 7,
-            "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
-            "social_connection": 6, "screen_time": 4, "caffeine_intake": 2,
-            "water_intake": 6, "sunlight_exposure": 30, "work_life_balance": 6,
+            "username": "John Doe",
+            "mood": "Good",
+            "sleep_hours": 7,
+            "stress_level": 3,
+            "anxiety_level": 2,
+            "exercise_minutes": 30,
+            "social_connection": 6,
+            "screen_time": 4,
+            "caffeine_intake": 2,
+            "water_intake": 6,
+            "sunlight_exposure": 30,
+            "work_life_balance": 6
         }])
+
         st.download_button(
-            label="📥 Download Template (Excel)", data=export_to_excel(template_df, sheet_name="Template"),
+            label="📥 Download Template (Excel)",
+            data=export_to_excel(template_df, sheet_name="Template"),
             file_name="bulk_upload_template.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key="bulk_dl_template"
         )
 
-    uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"], key="bulk_uploader")
+    uploaded_file = st.file_uploader(
+        "Upload your Excel file",
+        type=["xlsx"],
+        key="bulk_uploader"
+    )
 
     if uploaded_file is not None:
+
         try:
             bulk_df = pd.read_excel(uploaded_file)
         except Exception as e:
@@ -2100,31 +2128,70 @@ elif page == "📂 Bulk Upload":
             st.error(f"❌ Could not read that file: {e}")
 
         if bulk_df is not None:
-            missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
+
+            missing_cols = [
+                c for c in REQUIRED_COLUMNS
+                if c not in bulk_df.columns
+            ]
+
             if missing_cols:
-                st.error(f"❌ Missing required column(s): {', '.join(missing_cols)}. "
-                         f"Check the template above for the expected format.")
+                st.error(
+                    f"❌ Missing required column(s): {', '.join(missing_cols)}. "
+                    "Check the template above for the expected format."
+                )
+
             elif bulk_df.empty:
                 st.warning("⚠️ The uploaded file has no rows.")
+
             else:
+
                 bulk_df = bulk_df.copy()
+
                 if "date" not in bulk_df.columns:
-                    bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
-                            "social_connection", "screen_time", "caffeine_intake",
-                            "water_intake", "sunlight_exposure", "work_life_balance"]
+                    bulk_df["date"] = datetime.now().strftime(
+                        "%Y-%m-%d %H:%M:%S"
+                    )
+
+                numeric_cols = [
+                    "sleep_hours",
+                    "stress_level",
+                    "anxiety_level",
+                    "exercise_minutes",
+                    "social_connection",
+                    "screen_time",
+                    "caffeine_intake",
+                    "water_intake",
+                    "sunlight_exposure",
+                    "work_life_balance"
+                ]
+
                 for col in numeric_cols:
                     if col in bulk_df.columns:
-                        bulk_df[col] = pd.to_numeric(bulk_df[col], errors="coerce").fillna(0)
-                risk_levels, wellness_scores, factor_lists = [], [], []
+                        bulk_df[col] = pd.to_numeric(
+                            bulk_df[col],
+                            errors="coerce"
+                        ).fillna(0)
+
+                risk_levels = []
+                wellness_scores = []
+                factor_lists = []
+
                 for _, row in bulk_df.iterrows():
+
                     risk, factors, wellness = predict_risk(
-                        row["stress_level"], row["sleep_hours"], row["anxiety_level"],
-                        row["exercise_minutes"], row["mood"],
-                        row.get("social_connection", 5), row.get("screen_time", 4),
-                        row.get("caffeine_intake", 2), row.get("water_intake", 6),
-                        row.get("sunlight_exposure", 30), row.get("work_life_balance", 5),
+                        row["stress_level"],
+                        row["sleep_hours"],
+                        row["anxiety_level"],
+                        row["exercise_minutes"],
+                        row["mood"],
+                        row.get("social_connection", 5),
+                        row.get("screen_time", 4),
+                        row.get("caffeine_intake", 2),
+                        row.get("water_intake", 6),
+                        row.get("sunlight_exposure", 30),
+                        row.get("work_life_balance", 5)
                     )
+
                     risk_levels.append(risk)
                     wellness_scores.append(wellness)
                     factor_lists.append(", ".join(factors))
@@ -2133,61 +2200,202 @@ elif page == "📂 Bulk Upload":
                 bulk_df["risk_level"] = risk_levels
                 bulk_df["factors"] = factor_lists
 
-                st.success(f"✅ Analyzed {len(bulk_df)} records.")
+                st.success(
+                    f"✅ Analyzed {len(bulk_df)} records."
+                )
 
                 m1, m2, m3, m4 = st.columns(4)
-                m1.metric("Total Records", len(bulk_df))
-                m2.metric("Avg Wellness", f"{bulk_df['wellness_score'].mean():.0f}/100")
-                m3.metric("High Risk", int((bulk_df["risk_level"] == "High").sum()))
-                m4.metric("Low Risk", int((bulk_df["risk_level"] == "Low").sum()))
+
+                m1.metric(
+                    "Total Records",
+                    len(bulk_df)
+                )
+
+                m2.metric(
+                    "Avg Wellness",
+                    f"{bulk_df['wellness_score'].mean():.0f}/100"
+                )
+
+                m3.metric(
+                    "High Risk",
+                    int((bulk_df["risk_level"] == "High").sum())
+                )
+
+                m4.metric(
+                    "Low Risk",
+                    int((bulk_df["risk_level"] == "Low").sum())
+                )
 
                 st.markdown("### 📊 Results")
-                st.dataframe(bulk_df, use_container_width=True)
+
+                st.dataframe(
+                    bulk_df,
+                    use_container_width=True
+                )
 
                 c1, c2 = st.columns(2)
+
                 with c1:
-                    risk_counts = bulk_df["risk_level"].value_counts().reset_index()
+
+                    risk_counts = (
+                        bulk_df["risk_level"]
+                        .value_counts()
+                        .reset_index()
+                    )
+
                     risk_counts.columns = ["Risk", "Count"]
-                    fig_risk = px.bar(risk_counts, x="Risk", y="Count", color="Risk",
-                                       title="Risk Level Distribution", color_discrete_map=RISK_COLOR_MAP)
-                    st.plotly_chart(style_plot(fig_risk), use_container_width=True)
+
+                    fig_risk = px.bar(
+                        risk_counts,
+                        x="Risk",
+                        y="Count",
+                        color="Risk",
+                        title="Risk Level Distribution",
+                        color_discrete_map=RISK_COLOR_MAP
+                    )
+
+                    st.plotly_chart(
+                        style_plot(fig_risk),
+                        use_container_width=True
+                    )
+
                 with c2:
-                    fig_hist = px.histogram(bulk_df, x="wellness_score", nbins=15, title="Wellness Score Distribution",
-                                             color_discrete_sequence=[COLOR_PRIMARY])
-                    st.plotly_chart(style_plot(fig_hist), use_container_width=True)
+
+                    fig_hist = px.histogram(
+                        bulk_df,
+                        x="wellness_score",
+                        nbins=15,
+                        title="Wellness Score Distribution",
+                        color_discrete_sequence=[COLOR_PRIMARY]
+                    )
+
+                    st.plotly_chart(
+                        style_plot(fig_hist),
+                        use_container_width=True
+                    )
 
                 st.markdown("### 📥 Export or Save")
+
                 dl_col, save_col = st.columns(2)
+
                 with dl_col:
+
                     st.download_button(
-                        label="📥 Download Analyzed Results (Excel)", data=export_to_excel(bulk_df, sheet_name="Bulk Analysis"),
-                        file_name=f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        label="📥 Download Analyzed Results (Excel)",
+                        data=export_to_excel(
+                            bulk_df,
+                            sheet_name="Bulk Analysis"
+                        ),
+                        file_name=(
+                            f"bulk_analysis_"
+                            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+                        ),
                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                         key="bulk_dl_results"
                     )
+
                 with save_col:
-                    if st.button("➕ Add these records to the backend data", use_container_width=True, key="bulk_save_btn"):
-                        init_db()
-                        conn = get_connection()
-                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level",
-                                                "anxiety_level", "exercise_minutes", "social_connection",
-                                                "screen_time", "caffeine_intake", "water_intake",
-                                                "sunlight_exposure", "work_life_balance"]].values.tolist()
-                        conn.executemany(
-                            """INSERT INTO user_history
-                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
-                                social_connection, screen_time, caffeine_intake, water_intake,
-                                sunlight_exposure, work_life_balance)
-                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", history_rows,
-                        )
-                        prediction_rows = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]].values.tolist()
-                        conn.executemany(
-                            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
-                               VALUES (?, ?, ?, ?, ?)""", prediction_rows,
-                        )
-                        conn.commit()
-                        conn.close()
-                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They will now show up in Dashboard and Admin.")
+
+                    if st.button(
+                        "➕ Add these records to the backend data",
+                        use_container_width=True,
+                        key="bulk_save_btn"
+                    ):
+
+                        try:
+
+                            init_db()
+                            conn = get_connection()
+
+                            history_rows = []
+
+                            for _, r in bulk_df.iterrows():
+
+                                history_rows.append((
+                                    str(r["username"]),
+                                    str(r["date"]),
+                                    str(r["mood"]),
+                                    float(r["sleep_hours"]),
+                                    float(r["stress_level"]),
+                                    float(r["anxiety_level"]),
+                                    float(r["exercise_minutes"]),
+                                    float(r["social_connection"]),
+                                    float(r["screen_time"]),
+                                    float(r["caffeine_intake"]),
+                                    float(r["water_intake"]),
+                                    float(r["sunlight_exposure"]),
+                                    float(r["work_life_balance"])
+                                ))
+
+                            conn.executemany(
+                                """
+                                INSERT INTO user_history
+                                (
+                                    username,
+                                    date,
+                                    mood,
+                                    sleep_hours,
+                                    stress_level,
+                                    anxiety_level,
+                                    exercise_minutes,
+                                    social_connection,
+                                    screen_time,
+                                    caffeine_intake,
+                                    water_intake,
+                                    sunlight_exposure,
+                                    work_life_balance
+                                )
+                                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                """,
+                                history_rows
+                            )
+
+                            prediction_rows = []
+
+                            for _, r in bulk_df.iterrows():
+
+                                prediction_rows.append((
+                                    str(r["username"]),
+                                    str(r["date"]),
+                                    str(r["risk_level"]),
+                                    float(r["wellness_score"]),
+                                    str(r["factors"])
+                                ))
+
+                            conn.executemany(
+                                """
+                                INSERT INTO predictions
+                                (
+                                    username,
+                                    date,
+                                    risk_level,
+                                    wellness_score,
+                                    factors
+                                )
+                                VALUES (?, ?, ?, ?, ?)
+                                """,
+                                prediction_rows
+                            )
+
+                            conn.commit()
+                            conn.close()
+
+                            st.success(
+                                f"✅ Added {len(bulk_df)} records to the backend. "
+                                "They will now show up in Dashboard and Admin."
+                            )
+
+                        except Exception as e:
+
+                            try:
+                                conn.rollback()
+                                conn.close()
+                            except:
+                                pass
+
+                            st.error(
+                                f"❌ Could not save records to the backend: {e}"
+                            )
 
 
 # ═══════════════════════════════════════════════════════════════
