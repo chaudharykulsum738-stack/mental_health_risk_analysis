@@ -1642,80 +1642,96 @@ with st.sidebar:
 if page == "🏠 Home":
     init_login_state()
     if not st.session_state.logged_in:
-        show_login_page()
-        st.stop()
+        def show_login_page():
+    init_login_state()
     
-    st.markdown(f"""
-    <div class="hero-wrap">
-        <div class="hero-card">
-            <div class="hero-chip">✦ Your daily wellness companion</div>
-            <div class="hero-icon">🧠</div>
-            <div class="hero-title">MindTrack</div>
-            <div class="hero-tagline">Welcome back, {st.session_state.current_user}</div>
-        </div>
-    </div>
+    st.markdown("""
+    <style>
+      .auth-hero{
+        max-width:640px;margin:14px auto 6px;padding:22px 26px;
+        background: linear-gradient(135deg,#6C63FF15,#5AB0B015);
+        border-radius:18px;
+        border: 1px solid rgba(108,99,255,.18);
+        display:flex;align-items:center;gap:16px;
+      }
+      .auth-logo{
+        width:56px;height:56px;border-radius:16px;flex:none;
+        background: linear-gradient(135deg,#6C63FF,#5AB0B0);
+        display:flex;align-items:center;justify-content:center;
+        font-size:28px;color:#fff;box-shadow:0 8px 22px rgba(108,99,255,.35);
+      }
+      .auth-title{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin:0;}
+      .auth-sub{color:#5B667A;margin:2px 0 0;font-size:.95rem;}
+      .auth-note{color:#6B7280;font-size:.85rem;margin-top:10px;text-align:center;}
+      .auth-badge{
+        display:inline-block;padding:3px 10px;border-radius:999px;
+        background:#EEF2FF;color:#4338CA;font-size:.75rem;font-weight:700;
+        margin-left:8px;vertical-align:middle;
+      }
+    </style>
     """, unsafe_allow_html=True)
     
-    pulse_divider()
+    st.markdown("""
+      <div class="auth-hero">
+        <div class="auth-logo">🧠</div>
+        <div>
+          <p class="auth-title">MindTrack <span class="auth-badge">Secure</span></p>
+          <p class="auth-sub">Sign in with your email to access your private wellness dashboard.</p>
+        </div>
+      </div>
+    """, unsafe_allow_html=True)
     
-    st.markdown("## ⚡ Quick Start")
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        if st.button("📋 Start New Assessment", use_container_width=True, key="home_btn_assessment"):
-            st.session_state.nav_page = "📋 Assessment"
+    c1, c2 = st.columns(2)
+    with c1:
+        if st.button("🔐  Sign In", use_container_width=True,
+                     type=("primary" if st.session_state.auth_mode == "signin" else "secondary")):
+            st.session_state.auth_mode = "signin"
             st.rerun()
-    with col2:
-        if st.button("📝 Write in Journal", use_container_width=True, key="home_btn_journal"):
-            st.session_state.nav_page = "📝 Journal"
-            st.rerun()
-    with col3:
-        if st.button("🆘 I Need Support Now", use_container_width=True, key="home_btn_support"):
-            st.session_state.nav_page = "🆘 Support & Coping"
+    with c2:
+        if st.button("✨  Create Account", use_container_width=True,
+                     type=("primary" if st.session_state.auth_mode == "signup" else "secondary")):
+            st.session_state.auth_mode = "signup"
             st.rerun()
     
-    # Use row-secure fetch with current user's email
-    current_email = get_current_email()
-    df = get_user_history(current_email)
+    st.write("")
     
-    if len(df) > 0:
-        pulse_divider()
-        df_sorted = df.sort_values("date")
-        dates_only = df_sorted["date"].dt.date.tolist()
-        current_streak, longest_streak = calculate_streaks(dates_only)
-        
-        st.markdown("## 📊 Your Stats")
-        m1, m2, m3, m4, m5 = st.columns(5)
-        m1.metric("Total Check-ins", len(df_sorted))
-        m2.metric("Avg Sleep", f"{df_sorted['sleep_hours'].mean():.1f}h")
-        m3.metric("Avg Stress", f"{df_sorted['stress_level'].mean():.1f}")
-        m4.metric("🔥 Current Streak", f"{current_streak} day{'s' if current_streak != 1 else ''}")
-        m5.metric("🏆 Longest Streak", f"{longest_streak} day{'s' if longest_streak != 1 else ''}")
-        
-        this_avg, last_avg = weekly_digest(df_sorted)
-        if this_avg is not None:
-            st.markdown("#### This Week vs Last Week")
-            delta_txt = f"{this_avg - last_avg:+.0f} vs last week" if last_avg is not None else "No prior week to compare"
-            st.metric("This Week's Avg Wellness", f"{this_avg:.0f}/100", delta_txt)
-    
-    pulse_divider()
-    
-    wellness_tips = [
-        "Take a 5-minute walk outside 🌳", "Practice deep breathing for 2 minutes 🧘",
-        "Drink a glass of water 💧", "Call a friend or family member 📞",
-        "Write down 3 things you are grateful for ✍️", "Stretch your body for 10 minutes 🤸",
-    ]
-    st.markdown("## 🌟 Daily Wellness Tip")
-    st.info(random.choice(wellness_tips))
-    
-    pulse_divider()
-    
-    quotes = [
-        "The greatest glory in living lies not in never falling, but in rising every time we fall. – Nelson Mandela",
-        "The way to get started is to quit talking and begin doing. – Walt Disney",
-        "Balance is not something you find, it is something you create. – Jana Kingsford"
-    ]
-    st.markdown("## 💬 Motivation")
-    st.success(random.choice(quotes))
+    if st.session_state.auth_mode == "signin":
+        with st.form("signin_form", clear_on_submit=False):
+            email = st.text_input("📧 Email", placeholder="you@example.com", key="signin_email")
+            pw = st.text_input("🔑 Password", type="password", placeholder="••••••••", key="signin_pw")
+            ok = st.form_submit_button("Sign In →", use_container_width=True)
+            if ok:
+                success, msg, name = authenticate_user(email, pw)
+                if success:
+                    login_user(email, name)
+                    st.success(f"Welcome back, {name}! 🎉")
+                    st.rerun()
+                else:
+                    st.error(msg)
+        st.markdown("<p class='auth-note'>New here? Click <b>Create Account</b> above.</p>",
+                    unsafe_allow_html=True)
+    else:
+        with st.form("signup_form", clear_on_submit=False):
+            name = st.text_input("👤 Full name", placeholder="Alex Kumar", key="signup_name")
+            email = st.text_input("📧 Email", placeholder="you@example.com", key="signup_email")
+            pw = st.text_input("🔑 Password (min 6 chars)", type="password",
+                              placeholder="••••••••", key="signup_pw")
+            pw2 = st.text_input(" Confirm password", type="password",
+                               placeholder="••••••••", key="signup_pw2")
+            ok = st.form_submit_button("Create my account →", use_container_width=True)
+            if ok:
+                if pw != pw2:
+                    st.error("Passwords do not match.")
+                else:
+                    success, msg = register_user(email, name, pw)
+                    if success:
+                        login_user(email, name)
+                        st.success(f"Account created — welcome, {name.strip()}! 🎉")
+                        st.rerun()
+                    else:
+                        st.error(msg)
+        st.markdown("<p class='auth-note'>Already have an account? Click <b>Sign In</b>.</p>",
+                    unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════
 # 📋 ASSESSMENT PAGE
