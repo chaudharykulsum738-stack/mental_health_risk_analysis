@@ -2,7 +2,7 @@
 """
 🔧 ACCOUNT RECOVERY SCRIPT
 Shows all accounts and helps you find the right email to sign in with
-"""
+""
 
 import sqlite3
 import os
