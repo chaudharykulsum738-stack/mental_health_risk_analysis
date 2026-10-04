@@ -34,7 +34,10 @@ DATA_DIR = "data"
 os.makedirs(DATA_DIR, exist_ok=True)
 DB_PATH = os.path.join(DATA_DIR, "mental_health.db")
 
-LOGO_PATH = None
+# ═══════════════════════════════════════════════════════════════
+# 🎨 LOGO CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+LOGO_PATH = None  # Set to "logo.png" or URL if you have a logo
 
 st.set_page_config(
     page_title="MindTrack | Wellness Intelligence",
@@ -52,6 +55,7 @@ def toggle_dark_mode():
     st.session_state.dark_mode = not st.session_state.dark_mode
     st.rerun()
 
+# Light mode colors
 L_COLORS = {
     "ink": "#1B2430", "muted": "#5B6B6A", "bg": "#F4F6F5",
     "card": "#FFFFFF", "border": "rgba(27,36,48,0.10)",
@@ -61,6 +65,7 @@ L_COLORS = {
     "grid": "rgba(27,36,48,0.07)",
 }
 
+# Dark mode colors
 D_COLORS = {
     "ink": "#E8ECF1", "muted": "#8B95A5", "bg": "#0D1117",
     "card": "#161B22", "border": "rgba(255,255,255,0.08)",
@@ -72,6 +77,7 @@ D_COLORS = {
 
 C = D_COLORS if st.session_state.dark_mode else L_COLORS
 
+# Static accent colors
 COLOR_PRIMARY = "#2F6F62"
 COLOR_PRIMARY_LIGHT = "#4C9A79"
 COLOR_SLATE = "#5C7A8A"
@@ -105,49 +111,116 @@ css = f"""
     --ink: {C['ink']}; --muted: {C['muted']}; --paper: {C['bg']}; --card: {C['card']};
     --border: {C['border']}; --primary: {COLOR_PRIMARY}; --primary-light: {COLOR_PRIMARY_LIGHT};
     --good: {COLOR_GOOD}; --medium: {COLOR_MEDIUM}; --high: {COLOR_HIGH};
+    --grad: linear-gradient(135deg, #2F6F62, #3A8576);
 }}
+
 html, body, [class*="css"] {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }}
+
 .stApp::before {{
     content: ""; position: fixed; top: 0; left: 0; right: 0; height: 4px; z-index: 999999;
     background: linear-gradient(90deg, #2F6F62, #4C9A79, #7B68EE, #D9A441, #2F6F62);
 }}
+
 .stApp {{
     background:
         radial-gradient(1100px 520px at 88% -10%, rgba(76,154,121,0.12), transparent 60%),
         radial-gradient(900px 480px at -10% 22%, rgba(123,104,238, 0.08), transparent 55%),
         var(--paper);
 }}
-.main .block-container {{ padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1300px; }}
-h1, h2, h3 {{ font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important; font-weight: 600 !important; }}
-.main h2 {{ position: relative; padding-bottom: 10px !important; margin-bottom: 14px !important; }}
+
+.main .block-container {{
+    padding-top: 2.2rem; padding-bottom: 3rem; max-width: 1300px;
+    animation: fadeUp 0.4s ease both;
+}}
+
+h1, h2, h3 {{
+    font-family: 'Fraunces', Georgia, serif !important; color: var(--ink) !important;
+    font-weight: 600 !important; letter-spacing: -0.015em;
+}}
+
+.main h2 {{
+    position: relative; padding-bottom: 10px !important; margin-bottom: 14px !important;
+}}
 .main h2::after {{
     content: ""; position: absolute; left: 0; bottom: 0; width: 56px; height: 3.5px;
     border-radius: 4px; background: linear-gradient(90deg, var(--primary), var(--primary-light));
 }}
+
 .stMarkdown, .stMarkdown p, label, .stCaption {{ color: var(--muted) !important; }}
+::selection {{ background: rgba(76,154,121,0.28); }}
+
+::-webkit-scrollbar {{ width: 10px; height: 10px; }}
+::-webkit-scrollbar-track {{ background: transparent; }}
+::-webkit-scrollbar-thumb {{
+    background: rgba(127,140,150,0.35); border-radius: 8px;
+    border: 2px solid transparent; background-clip: content-box;
+}}
+::-webkit-scrollbar-thumb:hover {{ background: rgba(127,140,150,0.60); background-clip: content-box; border: 2px solid transparent; }}
+
 [data-testid="stSidebar"] {{
     background: linear-gradient(180deg, #1B2838 0%, #152420 55%, #101B17 100%);
     border-right: 1px solid rgba(255,255,255,0.08);
 }}
 [data-testid="stSidebar"] * {{ color: #E6EBE9 !important; }}
+[data-testid="stSidebar"] .stButton > button {{
+    background: rgba(255,255,255,0.07) !important; box-shadow: none !important;
+    border: 1px solid rgba(255,255,255,0.10) !important; text-align: left !important;
+}}
+[data-testid="stSidebar"] .stButton > button:hover {{
+    background: rgba(255,255,255,0.14) !important; transform: none !important;
+    border-color: rgba(127,209,176,0.4) !important;
+}}
+
 .sidebar-brand-row {{ display: flex; align-items: center; gap: 10px; margin: 0.35rem 0 0.25rem 0; }}
 .sidebar-logo {{
     width: 44px; height: 44px; border-radius: 14px; flex: none;
     background: linear-gradient(135deg, #4C9A79, #2F6F62);
     display: flex; align-items: center; justify-content: center;
-    font-size: 22px; box-shadow: 0 6px 18px rgba(47,111,98,0.50);
+    font-size: 22px; box-shadow: 0 6px 18px rgba(47,111,98,0.50), inset 0 1px 0 rgba(255,255,255,0.25);
 }}
-.sidebar-brand {{ font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important; }}
+.sidebar-brand {{
+    font-family: 'Fraunces', serif; font-size: 1.55rem; font-weight: 700; color: #fff !important;
+    letter-spacing: -0.01em;
+}}
 .sidebar-tagline {{
     font-family: 'IBM Plex Mono', monospace; font-size: 0.68rem; letter-spacing: 0.14em;
     text-transform: uppercase; color: #7FD1B0 !important; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 8px;
 }}
+
+[data-testid="stSidebar"] div[role="radiogroup"]::before {{
+    content: "MENU"; display: block; font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; color: rgba(230,235,233,0.40) !important;
+    margin: 0 0 8px 4px;
+}}
+[data-testid="stSidebar"] div[role="radiogroup"] label {{
+    background: rgba(255,255,255,0.04); border: 1px solid transparent;
+    border-radius: 10px; padding: 9px 14px; margin-bottom: 6px; transition: all 0.18s ease;
+}}
+[data-testid="stSidebar"] div[role="radiogroup"] label:hover {{
+    background: rgba(255,255,255,0.09); transform: translateX(3px);
+}}
+[data-testid="stSidebar"] div[role="radiogroup"] label:has(input[aria-checked="true"]) {{
+    background: linear-gradient(90deg, rgba(76,154,121,0.32), rgba(76,154,121,0.10)) !important;
+    border-color: rgba(127,209,176,0.55) !important;
+    box-shadow: inset 3px 0 0 #4C9A79, 0 2px 10px rgba(76,154,121,0.20);
+}}
+[data-testid="stSidebar"] div[role="radiogroup"] label p {{ font-weight: 500; font-size: 0.93rem; }}
+
+.sidebar-disclaimer {{
+    font-size: 0.68rem !important; color: rgba(230,235,233,0.55) !important;
+    margin-top: 16px; line-height: 1.5; padding: 12px 14px;
+    background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.07);
+    border-radius: 10px;
+}}
+
 .page-header {{ display: flex; align-items: center; gap: 16px; margin-bottom: 0.2rem; }}
 .page-header-icon {{
     font-size: 1.55rem; width: 60px; height: 60px; flex: none;
     display: flex; align-items: center; justify-content: center;
     background: linear-gradient(135deg, rgba(76,154,121,0.18), rgba(47,111,98,0.10));
     border: 1px solid rgba(76,154,121,0.32); border-radius: 17px;
+    box-shadow: 0 4px 16px rgba(47,111,98,0.18);
 }}
 .page-eyebrow {{
     font-family: 'IBM Plex Mono', monospace; font-size: 0.66rem; letter-spacing: 0.15em;
@@ -157,7 +230,10 @@ h1, h2, h3 {{ font-family: 'Fraunces', Georgia, serif !important; color: var(--i
 }}
 .page-title {{ margin: 6px 0 0 0 !important; font-size: 2.35rem !important; }}
 .page-subtitle {{ color: var(--muted) !important; font-size: 1rem; margin-top: 5px !important; }}
+
 .pulse-divider {{ height: 20px; margin: 1.3rem 0 1.7rem 0; }}
+.pulse-divider svg {{ width: 100%; height: 100%; display: block; }}
+
 .hero-wrap {{ padding: 0 0 1.2rem 0; }}
 .hero-card {{
     position: relative; overflow: hidden; text-align: center;
@@ -167,7 +243,25 @@ h1, h2, h3 {{ font-family: 'Fraunces', Georgia, serif !important; color: var(--i
     border: 1px solid rgba(255,255,255,0.14);
     box-shadow: 0 20px 50px rgba(24,48,42,0.40);
 }}
-@keyframes heroShift {{ 0%, 100% {{ background-position: 0% 50%; }} 50% {{ background-position: 100% 50%; }} }}
+@keyframes heroShift {{
+    0%, 100% {{ background-position: 0% 50%; }}
+    50% {{ background-position: 100% 50%; }}
+}}
+.hero-card::before, .hero-card::after {{ content: ""; position: absolute; border-radius: 50%; }}
+.hero-card::before {{
+    width: 280px; height: 280px; top: -120px; right: -60px;
+    background: radial-gradient(circle, rgba(127,209,176,0.40), transparent 65%);
+    animation: blobFloat 7s ease-in-out infinite;
+}}
+.hero-card::after {{
+    width: 240px; height: 240px; bottom: -110px; left: -40px;
+    background: radial-gradient(circle, rgba(123,104,238,0.30), transparent 65%);
+    animation: blobFloat 9s ease-in-out infinite reverse;
+}}
+@keyframes blobFloat {{
+    0%, 100% {{ transform: translate(0,0) scale(1); }}
+    50% {{ transform: translate(-18px, 14px) scale(1.08); }}
+}}
 .hero-chip {{
     position: relative; z-index: 1; display: inline-block;
     font-family: 'IBM Plex Mono', monospace; font-size: 0.64rem; letter-spacing: 0.2em;
@@ -180,44 +274,126 @@ h1, h2, h3 {{ font-family: 'Fraunces', Georgia, serif !important; color: var(--i
     width: 88px; height: 88px; margin: 0 auto 0.7rem auto;
     display: flex; align-items: center; justify-content: center;
     background: rgba(255,255,255,0.13); border: 1px solid rgba(255,255,255,0.25);
-    border-radius: 26px; animation: floaty 5s ease-in-out infinite;
+    border-radius: 26px; backdrop-filter: blur(6px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+    animation: floaty 5s ease-in-out infinite;
 }}
-@keyframes floaty {{ 0%, 100% {{ transform: translateY(0); }} 50% {{ transform: translateY(-9px); }} }}
+@keyframes floaty {{
+    0%, 100% {{ transform: translateY(0); }}
+    50% {{ transform: translateY(-9px); }}
+}}
 .hero-title {{
     position: relative; z-index: 1;
     font-family: 'Fraunces', serif; font-size: 2.9rem; margin: 0.2rem 0 0.45rem 0;
-    color: #fff; font-weight: 700;
+    color: #fff; font-weight: 700; text-shadow: 0 2px 14px rgba(0,0,0,0.28);
 }}
 .hero-tagline {{
     position: relative; z-index: 1;
     font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.13em; text-transform: uppercase;
     font-size: 0.8rem; color: #C9F0DD; font-weight: 600;
 }}
-[data-testid="stMetric"] {{
+
+[data-testid="stMetric"], .feature-card {{
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 18px 20px; border-top: 3px solid transparent;
+    padding: 18px 20px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    border-top: 3px solid transparent;
     border-image: linear-gradient(90deg, rgba(76,154,121,0.55), rgba(76,154,121,0.05)) 1;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    animation: fadeUp 0.45s ease both;
 }}
+[data-testid="stMetric"]:hover, .feature-card:hover {{
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgba(27,36,48,0.11);
+}}
+@keyframes fadeUp {{
+    from {{ opacity: 0; transform: translateY(10px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+[data-testid="stMetricLabel"] {{
+    font-family: 'IBM Plex Mono', monospace !important; text-transform: uppercase;
+    font-size: 0.66rem !important; letter-spacing: 0.08em; color: var(--muted) !important;
+}}
+[data-testid="stMetricValue"] {{
+    font-family: 'Fraunces', serif !important; color: var(--ink) !important; font-size: 2rem !important;
+}}
+
 .stButton > button {{
     background: linear-gradient(135deg, #2F6F62, #3A8576); color: #fff; border: none;
-    border-radius: 10px; padding: 11px 22px; font-weight: 600;
+    border-radius: 10px; padding: 11px 22px; font-weight: 600; font-family: 'Inter', sans-serif;
     box-shadow: 0 2px 8px rgba(47,111,98,0.32); transition: all 0.18s ease;
+    position: relative; overflow: hidden;
+}}
+.stButton > button::after {{
+    content: ""; position: absolute; top: 0; left: -90%; width: 45%; height: 100%;
+    background: linear-gradient(105deg, transparent, rgba(255,255,255,0.40), transparent);
+    transform: skewX(-20deg);
 }}
 .stButton > button:hover {{
     background: linear-gradient(135deg, #3A8576, #4C9A79);
     transform: translateY(-2px); box-shadow: 0 9px 20px rgba(47,111,98,0.38);
 }}
+.stButton > button:hover::after {{ animation: shine 0.8s ease; }}
+@keyframes shine {{ to {{ left: 140%; }} }}
+.stButton > button:active {{ transform: translateY(0); }}
+
+.stDownloadButton > button {{
+    background: var(--card) !important; color: var(--primary) !important;
+    border: 1.5px solid var(--primary) !important; border-radius: 10px; font-weight: 600;
+    transition: all 0.18s ease;
+}}
+.stDownloadButton > button:hover {{
+    background: linear-gradient(135deg, #2F6F62, #3A8576) !important; color: #fff !important;
+    transform: translateY(-2px);
+}}
+
+div[data-testid="stAlert"] {{
+    border-radius: 12px; border: 1px solid var(--border);
+    box-shadow: 0 1px 3px rgba(27,36,48,0.04);
+}}
+
 [data-baseweb="tab-list"] {{
     gap: 6px; background: var(--card); border: 1px solid var(--border);
-    border-radius: 12px; padding: 5px;
+    border-radius: 12px; padding: 5px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+}}
+button[data-baseweb="tab"] {{
+    font-family: 'Inter', sans-serif; font-weight: 600; color: var(--muted);
+    border-radius: 8px; height: auto; padding: 7px 16px;
 }}
 button[data-baseweb="tab"][aria-selected="true"] {{
     background: linear-gradient(135deg, #2F6F62, #3A8576); color: #fff !important;
 }}
-[data-testid="stPlotlyChart"] {{
+
+[data-testid="stPlotlyChart"], [data-testid="stVegaLiteChart"] {{
     background: var(--card); border: 1px solid var(--border); border-radius: 16px;
-    padding: 12px 8px 4px 8px; margin-bottom: 14px;
+    padding: 12px 8px 4px 8px; box-shadow: 0 1px 3px rgba(27,36,48,0.05);
+    margin-bottom: 14px;
 }}
+[data-testid="stDataFrame"] {{
+    background: var(--card) !important; border: 1px solid var(--border) !important;
+    border-radius: 14px !important; padding: 6px;
+}}
+
+input, textarea, .stTextInput > div > div > input, .stTextArea textarea {{
+    background: var(--card) !important; color: var(--ink) !important;
+    border: 1px solid var(--border) !important; border-radius: 10px !important;
+}}
+[data-baseweb="input"]:focus-within, [data-baseweb="textarea"]:focus-within,
+[data-baseweb="select"]:focus-within {{
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px rgba(76,154,121,0.15) !important;
+}}
+
+[data-testid="stSlider"] [role="slider"] {{
+    background-color: var(--primary) !important; box-shadow: 0 0 0 4px rgba(76,154,121,0.18);
+}}
+hr {{ display: none; }}
+[data-testid="stExpander"] {{
+    background: var(--card); border: 1px solid var(--border) !important; border-radius: 12px !important;
+}}
+[data-testid="stFileUploader"] {{
+    background: var(--card); border: 1.5px dashed var(--border); border-radius: 12px; padding: 8px;
+}}
+
 .user-pill {{
     display: inline-flex; align-items: center; gap: 6px;
     background: rgba(47,111,98,0.12); border: 1px solid rgba(47,111,98,0.30);
@@ -225,8 +401,19 @@ button[data-baseweb="tab"][aria-selected="true"] {{
     padding: 5px 14px; font-family: 'IBM Plex Mono', monospace;
     font-size: 0.8rem; font-weight: 600;
 }}
+
 .lock-screen {{ text-align: center; padding: 3rem 1rem; }}
 .lock-screen h2 {{ font-family: 'Fraunces', serif; color: var(--ink); }}
+
+.auth-hero {{
+    border-radius: 20px !important; box-shadow: 0 10px 30px rgba(108,99,255,0.16) !important;
+    border: 1px solid rgba(108,99,255,0.25) !important;
+}}
+
+[data-testid="stDataFrame"] td {{ color: var(--ink) !important; }}
+[data-testid="stDataFrame"] th {{ color: var(--ink) !important; background: var(--paper) !important; }}
+.stSlider > div > div > div {{ color: var(--ink) !important; }}
+
 .breathing-circle-wrap {{ display: flex; justify-content: center; padding: 1.8rem 0; }}
 .breathing-circle {{
     width: 140px; height: 140px; border-radius: 50%;
@@ -240,11 +427,6 @@ button[data-baseweb="tab"][aria-selected="true"] {{
     50%  {{ transform: scale(1.15); opacity: 1; }}
     75%  {{ transform: scale(0.7); opacity: 0.8; }}
     100% {{ transform: scale(0.7); opacity: 0.8; }}
-}}
-.security-badge {{
-    background: rgba(76,154,121,0.12); border: 1px solid rgba(76,154,121,0.30);
-    border-radius: 10px; padding: 8px 12px; margin-top: 10px;
-    font-size: 0.75rem; color: #7FD1B0;
 }}
 </style>
 """
@@ -283,7 +465,7 @@ def page_header(icon, eyebrow, title, subtitle=None):
 pulse_divider()
 
 # ═══════════════════════════════════════════════════════════════
-# 🔐 DATABASE FUNCTIONS (with Row-Level Security)
+# 🔐 DATABASE FUNCTIONS
 # ═══════════════════════════════════════════════════════════════
 def get_connection():
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -291,12 +473,11 @@ def get_connection():
     return conn
 
 def init_db():
-    """Initialize database with row-level security columns."""
     try:
         conn = get_connection()
         cur = conn.cursor()
         
-        # Users table (authentication)
+        # Users table (for authentication)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS users (
                 email TEXT PRIMARY KEY,
@@ -307,11 +488,10 @@ def init_db():
             )
         """)
         
-        # User history with user_email for row-level security
+        # User history table (for assessments)
         cur.execute("""
             CREATE TABLE IF NOT EXISTS user_history (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
                 username TEXT, date TEXT, mood TEXT, sleep_hours REAL,
                 stress_level REAL, anxiety_level REAL, exercise_minutes REAL,
                 social_connection REAL, screen_time REAL, caffeine_intake REAL,
@@ -319,66 +499,36 @@ def init_db():
             )
         """)
         
-        # Add user_email column if missing (migration for existing DBs)
-        try:
-            cur.execute("ALTER TABLE user_history ADD COLUMN user_email TEXT")
-        except sqlite3.OperationalError:
-            pass
+        # Add new columns if they don't exist
+        new_cols = [
+            ("social_connection", "REAL"),
+            ("screen_time", "REAL"),
+            ("caffeine_intake", "REAL"),
+            ("water_intake", "REAL"),
+            ("sunlight_exposure", "REAL"),
+            ("work_life_balance", "REAL"),
+        ]
+        for col_name, col_type in new_cols:
+            try:
+                cur.execute(f"ALTER TABLE user_history ADD COLUMN {col_name} {col_type}")
+            except sqlite3.OperationalError:
+                pass
         
-        # Backfill existing rows: set user_email from users table by matching username
-        try:
-            cur.execute("""
-                UPDATE user_history 
-                SET user_email = (SELECT email FROM users WHERE users.name = user_history.username)
-                WHERE user_email IS NULL OR user_email = ''
-            """)
-        except Exception:
-            pass
-        
-        # Predictions with user_email
+        # Predictions table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS predictions (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
-                user_email TEXT NOT NULL,
                 username TEXT, date TEXT, risk_level TEXT, wellness_score REAL, factors TEXT
             )
         """)
-        try:
-            cur.execute("ALTER TABLE predictions ADD COLUMN user_email TEXT")
-        except sqlite3.OperationalError:
-            pass
-        try:
-            cur.execute("""
-                UPDATE predictions 
-                SET user_email = (SELECT email FROM users WHERE users.name = predictions.username)
-                WHERE user_email IS NULL OR user_email = ''
-            """)
-        except Exception:
-            pass
         
-        # Goals keyed by user_email (row-level security)
+        # Goals table
         cur.execute("""
             CREATE TABLE IF NOT EXISTS goals (
-                user_email TEXT PRIMARY KEY,
-                username TEXT,
+                username TEXT PRIMARY KEY,
                 target_sleep REAL, target_exercise REAL, target_stress_max REAL,
                 target_social REAL, target_screen_max REAL, target_water REAL,
                 target_sunlight REAL, target_worklife REAL, updated_at TEXT
-            )
-        """)
-        # Migrate old goals table if it uses username as PK
-        try:
-            cur.execute("ALTER TABLE goals ADD COLUMN user_email TEXT")
-        except sqlite3.OperationalError:
-            pass
-        
-        # Login history
-        cur.execute("""
-            CREATE TABLE IF NOT EXISTS login_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT NOT NULL,
-                name TEXT NOT NULL,
-                login_time TEXT NOT NULL
             )
         """)
         
@@ -411,7 +561,7 @@ def is_valid_email(email: str) -> bool:
     junk_domains = {"test.com", "example.com", "abc.com", "aaa.com", "a.com"}
     return domain.lower() not in junk_domains
 
-def register_user(email: str, name: str, password: str) -> tuple:
+def register_user(email: str, name: str, password: str) -> tuple[bool, str]:
     init_db()
     email = email.strip().lower()
     name = name.strip()
@@ -442,7 +592,7 @@ def register_user(email: str, name: str, password: str) -> tuple:
     except Exception as e:
         return False, f"Could not create account: {e}"
 
-def authenticate_user(email: str, password: str) -> tuple:
+def authenticate_user(email: str, password: str) -> tuple[bool, str, str]:
     init_db()
     email = (email or "").strip().lower()
     if not email or not password:
@@ -459,25 +609,9 @@ def authenticate_user(email: str, password: str) -> tuple:
             return False, "No account found with this email. Please sign up.", ""
         if _hash_password(password, row["salt"]) != row["password_hash"]:
             return False, "Incorrect password. Please try again.", ""
-        
-        # Record login
-        record_login(email, row["name"])
         return True, "Welcome back!", row["name"]
     except Exception as e:
         return False, f"Login error: {e}", ""
-
-def record_login(email: str, name: str):
-    try:
-        init_db()
-        conn = get_connection()
-        conn.execute(
-            "INSERT INTO login_history (email, name, login_time) VALUES (?, ?, ?)",
-            (email, name, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
-        )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        st.error(f"Error recording login: {e}")
 
 def init_login_state():
     if "logged_in" not in st.session_state:
@@ -512,14 +646,6 @@ def require_login():
         """, unsafe_allow_html=True)
         st.stop()
 
-def get_current_email() -> str:
-    """Get current user's email - REQUIRED for all data access."""
-    email = st.session_state.get("current_email")
-    if not email:
-        st.error("🔒 Session expired. Please sign in again.")
-        st.stop()
-    return email.strip().lower()
-
 def show_login_page():
     init_login_state()
     
@@ -528,7 +654,8 @@ def show_login_page():
       .auth-hero{
         max-width:640px;margin:14px auto 6px;padding:22px 26px;
         background: linear-gradient(135deg,#6C63FF15,#5AB0B015);
-        border-radius:18px; border: 1px solid rgba(108,99,255,.18);
+        border-radius:18px;
+        border: 1px solid rgba(108,99,255,.18);
         display:flex;align-items:center;gap:16px;
       }
       .auth-logo{
@@ -545,6 +672,7 @@ def show_login_page():
         background:#EEF2FF;color:#4338CA;font-size:.75rem;font-weight:700;
         margin-left:8px;vertical-align:middle;
       }
+      [data-theme="dark"] .auth-sub, [data-theme="dark"] .auth-note { color:#B7C0CE; }
     </style>
     """, unsafe_allow_html=True)
     
@@ -619,25 +747,13 @@ def show_user_badge():
             <div style="font-size:.78rem;color:#6B7280;margin-top:4px;">{email}</div>
         </div>
         """, unsafe_allow_html=True)
-        
-        st.sidebar.markdown("""
-        <div class="security-badge">
-            🔒 <b>Private Mode</b><br>
-            <span style="font-size: 0.7rem; opacity: 0.8;">
-                You can only see your own data.
-            </span>
-        </div>
-        """, unsafe_allow_html=True)
 
 # ═══════════════════════════════════════════════════════════════
-# 🔒 SECURE DATA FUNCTIONS (Row-Level Security)
+# 📊 DATA FUNCTIONS (Assessments, Predictions, Goals, Journal)
 # ═══════════════════════════════════════════════════════════════
-
-# --- SAVE FUNCTIONS (always require email) ---
-def save_user_history(user_email, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+def save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
                      social_connection, screen_time, caffeine_intake, water_intake,
                      sunlight_exposure, work_life_balance, entry_date=None):
-    """Save assessment - linked to user_email for security."""
     try:
         init_db()
         if entry_date is None:
@@ -645,16 +761,15 @@ def save_user_history(user_email, mood, sleep_hours, stress_level, anxiety_level
         else:
             date_str = datetime.combine(entry_date, datetime.now().time()).strftime("%Y-%m-%d %H:%M:%S")
         
-        username = st.session_state.get("current_user", "")
         conn = get_connection()
         conn.execute(
             """INSERT INTO user_history
-               (user_email, username, date, mood, sleep_hours, stress_level, anxiety_level, 
-                exercise_minutes, social_connection, screen_time, caffeine_intake, 
-                water_intake, sunlight_exposure, work_life_balance)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (user_email, username, date_str, mood, sleep_hours, stress_level, anxiety_level,
-             exercise_minutes, social_connection, screen_time, caffeine_intake, water_intake,
+               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                social_connection, screen_time, caffeine_intake, water_intake,
+                sunlight_exposure, work_life_balance)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (username, date_str, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+             social_connection, screen_time, caffeine_intake, water_intake,
              sunlight_exposure, work_life_balance),
         )
         conn.commit()
@@ -664,17 +779,14 @@ def save_user_history(user_email, mood, sleep_hours, stress_level, anxiety_level
         st.error(f"Error saving assessment: {e}")
         return False
 
-def save_prediction(user_email, risk_level, wellness_score, factors):
+def save_prediction(username, risk_level, wellness_score, factors):
     try:
         init_db()
-        username = st.session_state.get("current_user", "")
         conn = get_connection()
         conn.execute(
-            """INSERT INTO predictions 
-               (user_email, username, date, risk_level, wellness_score, factors)
-               VALUES (?, ?, ?, ?, ?, ?)""",
-            (user_email, username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), 
-             risk_level, wellness_score, str(factors)),
+            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
+               VALUES (?, ?, ?, ?, ?)""",
+            (username, datetime.now().strftime("%Y-%m-%d %H:%M:%S"), risk_level, wellness_score, str(factors)),
         )
         conn.commit()
         conn.close()
@@ -683,20 +795,16 @@ def save_prediction(user_email, risk_level, wellness_score, factors):
         st.error(f"Error saving prediction: {e}")
         return False
 
-def save_goals(user_email, target_sleep, target_exercise, target_stress_max,
+def save_goals(username, target_sleep, target_exercise, target_stress_max,
               target_social, target_screen_max, target_water, target_sunlight, target_worklife):
     try:
         init_db()
-        username = st.session_state.get("current_user", "")
         conn = get_connection()
         conn.execute(
-            """INSERT INTO goals 
-               (user_email, username, target_sleep, target_exercise, target_stress_max,
-                target_social, target_screen_max, target_water, target_sunlight, 
-                target_worklife, updated_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-               ON CONFLICT(user_email) DO UPDATE SET
-               username=excluded.username,
+            """INSERT INTO goals (username, target_sleep, target_exercise, target_stress_max,
+               target_social, target_screen_max, target_water, target_sunlight, target_worklife, updated_at)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+               ON CONFLICT(username) DO UPDATE SET
                target_sleep=excluded.target_sleep,
                target_exercise=excluded.target_exercise,
                target_stress_max=excluded.target_stress_max,
@@ -706,7 +814,7 @@ def save_goals(user_email, target_sleep, target_exercise, target_stress_max,
                target_sunlight=excluded.target_sunlight,
                target_worklife=excluded.target_worklife,
                updated_at=excluded.updated_at""",
-            (user_email, username, target_sleep, target_exercise, target_stress_max,
+            (username, target_sleep, target_exercise, target_stress_max,
              target_social, target_screen_max, target_water, target_sunlight, target_worklife,
              datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
         )
@@ -717,18 +825,111 @@ def save_goals(user_email, target_sleep, target_exercise, target_stress_max,
         st.error(f"Error saving goals: {e}")
         return False
 
-# --- FETCH FUNCTIONS (always filter by email - NO public "get all") ---
-def get_user_history(user_email: str) -> pd.DataFrame:
-    """Get ONLY the current user's history - row-level security enforced."""
+def get_goals(username):
     try:
         init_db()
         conn = get_connection()
-        df = pd.read_sql_query(
-            "SELECT * FROM user_history WHERE user_email = ?", 
-            conn, 
-            params=(user_email,)
-        )
+        row = conn.execute("SELECT * FROM goals WHERE username=?", (username,)).fetchone()
         conn.close()
+        return dict(row) if row else None
+    except Exception as e:
+        st.error(f"Error loading goals: {e}")
+        return None
+
+JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
+
+def save_journal_entry(username, text, sentiment, polarity):
+    try:
+        os.makedirs(DATA_DIR, exist_ok=True)
+        entry = {
+            "id": datetime.now().strftime("%Y%m%d%H%M%S%f"),
+            "username": username,
+            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "text": text,
+            "sentiment": sentiment,
+            "polarity": round(polarity, 4),
+        }
+        df_new = pd.DataFrame([entry])
+        if os.path.exists(JOURNAL_CSV):
+            df_existing = pd.read_csv(JOURNAL_CSV)
+            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
+        else:
+            df_combined = df_new
+        df_combined.to_csv(JOURNAL_CSV, index=False)
+        return entry
+    except Exception as e:
+        st.error(f"Error saving journal: {e}")
+        return None
+
+def get_journal_entries(username=None):
+    try:
+        if not os.path.exists(JOURNAL_CSV):
+            return pd.DataFrame(columns=["id", "username", "date", "text", "sentiment", "polarity"])
+        df = pd.read_csv(JOURNAL_CSV)
+        df["date"] = pd.to_datetime(df["date"], errors="coerce")
+        if username:
+            df = df[df["username"].astype(str) == str(username)]
+        return df.sort_values("date", ascending=False).reset_index(drop=True)
+    except Exception as e:
+        st.error(f"Error reading journals: {e}")
+        return pd.DataFrame(columns=["id", "username", "date", "text", "sentiment", "polarity"])
+
+def delete_journal_entry(entry_id):
+    try:
+        if not os.path.exists(JOURNAL_CSV):
+            return
+        df = pd.read_csv(JOURNAL_CSV)
+        df = df[df["id"].astype(str) != str(entry_id)]
+        df.to_csv(JOURNAL_CSV, index=False)
+    except Exception as e:
+        st.error(f"Error deleting journal: {e}")
+
+def delete_all_journal_entries(username):
+    try:
+        if not os.path.exists(JOURNAL_CSV):
+            return
+        df = pd.read_csv(JOURNAL_CSV)
+        df = df[df["username"].astype(str) != str(username)]
+        df.to_csv(JOURNAL_CSV, index=False)
+    except Exception as e:
+        st.error(f"Error clearing journals: {e}")
+
+def export_journal_to_excel(username=None):
+    df = get_journal_entries(username)
+    buffer = io.BytesIO()
+    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
+        df.to_excel(writer, index=False, sheet_name="Journal Entries")
+    buffer.seek(0)
+    return buffer
+
+def delete_entry(entry_id):
+    try:
+        conn = get_connection()
+        conn.execute("DELETE FROM user_history WHERE id=?", (int(entry_id),))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"Error deleting entry: {e}")
+
+def delete_all_entries(username):
+    try:
+        conn = get_connection()
+        conn.execute("DELETE FROM user_history WHERE username=?", (username,))
+        conn.commit()
+        conn.close()
+    except Exception as e:
+        st.error(f"Error clearing entries: {e}")
+
+def get_history_data():
+    try:
+        init_db()
+        conn = get_connection()
+        try:
+            df = pd.read_sql_query("SELECT * FROM user_history", conn)
+        except Exception:
+            return pd.DataFrame()
+        finally:
+            conn.close()
         
         if df.empty:
             return df
@@ -753,17 +954,16 @@ def get_user_history(user_email: str) -> pd.DataFrame:
         st.error(f"Error loading history: {e}")
         return pd.DataFrame()
 
-def get_user_predictions(user_email: str) -> pd.DataFrame:
-    """Get ONLY the current user's predictions."""
+def get_prediction_data():
     try:
         init_db()
         conn = get_connection()
-        df = pd.read_sql_query(
-            "SELECT * FROM predictions WHERE user_email = ?", 
-            conn, 
-            params=(user_email,)
-        )
-        conn.close()
+        try:
+            df = pd.read_sql_query("SELECT * FROM predictions", conn)
+        except Exception:
+            return pd.DataFrame()
+        finally:
+            conn.close()
         
         if df.empty:
             return df
@@ -777,153 +977,10 @@ def get_user_predictions(user_email: str) -> pd.DataFrame:
         st.error(f"Error loading predictions: {e}")
         return pd.DataFrame()
 
-def get_user_goals(user_email: str):
-    """Get ONLY the current user's goals."""
-    try:
-        init_db()
-        conn = get_connection()
-        row = conn.execute(
-            "SELECT * FROM goals WHERE user_email = ?", (user_email,)
-        ).fetchone()
-        conn.close()
-        return dict(row) if row else None
-    except Exception as e:
-        st.error(f"Error loading goals: {e}")
-        return None
-
-def delete_user_entry(entry_id, user_email: str):
-    """Delete entry - only if it belongs to the user."""
-    try:
-        conn = get_connection()
-        conn.execute(
-            "DELETE FROM user_history WHERE id = ? AND user_email = ?", 
-            (int(entry_id), user_email)
-        )
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        st.error(f"Error deleting entry: {e}")
-
-def delete_all_user_entries(user_email: str):
-    """Delete all entries for a specific user."""
-    try:
-        conn = get_connection()
-        conn.execute("DELETE FROM user_history WHERE user_email = ?", (user_email,))
-        conn.commit()
-        conn.close()
-    except Exception as e:
-        st.error(f"Error clearing entries: {e}")
-
-# --- ADMIN FUNCTIONS (explicit naming - only for admin page) ---
-def get_all_history_admin() -> pd.DataFrame:
-    """ADMIN ONLY: Get all user history."""
-    try:
-        init_db()
-        conn = get_connection()
-        df = pd.read_sql_query("SELECT * FROM user_history", conn)
-        conn.close()
-        
-        if df.empty:
-            return df
-        
-        df = df.copy()
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        mood_map = {"Very Bad": 1, "Bad": 2, "Neutral": 3, "Good": 4, "Very Good": 5}
-        df["mood_num"] = df["mood"].map(mood_map)
-        df["wellness_score"] = df.apply(
-            lambda row: calculate_wellness_score(
-                row["stress_level"], row["sleep_hours"], row["anxiety_level"], row["exercise_minutes"],
-                row.get("social_connection", 5), row.get("screen_time", 4),
-                row.get("caffeine_intake", 2), row.get("water_intake", 6),
-                row.get("sunlight_exposure", 30), row.get("work_life_balance", 5)
-            ),
-            axis=1,
-        )
-        return df.dropna(subset=["date"])
-    except Exception as e:
-        return pd.DataFrame()
-
-def get_all_users_admin() -> pd.DataFrame:
-    """ADMIN ONLY: Get all registered users."""
-    try:
-        init_db()
-        conn = get_connection()
-        df = pd.read_sql_query(
-            "SELECT email, name, created_at FROM users ORDER BY created_at DESC", 
-            conn
-        )
-        conn.close()
-        return df
-    except Exception as e:
-        return pd.DataFrame()
-
-# --- JOURNAL FUNCTIONS (with row-level security) ---
-JOURNAL_CSV = os.path.join(DATA_DIR, "journal_entries.csv")
-
-def save_journal_entry(user_email, text, sentiment, polarity):
-    try:
-        os.makedirs(DATA_DIR, exist_ok=True)
-        username = st.session_state.get("current_user", "")
-        entry = {
-            "id": datetime.now().strftime("%Y%m%d%H%M%S%f"),
-            "user_email": user_email,
-            "username": username,
-            "date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "text": text,
-            "sentiment": sentiment,
-            "polarity": round(polarity, 4),
-        }
-        df_new = pd.DataFrame([entry])
-        if os.path.exists(JOURNAL_CSV):
-            df_existing = pd.read_csv(JOURNAL_CSV)
-            df_combined = pd.concat([df_existing, df_new], ignore_index=True)
-        else:
-            df_combined = df_new
-        df_combined.to_csv(JOURNAL_CSV, index=False)
-        return entry
-    except Exception as e:
-        st.error(f"Error saving journal: {e}")
-        return None
-
-def get_user_journals(user_email: str) -> pd.DataFrame:
-    """Get ONLY the current user's journals."""
-    try:
-        if not os.path.exists(JOURNAL_CSV):
-            return pd.DataFrame(columns=["id", "user_email", "username", "date", "text", "sentiment", "polarity"])
-        df = pd.read_csv(JOURNAL_CSV)
-        df["date"] = pd.to_datetime(df["date"], errors="coerce")
-        # Row-level security: filter by email
-        df = df[df["user_email"].astype(str) == str(user_email)]
-        return df.sort_values("date", ascending=False).reset_index(drop=True)
-    except Exception as e:
-        return pd.DataFrame(columns=["id", "user_email", "username", "date", "text", "sentiment", "polarity"])
-
-def delete_journal_entry(entry_id, user_email: str):
-    try:
-        if not os.path.exists(JOURNAL_CSV):
-            return
-        df = pd.read_csv(JOURNAL_CSV)
-        # Only delete if it belongs to the user
-        df = df[~((df["id"].astype(str) == str(entry_id)) & (df["user_email"].astype(str) == str(user_email)))]
-        df.to_csv(JOURNAL_CSV, index=False)
-    except Exception as e:
-        st.error(f"Error deleting journal: {e}")
-
-def delete_all_user_journals(user_email: str):
-    try:
-        if not os.path.exists(JOURNAL_CSV):
-            return
-        df = pd.read_csv(JOURNAL_CSV)
-        df = df[df["user_email"].astype(str) != str(user_email)]
-        df.to_csv(JOURNAL_CSV, index=False)
-    except Exception as e:
-        st.error(f"Error clearing journals: {e}")
-
-def export_journal_to_excel(user_email: str):
-    df = get_user_journals(user_email)
+def export_to_excel(df, sheet_name="Data"):
     buffer = io.BytesIO()
     with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name="Journal Entries")
+        df.to_excel(writer, index=False, sheet_name=sheet_name)
     buffer.seek(0)
     return buffer
 
@@ -933,10 +990,15 @@ def export_journal_to_excel(user_email: str):
 def calculate_wellness_score(stress, sleep, anxiety, exercise, social_connection, screen_time,
                             caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     try:
-        stress = float(stress); sleep = float(sleep); anxiety = float(anxiety)
-        exercise = float(exercise); social_connection = float(social_connection)
-        screen_time = float(screen_time); caffeine_intake = float(caffeine_intake)
-        water_intake = float(water_intake); sunlight_exposure = float(sunlight_exposure)
+        stress = float(stress)
+        sleep = float(sleep)
+        anxiety = float(anxiety)
+        exercise = float(exercise)
+        social_connection = float(social_connection)
+        screen_time = float(screen_time)
+        caffeine_intake = float(caffeine_intake)
+        water_intake = float(water_intake)
+        sunlight_exposure = float(sunlight_exposure)
         work_life_balance = float(work_life_balance)
     except (ValueError, TypeError):
         return 0.0
@@ -968,16 +1030,27 @@ def predict_risk(stress, sleep, anxiety, exercise, mood, social_connection, scre
         risk = "Low"
     
     factors = []
-    if float(stress) > 7: factors.append("High stress levels")
-    if float(sleep) < 6: factors.append("Insufficient sleep")
-    if float(anxiety) > 7: factors.append("High anxiety levels")
-    if float(exercise) < 30: factors.append("Low physical activity")
-    if float(social_connection) < 4: factors.append("Low social connection")
-    if float(screen_time) > 8: factors.append("Excessive screen time")
-    if float(caffeine_intake) > 5: factors.append("High caffeine intake")
-    if float(water_intake) < 4: factors.append("Low hydration")
-    if float(sunlight_exposure) < 15: factors.append("Insufficient sunlight exposure")
-    if float(work_life_balance) < 4: factors.append("Poor work-life balance")
+    if float(stress) > 7:
+        factors.append("High stress levels")
+    if float(sleep) < 6:
+        factors.append("Insufficient sleep")
+    if float(anxiety) > 7:
+        factors.append("High anxiety levels")
+    if float(exercise) < 30:
+        factors.append("Low physical activity")
+    if float(social_connection) < 4:
+        factors.append("Low social connection")
+    if float(screen_time) > 8:
+        factors.append("Excessive screen time")
+    if float(caffeine_intake) > 5:
+        factors.append("High caffeine intake")
+    if float(water_intake) < 4:
+        factors.append("Low hydration")
+    if float(sunlight_exposure) < 15:
+        factors.append("Insufficient sunlight exposure")
+    if float(work_life_balance) < 4:
+        factors.append("Poor work-life balance")
+    
     if not factors:
         factors = ["Good overall wellness indicators"]
     
@@ -986,38 +1059,53 @@ def predict_risk(stress, sleep, anxiety, exercise, mood, social_connection, scre
 def get_recommendations(stress, sleep, anxiety, exercise, social_connection, screen_time,
                        caffeine_intake, water_intake, sunlight_exposure, work_life_balance):
     recommendations = []
+    
     if stress > 7:
         recommendations.append("🧘 Try deep breathing exercises for 5 minutes daily")
         recommendations.append("🧘‍♂️ Practice mindfulness meditation")
+        recommendations.append("☕ Take short breaks throughout your work/study")
     if sleep < 6:
         recommendations.append("🛏️ Establish a consistent sleep schedule")
         recommendations.append("📵 Avoid screens 1 hour before bedtime")
+        recommendations.append("🌙 Create a relaxing bedtime routine")
     if anxiety > 7:
         recommendations.append("🧘 Try progressive muscle relaxation")
         recommendations.append("📝 Consider journaling your thoughts")
+        recommendations.append("🌱 Practice grounding techniques")
     if exercise < 30:
         recommendations.append("🚶 Aim for 30 minutes of daily walking")
         recommendations.append("🧘 Try yoga or stretching exercises")
+        recommendations.append("🏃 Incorporate physical activity into your routine")
     if social_connection < 4:
         recommendations.append("👥 Reach out to a friend or family member")
         recommendations.append("🤝 Join a community group or club")
+        recommendations.append("📞 Schedule regular check-ins with loved ones")
     if screen_time > 8:
         recommendations.append("📵 Set screen time limits on your devices")
         recommendations.append("🌳 Take regular breaks from screens")
+        recommendations.append("📖 Try reading a physical book instead of scrolling")
     if caffeine_intake > 5:
         recommendations.append("☕ Reduce caffeine intake gradually")
+        recommendations.append("🍵 Try herbal tea as an alternative")
         recommendations.append("⏰ Avoid caffeine after 2 PM")
     if water_intake < 4:
         recommendations.append("💧 Drink a glass of water every hour")
         recommendations.append("🍋 Add lemon to water for flavor")
+        recommendations.append("📱 Use a hydration reminder app")
     if sunlight_exposure < 15:
         recommendations.append("☀️ Get 15-30 minutes of morning sunlight")
         recommendations.append("🚶 Take walks outside during lunch")
+        recommendations.append("🪟 Open curtains and let natural light in")
     if work_life_balance < 4:
         recommendations.append("⏰ Set clear work boundaries")
+        recommendations.append("🛑 Learn to say no to extra commitments")
         recommendations.append("🎨 Schedule time for hobbies and relaxation")
+    
     if len(recommendations) == 0:
         recommendations.append("🎉 Great job! Keep maintaining your healthy habits!")
+        recommendations.append("✅ Continue with your current wellness routine")
+        recommendations.append("🎨 Consider exploring new hobbies")
+    
     return recommendations
 
 def analyze_sentiment(text):
@@ -1040,31 +1128,45 @@ def generate_pdf_report(username, risk_level, wellness_score, factors, recommend
     story = []
     
     brand_color = rl_colors.HexColor(COLOR_PRIMARY)
-    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, 
-                                spaceAfter=6, alignment=1, textColor=brand_color)
+    ink_color = rl_colors.HexColor("#2D3436" if not st.session_state.dark_mode else "#E8ECF1")
+    muted_color = rl_colors.HexColor(C["muted"])
+    
+    title_style = ParagraphStyle('CustomTitle', parent=styles['Heading1'], fontSize=24, spaceAfter=6,
+                                alignment=1, textColor=brand_color)
     story.append(Paragraph("MindTrack Wellness Report", title_style))
-    story.append(Paragraph(f"For: {username}", styles['Heading2']))
+    
+    eyebrow_style = ParagraphStyle('Eyebrow', parent=styles['Normal'], fontSize=10, alignment=1,
+                                  textColor=muted_color, spaceAfter=24)
+    story.append(Paragraph("MENTAL HEALTH RISK ANALYSIS", eyebrow_style))
+    
+    subtitle_style = ParagraphStyle('CustomSubtitle', parent=styles['Heading2'], fontSize=14, spaceAfter=16,
+                                   textColor=ink_color)
+    story.append(Paragraph(f"For: {username}", subtitle_style))
     story.append(Paragraph(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}", styles['Normal']))
     story.append(Spacer(1, 20))
-    story.append(Paragraph(f"Risk Level: {risk_level}", styles['Normal']))
-    story.append(Paragraph(f"Wellness Score: {wellness_score}/100", styles['Normal']))
+    
+    info_style = ParagraphStyle('CustomInfo', parent=styles['Normal'], fontSize=12, spaceAfter=12, textColor=ink_color)
+    story.append(Paragraph(f"Risk Level: {risk_level}", info_style))
+    story.append(Paragraph(f"Wellness Score: {wellness_score}/100", info_style))
     story.append(Spacer(1, 20))
-    story.append(Paragraph("Key Factors:", styles['Heading2']))
+    
+    story.append(Paragraph("Key Factors:", subtitle_style))
     for factor in factors:
-        story.append(Paragraph(f"- {factor}", styles['Normal']))
+        story.append(Paragraph(f"- {factor}", info_style))
     story.append(Spacer(1, 20))
-    story.append(Paragraph("Recommendations:", styles['Heading2']))
+    
+    story.append(Paragraph("Recommendations:", subtitle_style))
     for rec in recommendations:
-        story.append(Paragraph(f"- {rec}", styles['Normal']))
+        story.append(Paragraph(f"- {rec}", info_style))
+    story.append(Spacer(1, 24))
+    
+    footer_style = ParagraphStyle('Footer', parent=styles['Normal'], fontSize=8,
+                                 textColor=muted_color)
+    story.append(Paragraph(
+        "This report is a self-reflection summary, not a clinical diagnosis. "
+        "If you are struggling, please consider speaking with a licensed professional.", footer_style))
     
     doc.build(story)
-    buffer.seek(0)
-    return buffer
-
-def export_to_excel(df, sheet_name="Data"):
-    buffer = io.BytesIO()
-    with pd.ExcelWriter(buffer, engine="openpyxl") as writer:
-        df.to_excel(writer, index=False, sheet_name=sheet_name)
     buffer.seek(0)
     return buffer
 
@@ -1123,13 +1225,19 @@ def create_extended_factor_bar(stress, sleep, anxiety, exercise, social_connecti
     colors = []
     for i, (val, target) in enumerate(zip(actual_values, healthy_targets)):
         if i in [0, 2, 5, 6]:
-            if val <= target: colors.append(COLOR_GOOD)
-            elif val <= target * 1.5: colors.append(COLOR_MEDIUM)
-            else: colors.append(COLOR_HIGH)
+            if val <= target:
+                colors.append(COLOR_GOOD)
+            elif val <= target * 1.5:
+                colors.append(COLOR_MEDIUM)
+            else:
+                colors.append(COLOR_HIGH)
         else:
-            if val >= target: colors.append(COLOR_GOOD)
-            elif val >= target * 0.6: colors.append(COLOR_MEDIUM)
-            else: colors.append(COLOR_HIGH)
+            if val >= target:
+                colors.append(COLOR_GOOD)
+            elif val >= target * 0.6:
+                colors.append(COLOR_MEDIUM)
+            else:
+                colors.append(COLOR_HIGH)
     
     fig = go.Figure()
     fig.add_trace(go.Bar(name="Your Values", x=categories, y=actual_values, marker_color=colors))
@@ -1414,22 +1522,26 @@ def predict_next_wellness(df):
 def generate_smart_recommendations(df, trends, correlations, anomalies):
     recs = []
     if not df.empty:
+        latest = df.iloc[-1]
+        
         if trends.get("wellness_score", {}).get("direction") == "declining":
-            recs.append("📉 Trend Alert: Your wellness score has been declining. Consider reviewing your recent habits.")
+            recs.append("📉 Trend Alert: Your wellness score has been declining. Consider reviewing your recent habits and making one small adjustment today.")
         if trends.get("sleep_hours", {}).get("direction") == "declining":
-            recs.append("😴 Sleep Recovery: Your sleep duration is trending down. Try a consistent bedtime routine.")
+            recs.append("😴 Sleep Recovery: Your sleep duration is trending down. Try a consistent bedtime routine — your data shows better scores on days with 7+ hours.")
         if trends.get("stress_level", {}).get("direction") == "improving":
-            recs.append("🎉 Great Progress: Your stress levels are improving!")
+            recs.append("🎉 Great Progress: Your stress levels are improving! Keep doing what's working.")
         
         for corr in correlations:
             if corr["factor_a"] == "sleep_hours" and corr["factor_b"] == "stress_level" and corr["direction"] == "negative":
-                recs.append(f"🔗 Insight: Your data shows a {corr['strength']} negative correlation between sleep and stress.")
+                recs.append(f"🔗 Insight: Your data shows a {corr['strength']} negative correlation between sleep and stress. Prioritizing sleep could directly lower your stress.")
             if corr["factor_a"] == "exercise_minutes" and corr["factor_b"] == "wellness_score" and corr["direction"] == "positive":
-                recs.append(f"🔗 Insight: Exercise and wellness are {corr['strength']}ly linked in your history.")
+                recs.append(f"🔗 Insight: Exercise and wellness are {corr['strength']}ly linked in your history. Even 20 minutes helps!")
         
         for anomaly in anomalies:
             if anomaly["metric"] == "stress_level" and anomaly["direction"] == "spike":
-                recs.append(f"⚠️ Recent Spike: Your stress jumped significantly (Z-score: {anomaly['z_score']}).")
+                recs.append(f"⚠️ Recent Spike: Your stress jumped significantly (Z-score: {anomaly['z_score']}). Try the 4-7-8 breathing technique on the Support page.")
+            if anomaly["metric"] == "sleep_hours" and anomaly["direction"] == "drop":
+                recs.append(f"⚠️ Sleep Drop: Your recent sleep is below your personal average. Consider avoiding screens 1 hour before bed.")
     
     if not recs:
         recs.append("✅ Your wellness patterns look stable. Keep maintaining your healthy habits!")
@@ -1451,9 +1563,9 @@ def generate_ai_narrative(df, username):
     if score >= 80:
         paragraphs.append(f"Hi {username}, your overall wellness is looking strong at {score:.0f}/100.")
     elif score >= 50:
-        paragraphs.append(f"Hi {username}, your wellness score is {score:.0f}/100 — there's room for improvement.")
+        paragraphs.append(f"Hi {username}, your wellness score is {score:.0f}/100 — there's room for improvement, and your data can guide the way.")
     else:
-        paragraphs.append(f"Hi {username}, your wellness score is {score:.0f}/100. Your data reveals areas to focus on.")
+        paragraphs.append(f"Hi {username}, your wellness score is {score:.0f}/100. Your data reveals specific areas to focus on — let's look at them.")
     
     if trends:
         trend_parts = []
@@ -1471,7 +1583,7 @@ def generate_ai_narrative(df, username):
         a = top["factor_a"].replace("_", " ").title()
         b = top["factor_b"].replace("_", " ").title()
         direction = "increase together" if top["direction"] == "positive" else "move in opposite directions"
-        paragraphs.append(f"Your strongest pattern: {a} and {b} {direction} (correlation: {top['correlation']}).")
+        paragraphs.append(f"Your strongest pattern: {a} and {b} {direction} (correlation: {top['correlation']}). This is one of the most reliable signals in your data.")
     
     if prediction is not None:
         diff = prediction - score
@@ -1481,7 +1593,7 @@ def generate_ai_narrative(df, username):
     
     if anomalies:
         sev = anomalies[0]
-        paragraphs.append(f"⚠️ Attention needed: Your recent {sev['metric'].replace('_', ' ')} shows a significant {sev['direction']}.")
+        paragraphs.append(f"⚠️ Attention needed: Your recent {sev['metric'].replace('_', ' ')} shows a significant {sev['direction']} compared to your usual pattern.")
     
     return "\n\n".join(paragraphs)
 
@@ -1523,7 +1635,8 @@ def create_trend_visualization(df):
         line=dict(color=COLOR_MEDIUM, width=2, dash="dash"),
         marker=dict(symbol="diamond", size=10)
     ))
-    fig.add_vline(x=hist_dates[-1], line_dash="dot", line_color=C['muted'], annotation_text="Today")
+    fig.add_vline(x=hist_dates[-1], line_dash="dot", line_color=C['muted'],
+                 annotation_text="Today")
     fig.update_layout(
         title="Wellness Score Trajectory + 3-Day AI Forecast",
         yaxis_title="Wellness Score",
@@ -1581,12 +1694,12 @@ def create_correlation_network(df):
     return fig
 
 # ═══════════════════════════════════════════════════════════════
-# 🧭 NAVIGATION (SAFE - handles corrupted session state)
+# 🧭 NAVIGATION
 # ═══════════════════════════════════════════════════════════════
 PAGES = [
-    " Home", "📋 Assessment", " Risk Prediction", "🎯 Goals",
+    "🏠 Home", "📋 Assessment", "🤖 Risk Prediction", "🎯 Goals",
     "📂 Bulk Upload", "📈 Dashboard", "📝 Journal", "📓 My Journals", "🗂️ My Entries",
-    "🆘 Support & Coping", " Report", "🧠 AI Insights", "📊 Admin"
+    "🆘 Support & Coping", "📄 Report", "🧠 AI Insights", "📊 Admin"
 ]
 
 with st.sidebar:
@@ -1603,19 +1716,11 @@ with st.sidebar:
     <div class="sidebar-tagline">Wellness Intelligence</div>
     """, unsafe_allow_html=True)
     
-    # ✅ SAFE: Initialize with fallback
-    if "nav_page" not in st.session_state or st.session_state.nav_page not in PAGES:
-        st.session_state.nav_page = PAGES[0]
-    
-    # ✅ SAFE: Get index with fallback
-    try:
-        safe_index = PAGES.index(st.session_state.nav_page)
-    except ValueError:
-        safe_index = 0
+    if "nav_page" not in st.session_state:
         st.session_state.nav_page = PAGES[0]
     
     page = st.sidebar.radio("Go to", PAGES,
-                           index=safe_index,
+                           index=PAGES.index(st.session_state.nav_page),
                            label_visibility="collapsed")
     
     if page != st.session_state.nav_page:
@@ -1636,117 +1741,103 @@ with st.sidebar:
         In crisis (US)? Call or text <b>988</b> — or see Support & Coping.
     </div>
     """, unsafe_allow_html=True)
+
 # ═══════════════════════════════════════════════════════════════
 # 🏠 HOME PAGE
 # ═══════════════════════════════════════════════════════════════
 if page == "🏠 Home":
     init_login_state()
     if not st.session_state.logged_in:
-        def show_login_page():
-    init_login_state()
+        show_login_page()
+        st.stop()
     
-    st.markdown("""
-    <style>
-      .auth-hero{
-        max-width:640px;margin:14px auto 6px;padding:22px 26px;
-        background: linear-gradient(135deg,#6C63FF15,#5AB0B015);
-        border-radius:18px;
-        border: 1px solid rgba(108,99,255,.18);
-        display:flex;align-items:center;gap:16px;
-      }
-      .auth-logo{
-        width:56px;height:56px;border-radius:16px;flex:none;
-        background: linear-gradient(135deg,#6C63FF,#5AB0B0);
-        display:flex;align-items:center;justify-content:center;
-        font-size:28px;color:#fff;box-shadow:0 8px 22px rgba(108,99,255,.35);
-      }
-      .auth-title{font-size:1.6rem;font-weight:800;letter-spacing:-.02em;margin:0;}
-      .auth-sub{color:#5B667A;margin:2px 0 0;font-size:.95rem;}
-      .auth-note{color:#6B7280;font-size:.85rem;margin-top:10px;text-align:center;}
-      .auth-badge{
-        display:inline-block;padding:3px 10px;border-radius:999px;
-        background:#EEF2FF;color:#4338CA;font-size:.75rem;font-weight:700;
-        margin-left:8px;vertical-align:middle;
-      }
-    </style>
-    """, unsafe_allow_html=True)
-    
-    st.markdown("""
-      <div class="auth-hero">
-        <div class="auth-logo">🧠</div>
-        <div>
-          <p class="auth-title">MindTrack <span class="auth-badge">Secure</span></p>
-          <p class="auth-sub">Sign in with your email to access your private wellness dashboard.</p>
+    st.markdown(f"""
+    <div class="hero-wrap">
+        <div class="hero-card">
+            <div class="hero-chip">✦ Your daily wellness companion</div>
+            <div class="hero-icon">🧠</div>
+            <div class="hero-title">MindTrack</div>
+            <div class="hero-tagline">Welcome back, {st.session_state.current_user}</div>
         </div>
-      </div>
+    </div>
     """, unsafe_allow_html=True)
     
-    c1, c2 = st.columns(2)
-    with c1:
-        if st.button("🔐  Sign In", use_container_width=True,
-                     type=("primary" if st.session_state.auth_mode == "signin" else "secondary")):
-            st.session_state.auth_mode = "signin"
+    pulse_divider()
+    
+    st.markdown("## ⚡ Quick Start")
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        if st.button("📋 Start New Assessment", use_container_width=True, key="home_btn_assessment"):
+            st.session_state.nav_page = "📋 Assessment"
             st.rerun()
-    with c2:
-        if st.button("✨  Create Account", use_container_width=True,
-                     type=("primary" if st.session_state.auth_mode == "signup" else "secondary")):
-            st.session_state.auth_mode = "signup"
+    with col2:
+        if st.button("📝 Write in Journal", use_container_width=True, key="home_btn_journal"):
+            st.session_state.nav_page = "📝 Journal"
+            st.rerun()
+    with col3:
+        if st.button("🆘 I Need Support Now", use_container_width=True, key="home_btn_support"):
+            st.session_state.nav_page = "🆘 Support & Coping"
             st.rerun()
     
-    st.write("")
+    try:
+        df = get_history_data()
+        if len(df) > 0:
+            pulse_divider()
+            df_sorted = df.sort_values("date")
+            dates_only = df_sorted["date"].dt.date.tolist()
+            current_streak, longest_streak = calculate_streaks(dates_only)
+            
+            st.markdown("## 📊 Your Stats")
+            m1, m2, m3, m4, m5 = st.columns(5)
+            m1.metric("Total Check-ins", len(df_sorted))
+            m2.metric("Avg Sleep", f"{df_sorted['sleep_hours'].mean():.1f}h")
+            m3.metric("Avg Stress", f"{df_sorted['stress_level'].mean():.1f}")
+            m4.metric("🔥 Current Streak", f"{current_streak} day{'s' if current_streak != 1 else ''}")
+            m5.metric("🏆 Longest Streak", f"{longest_streak} day{'s' if longest_streak != 1 else ''}")
+            
+            this_avg, last_avg = weekly_digest(df_sorted)
+            if this_avg is not None:
+                st.markdown("#### This Week vs Last Week")
+                delta_txt = f"{this_avg - last_avg:+.0f} vs last week" if last_avg is not None else "No prior week to compare"
+                st.metric("This Week's Avg Wellness", f"{this_avg:.0f}/100", delta_txt)
+    except Exception:
+        pass
     
-    if st.session_state.auth_mode == "signin":
-        with st.form("signin_form", clear_on_submit=False):
-            email = st.text_input("📧 Email", placeholder="you@example.com", key="signin_email")
-            pw = st.text_input("🔑 Password", type="password", placeholder="••••••••", key="signin_pw")
-            ok = st.form_submit_button("Sign In →", use_container_width=True)
-            if ok:
-                success, msg, name = authenticate_user(email, pw)
-                if success:
-                    login_user(email, name)
-                    st.success(f"Welcome back, {name}! 🎉")
-                    st.rerun()
-                else:
-                    st.error(msg)
-        st.markdown("<p class='auth-note'>New here? Click <b>Create Account</b> above.</p>",
-                    unsafe_allow_html=True)
-    else:
-        with st.form("signup_form", clear_on_submit=False):
-            name = st.text_input("👤 Full name", placeholder="Alex Kumar", key="signup_name")
-            email = st.text_input("📧 Email", placeholder="you@example.com", key="signup_email")
-            pw = st.text_input("🔑 Password (min 6 chars)", type="password",
-                              placeholder="••••••••", key="signup_pw")
-            pw2 = st.text_input(" Confirm password", type="password",
-                               placeholder="••••••••", key="signup_pw2")
-            ok = st.form_submit_button("Create my account →", use_container_width=True)
-            if ok:
-                if pw != pw2:
-                    st.error("Passwords do not match.")
-                else:
-                    success, msg = register_user(email, name, pw)
-                    if success:
-                        login_user(email, name)
-                        st.success(f"Account created — welcome, {name.strip()}! 🎉")
-                        st.rerun()
-                    else:
-                        st.error(msg)
-        st.markdown("<p class='auth-note'>Already have an account? Click <b>Sign In</b>.</p>",
-                    unsafe_allow_html=True)
-
+    pulse_divider()
+    
+    wellness_tips = [
+        "Take a 5-minute walk outside 🌳", "Practice deep breathing for 2 minutes 🧘",
+        "Drink a glass of water 💧", "Call a friend or family member 📞",
+        "Write down 3 things you are grateful for ✍️", "Stretch your body for 10 minutes 🤸",
+        "Listen to your favorite song 🎵", "Take a short break from screens 📵",
+        "Get 15 minutes of sunlight ☀️", "Set a work boundary today ⏰",
+        "Drink herbal tea instead of coffee 🍵", "Connect with someone you care about 👥"
+    ]
+    st.markdown("## 🌟 Daily Wellness Tip")
+    st.info(random.choice(wellness_tips))
+    
+    pulse_divider()
+    
+    quotes = [
+        "The greatest glory in living lies not in never falling, but in rising every time we fall. – Nelson Mandela",
+        "The way to get started is to quit talking and begin doing. – Walt Disney",
+        "Your time is limited, do not waste it living someone else's life. – Steve Jobs",
+        "The future belongs to those who believe in the beauty of their dreams. – Eleanor Roosevelt",
+        "It does not matter how slowly you go as long as you do not stop. – Confucius",
+        "Connection is why we are here; it gives purpose and meaning to our lives. – Brené Brown",
+        "Balance is not something you find, it is something you create. – Jana Kingsford"
+    ]
+    st.markdown("## 💬 Motivation")
+    st.success(random.choice(quotes))
 # ═══════════════════════════════════════════════════════════════
 # 📋 ASSESSMENT PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "📋 Assessment":
     require_login()
     page_header("📋", "Daily Check-in", "Mental Health Assessment",
-                "A comprehensive 11-factor wellness check.")
+                "A comprehensive 11-factor wellness check to understand how you are doing today.")
     
-    # 🔒 LOCKED to current user - no text input for name
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 Logged in as **{username}** ({current_email})")
-    
+    username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="assessment_username")
     entry_date = st.date_input("📅 Date of this assessment", value=datetime.now().date(), key="assessment_date")
     
     st.markdown("## Answer the following questions:")
@@ -1765,42 +1856,50 @@ elif page == "📋 Assessment":
         exercise_minutes = st.slider("🏃 How many minutes did you exercise today?", 0, 180, 30, key="assessment_exercise")
     
     with col2:
-        social_connection = st.slider("👥 Social connection quality (0-10)", 0, 10, 6, key="assessment_social")
-        screen_time = st.slider("📱 Screen time today (hours)", 0, 16, 4, key="assessment_screen")
-        caffeine_intake = st.slider("☕ Caffeine intake (cups today)", 0, 10, 2, key="assessment_caffeine")
-        water_intake = st.slider("💧 Water intake (glasses today)", 0, 20, 6, key="assessment_water")
+        social_connection = st.slider("👥 Social connection quality (0-10)", 0, 10, 6,
+                                       help="How connected do you feel to friends, family, or community?", key="assessment_social")
+        screen_time = st.slider("📱 Screen time today (hours)", 0, 16, 4,
+                                 help="Total hours spent on phones, computers, TV", key="assessment_screen")
+        caffeine_intake = st.slider("☕ Caffeine intake (cups today)", 0, 10, 2,
+                                     help="Coffee, tea, energy drinks, etc.", key="assessment_caffeine")
+        water_intake = st.slider("💧 Water intake (glasses today)", 0, 20, 6,
+                                  help="Approximate number of 8oz glasses", key="assessment_water")
     
     col3, col4 = st.columns(2)
     with col3:
-        sunlight_exposure = st.slider("☀️ Sunlight exposure (minutes today)", 0, 300, 30, key="assessment_sun")
+        sunlight_exposure = st.slider("☀️ Sunlight exposure (minutes today)", 0, 300, 30,
+                                       help="Time spent outdoors in natural light", key="assessment_sun")
+    
     with col4:
-        work_life_balance = st.slider("⚖️ Work-life balance (0-10)", 0, 10, 6, key="assessment_worklife")
+        work_life_balance = st.slider("⚖️ Work-life balance (0-10)", 0, 10, 6,
+                                       help="How well are you balancing work/study with personal life?", key="assessment_worklife")
     
     preview_score = calculate_wellness_score(stress_level, sleep_hours, anxiety_level, exercise_minutes,
                                               social_connection, screen_time, caffeine_intake,
                                               water_intake, sunlight_exposure, work_life_balance)
     st.metric("Preview Wellness Score", f"{preview_score}/100")
     
-    goals = get_user_goals(current_email)
+    goals = get_goals(username)
     if goals:
         st.caption(
             f"🎯 Your goals: {goals['target_sleep']:.0f}h sleep · "
-            f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f}"
+            f"{goals['target_exercise']:.0f} min exercise · stress under {goals['target_stress_max']:.0f} · "
+            f"social >= {goals.get('target_social', 5):.0f} · screen <= {goals.get('target_screen_max', 4):.0f}h · "
+            f"water >= {goals.get('target_water', 6):.0f} · sunlight >= {goals.get('target_sunlight', 15):.0f}min · "
+            f"work-life >= {goals.get('target_worklife', 5):.0f}"
         )
     
     if st.button("✅ Submit Assessment", use_container_width=True, key="assessment_submit"):
-        # 🔒 Save with current user's email (row-level security)
-        success = save_user_history(current_email, mood, sleep_hours, stress_level, anxiety_level, 
-                                    exercise_minutes, social_connection, screen_time, caffeine_intake, 
-                                    water_intake, sunlight_exposure, work_life_balance, entry_date=entry_date)
+        success = save_user_history(username, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                              social_connection, screen_time, caffeine_intake, water_intake,
+                              sunlight_exposure, work_life_balance, entry_date=entry_date)
         if success:
             st.session_state['assessment_data'] = {
-                "username": username, "email": current_email, "date": entry_date, "mood": mood,
-                "sleep_hours": sleep_hours, "stress_level": stress_level, "anxiety_level": anxiety_level,
-                "exercise_minutes": exercise_minutes, "social_connection": social_connection,
-                "screen_time": screen_time, "caffeine_intake": caffeine_intake,
-                "water_intake": water_intake, "sunlight_exposure": sunlight_exposure,
-                "work_life_balance": work_life_balance
+                "username": username, "date": entry_date, "mood": mood, "sleep_hours": sleep_hours,
+                "stress_level": stress_level, "anxiety_level": anxiety_level, "exercise_minutes": exercise_minutes,
+                "social_connection": social_connection, "screen_time": screen_time,
+                "caffeine_intake": caffeine_intake, "water_intake": water_intake,
+                "sunlight_exposure": sunlight_exposure, "work_life_balance": work_life_balance
             }
             st.success(f"🎉 Assessment saved for {entry_date.strftime('%Y-%m-%d')}!")
             st.balloons()
@@ -1811,8 +1910,6 @@ elif page == "📋 Assessment":
 elif page == "🤖 Risk Prediction":
     require_login()
     page_header("🤖", "AI Analysis", "Mental Health Risk Prediction", "Based on your most recent assessment.")
-    
-    current_email = get_current_email()
     
     if 'assessment_data' not in st.session_state:
         st.warning("⚠️ Please complete the Assessment first!")
@@ -1862,16 +1959,16 @@ elif page == "🤖 Risk Prediction":
         for rec in recommendations:
             st.success(rec)
         
-        # 🔒 Save with current user's email
-        save_prediction(current_email, risk, wellness_score, factors)
+        save_prediction(username, risk, wellness_score, factors)
         
-        # 🔒 Fetch only current user's history
-        mine = get_user_history(current_email)
+        hist = get_history_data()
+        mine = hist[hist["username"].astype(str) == str(username)] if not hist.empty else hist
         if not mine.empty and trend_nudge(mine):
             pulse_divider()
             st.warning(
                 "Your recent check-ins suggest things have felt harder lately. "
-                "Consider visiting **Support & Coping**."
+                "That is worth paying attention to — consider reaching out to a professional "
+                "or someone you trust. The **Support & Coping** page has resources if you would like them."
             )
 
 # ═══════════════════════════════════════════════════════════════
@@ -1880,16 +1977,11 @@ elif page == "🤖 Risk Prediction":
 elif page == "🎯 Goals":
     require_login()
     page_header("🎯", "Personal Targets", "Your Wellness Goals",
-                "Set targets that matter to you — we will track your progress.")
-    
-    # 🔒 LOCKED to current user
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 Goals for **{username}**")
+                "Set targets that matter to you — we will track your progress against them.")
     
     with st.form("goals_form"):
-        existing = get_user_goals(current_email)
+        username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="goals_username")
+        existing = get_goals(username)
         
         st.markdown("### Core Wellness Goals")
         col1, col2, col3 = st.columns(3)
@@ -1907,41 +1999,40 @@ elif page == "🎯 Goals":
         col4, col5, col6 = st.columns(3)
         with col4:
             target_social = st.slider("🎯 Min social connection", 0, 10,
-                                       int(existing.get("target_social", 5)) if existing else 5, key="goal_social")
+                                       int(existing["target_social"]) if existing and "target_social" in existing else 5, key="goal_social")
         with col5:
             target_screen_max = st.slider("🎯 Max screen time (hours)", 0, 12,
-                                           int(existing.get("target_screen_max", 4)) if existing else 4, key="goal_screen")
+                                           int(existing["target_screen_max"]) if existing and "target_screen_max" in existing else 4, key="goal_screen")
         with col6:
             target_water = st.slider("🎯 Min water intake (glasses)", 0, 15,
-                                      int(existing.get("target_water", 6)) if existing else 6, key="goal_water")
+                                      int(existing["target_water"]) if existing and "target_water" in existing else 6, key="goal_water")
         
         col7, col8 = st.columns(2)
         with col7:
             target_sunlight = st.slider("🎯 Min sunlight (minutes)", 0, 120,
-                                         int(existing.get("target_sunlight", 15)) if existing else 15, key="goal_sun")
+                                         int(existing["target_sunlight"]) if existing and "target_sunlight" in existing else 15, key="goal_sun")
         with col8:
             target_worklife = st.slider("🎯 Min work-life balance", 0, 10,
-                                         int(existing.get("target_worklife", 5)) if existing else 5, key="goal_worklife")
+                                         int(existing["target_worklife"]) if existing and "target_worklife" in existing else 5, key="goal_worklife")
         
         submitted = st.form_submit_button("💾 Save Goals", use_container_width=True)
     
     if submitted:
-        # 🔒 Save with current user's email
-        save_goals(current_email, target_sleep, target_exercise, target_stress_max,
+        save_goals(username, target_sleep, target_exercise, target_stress_max,
                    target_social, target_screen_max, target_water, target_sunlight, target_worklife)
         st.success("Goals saved!")
     
     pulse_divider()
     st.markdown("## 📈 Progress vs Goals")
     
-    # 🔒 Fetch only current user's history
-    mine = get_user_history(current_email).sort_values("date")
+    hist = get_history_data()
+    mine = hist[hist["username"].astype(str) == username].sort_values("date") if not hist.empty else hist
     
     if mine.empty:
         st.info("Complete an assessment to see your progress against these goals.")
     else:
         last = mine.iloc[-1]
-        g = get_user_goals(current_email) or {
+        g = get_goals(username) or {
             "target_sleep": target_sleep, "target_exercise": target_exercise,
             "target_stress_max": target_stress_max, "target_social": target_social,
             "target_screen_max": target_screen_max, "target_water": target_water,
@@ -1955,39 +2046,184 @@ elif page == "🎯 Goals":
                      f"{last['exercise_minutes'] - g['target_exercise']:+.0f} min vs goal")
         gcol3.metric("Stress (latest)", f"{last['stress_level']:.0f}",
                      f"{last['stress_level'] - g['target_stress_max']:+.0f} vs max", delta_color="inverse")
+        
+        gcol4, gcol5, gcol6 = st.columns(3)
+        gcol4.metric("Social (latest)", f"{last.get('social_connection', 0):.0f}",
+                     f"{last.get('social_connection', 0) - g['target_social']:+.0f} vs goal")
+        gcol5.metric("Screen (latest)", f"{last.get('screen_time', 0):.0f}h",
+                     f"{last.get('screen_time', 0) - g['target_screen_max']:+.0f}h vs max", delta_color="inverse")
+        gcol6.metric("Water (latest)", f"{last.get('water_intake', 0):.0f}",
+                     f"{last.get('water_intake', 0) - g['target_water']:+.0f} vs goal")
+        
+        gcol7, gcol8 = st.columns(2)
+        gcol7.metric("Sunlight (latest)", f"{last.get('sunlight_exposure', 0):.0f}min",
+                     f"{last.get('sunlight_exposure', 0) - g['target_sunlight']:+.0f}min vs goal")
+        gcol8.metric("Work-Life (latest)", f"{last.get('work_life_balance', 0):.0f}",
+                     f"{last.get('work_life_balance', 0) - g['target_worklife']:+.0f} vs goal")
 
 # ═══════════════════════════════════════════════════════════════
-# 📈 DASHBOARD PAGE (SECURE - no "All Users" for non-admins)
+# 📂 BULK UPLOAD PAGE
+# ═══════════════════════════════════════════════════════════════
+elif page == "📂 Bulk Upload":
+    require_login()
+    page_header("📂", "Batch Processing", "Bulk Upload & Analyze", "Upload an Excel file to analyze many records at once.")
+    
+    st.write(
+        "Upload an Excel file (.xlsx) with multiple records to analyze them all at once, "
+        "instead of entering them one by one in the Assessment page."
+    )
+    
+    REQUIRED_COLUMNS = ["username", "mood", "sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                         "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                         "sunlight_exposure", "work_life_balance"]
+    
+    with st.expander("📋 Expected file format / download a template"):
+        st.write(f"Your Excel file must contain these columns: `{'`, `'.join(REQUIRED_COLUMNS)}`")
+        st.caption("`mood` must be one of: Very Bad, Bad, Neutral, Good, Very Good. A `date` column is optional.")
+        
+        template_df = pd.DataFrame([{
+            "username": "John Doe", "mood": "Good", "sleep_hours": 7,
+            "stress_level": 3, "anxiety_level": 2, "exercise_minutes": 30,
+            "social_connection": 6, "screen_time": 4, "caffeine_intake": 2,
+            "water_intake": 6, "sunlight_exposure": 30, "work_life_balance": 6,
+        }])
+        st.download_button(
+            label="📥 Download Template (Excel)", data=export_to_excel(template_df, sheet_name="Template"),
+            file_name="bulk_upload_template.xlsx",
+            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            key="bulk_dl_template"
+        )
+    
+    uploaded_file = st.file_uploader("Upload your Excel file", type=["xlsx"], key="bulk_uploader")
+    
+    if uploaded_file is not None:
+        try:
+            bulk_df = pd.read_excel(uploaded_file)
+        except Exception as e:
+            bulk_df = None
+            st.error(f"❌ Could not read that file: {e}")
+        
+        if bulk_df is not None:
+            missing_cols = [c for c in REQUIRED_COLUMNS if c not in bulk_df.columns]
+            if missing_cols:
+                st.error(f"❌ Missing required column(s): {', '.join(missing_cols)}. "
+                         f"Check the template above for the expected format.")
+            elif bulk_df.empty:
+                st.warning("⚠️ The uploaded file has no rows.")
+            else:
+                bulk_df = bulk_df.copy()
+                if "date" not in bulk_df.columns:
+                    bulk_df["date"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                
+                numeric_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                            "social_connection", "screen_time", "caffeine_intake",
+                            "water_intake", "sunlight_exposure", "work_life_balance"]
+                for col in numeric_cols:
+                    if col in bulk_df.columns:
+                        bulk_df[col] = pd.to_numeric(bulk_df[col], errors="coerce").fillna(0)
+                
+                risk_levels, wellness_scores, factor_lists = [], [], []
+                for _, row in bulk_df.iterrows():
+                    risk, factors, wellness = predict_risk(
+                        row["stress_level"], row["sleep_hours"], row["anxiety_level"],
+                        row["exercise_minutes"], row["mood"],
+                        row.get("social_connection", 5), row.get("screen_time", 4),
+                        row.get("caffeine_intake", 2), row.get("water_intake", 6),
+                        row.get("sunlight_exposure", 30), row.get("work_life_balance", 5),
+                    )
+                    risk_levels.append(risk)
+                    wellness_scores.append(wellness)
+                    factor_lists.append(", ".join(factors))
+                
+                bulk_df["wellness_score"] = wellness_scores
+                bulk_df["risk_level"] = risk_levels
+                bulk_df["factors"] = factor_lists
+                
+                st.success(f"✅ Analyzed {len(bulk_df)} records.")
+                
+                m1, m2, m3, m4 = st.columns(4)
+                m1.metric("Total Records", len(bulk_df))
+                m2.metric("Avg Wellness", f"{bulk_df['wellness_score'].mean():.0f}/100")
+                m3.metric("High Risk", int((bulk_df["risk_level"] == "High").sum()))
+                m4.metric("Low Risk", int((bulk_df["risk_level"] == "Low").sum()))
+                
+                st.markdown("### 📊 Results")
+                st.dataframe(bulk_df, use_container_width=True)
+                
+                c1, c2 = st.columns(2)
+                with c1:
+                    risk_counts = bulk_df["risk_level"].value_counts().reset_index()
+                    risk_counts.columns = ["Risk", "Count"]
+                    fig_risk = px.bar(risk_counts, x="Risk", y="Count", color="Risk",
+                                       title="Risk Level Distribution", color_discrete_map=RISK_COLOR_MAP)
+                    st.plotly_chart(style_plot(fig_risk), use_container_width=True)
+                
+                with c2:
+                    fig_hist = px.histogram(bulk_df, x="wellness_score", nbins=15, title="Wellness Score Distribution",
+                                             color_discrete_sequence=[COLOR_PRIMARY])
+                    st.plotly_chart(style_plot(fig_hist), use_container_width=True)
+                
+                st.markdown("### 📥 Export or Save")
+                dl_col, save_col = st.columns(2)
+                with dl_col:
+                    st.download_button(
+                        label="📥 Download Analyzed Results (Excel)", data=export_to_excel(bulk_df, sheet_name="Bulk Analysis"),
+                        file_name=f"bulk_analysis_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                        mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                        key="bulk_dl_results"
+                    )
+                with save_col:
+                    if st.button("➕ Add these records to the backend data", use_container_width=True, key="bulk_save_btn"):
+                        init_db()
+                        conn = get_connection()
+                        history_rows = bulk_df[["username", "date", "mood", "sleep_hours", "stress_level",
+                                                "anxiety_level", "exercise_minutes", "social_connection",
+                                                "screen_time", "caffeine_intake", "water_intake",
+                                                "sunlight_exposure", "work_life_balance"]].values.tolist()
+                        conn.executemany(
+                            """INSERT INTO user_history
+                               (username, date, mood, sleep_hours, stress_level, anxiety_level, exercise_minutes,
+                                social_connection, screen_time, caffeine_intake, water_intake,
+                                sunlight_exposure, work_life_balance)
+                               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""", history_rows,
+                        )
+                        prediction_rows = bulk_df[["username", "date", "risk_level", "wellness_score", "factors"]].values.tolist()
+                        conn.executemany(
+                            """INSERT INTO predictions (username, date, risk_level, wellness_score, factors)
+                               VALUES (?, ?, ?, ?, ?)""", prediction_rows,
+                        )
+                        conn.commit()
+                        conn.close()
+                        st.success(f"✅ Added {len(bulk_df)} records to the backend. They will now show up in Dashboard and Admin.")
+
+# ═══════════════════════════════════════════════════════════════
+# 📈 DASHBOARD PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "📈 Dashboard":
     require_login()
-    page_header("📈", "Analytics", "Wellness Dashboard", "Your personal wellness trends and insights.")
+    page_header("📈", "Analytics", "Wellness Dashboard", "Trends, distributions, and correlations over time.")
     
-    # 🔒 ROW-LEVEL SECURITY: Only fetch current user's data
-    current_email = get_current_email()
-    is_admin = st.session_state.get("admin_authenticated", False)
-    
-    # 🔒 Secure fetch - only current user's data
-    history_df = get_user_history(current_email)
-    prediction_df = get_user_predictions(current_email)
+    history_df = get_history_data()
+    prediction_df = get_prediction_data()
     
     if history_df.empty:
         st.info("📭 No data available yet! Complete an assessment first.")
     else:
-        filter_col1, filter_col2 = st.columns([1.5, 1])
+        filter_col1, filter_col2, filter_col3 = st.columns([1.3, 1.2, 1])
         with filter_col1:
-            # 🔒 No "All Users" option - locked to current user
-            st.info(f"🔒 Viewing data for: **{st.session_state.current_user}**")
+            users = ["All Users"] + sorted(history_df["username"].dropna().astype(str).unique().tolist())
+            selected_user = st.selectbox("Filter by user", users, key="dash_user_filter")
         with filter_col2:
+            min_date = history_df["date"].min().date()
+            max_date = history_df["date"].max().date()
+            selected_dates = st.date_input("Date range", value=(min_date, max_date), min_value=min_date, max_value=max_date, key="dash_date_filter")
+        with filter_col3:
             chart_style = st.selectbox("Chart mode", ["Smooth", "Detailed"], key="dash_chart_style")
         
-        # Date range filter
-        min_date = history_df["date"].min().date()
-        max_date = history_df["date"].max().date()
-        selected_dates = st.date_input("Date range", value=(min_date, max_date), 
-                                       min_value=min_date, max_value=max_date, key="dash_date_filter")
-        
         filtered_df = history_df.copy()
+        if selected_user != "All Users":
+            filtered_df = filtered_df[filtered_df["username"].astype(str) == selected_user]
+        
         if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
             start_date, end_date = selected_dates
             filtered_df = filtered_df[
@@ -2005,10 +2241,9 @@ elif page == "📈 Dashboard":
             m4.metric("Avg Sleep", f"{filtered_df['sleep_hours'].mean():.1f}h")
             
             st.download_button(
-                label="📥 Download My History (Excel)",
-                data=export_to_excel(filtered_df.drop(columns=["mood_num", "user_email"], errors="ignore"), 
-                                     sheet_name="My History"),
-                file_name=f"my_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                label="📥 Download History (Excel)",
+                data=export_to_excel(filtered_df.drop(columns=["mood_num"], errors="ignore"), sheet_name="History"),
+                file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="dash_dl_history"
             )
@@ -2027,6 +2262,18 @@ elif page == "📈 Dashboard":
                     fig_sleep = px.area(filtered_df.sort_values("date"), x="date", y="sleep_hours",
                                          title="Sleep Pattern", color_discrete_sequence=[COLOR_SLATE])
                     st.plotly_chart(style_plot(fig_sleep), use_container_width=True)
+                
+                col3, col4 = st.columns(2)
+                with col3:
+                    fig_stress = px.line(filtered_df.sort_values("date"), x="date", y="stress_level", markers=True,
+                                          title="Stress Trend", color_discrete_sequence=[COLOR_MEDIUM])
+                    fig_stress.update_traces(line_shape=line_shape)
+                    st.plotly_chart(style_plot(fig_stress), use_container_width=True)
+                with col4:
+                    fig_exercise = px.bar(filtered_df.sort_values("date"), x="date", y="exercise_minutes",
+                                           title="Exercise Activity", color="exercise_minutes",
+                                           color_continuous_scale=[[0, "#E7EFEC"], [1, COLOR_PRIMARY]])
+                    st.plotly_chart(style_plot(fig_exercise), use_container_width=True)
                 
                 fig_wellness = px.line(filtered_df.sort_values("date"), x="date", y="wellness_score", markers=True,
                                         title="Overall Wellness Score Trend", color_discrete_sequence=[COLOR_PRIMARY])
@@ -2050,12 +2297,33 @@ elif page == "📈 Dashboard":
                                             title="Sleep Variability", color_discrete_sequence=[COLOR_SLATE])
                     st.plotly_chart(style_plot(fig_sleep_box), use_container_width=True)
                 
-                if not prediction_df.empty:
-                    risk_counts = prediction_df["risk_level"].value_counts().reset_index()
-                    risk_counts.columns = ["Risk", "Count"]
-                    fig_risk = px.bar(risk_counts, x="Risk", y="Count", color="Risk",
-                                       title="Risk Level Distribution", color_discrete_map=RISK_COLOR_MAP)
-                    st.plotly_chart(style_plot(fig_risk), use_container_width=True)
+                col3, col4 = st.columns(2)
+                with col3:
+                    fig_scatter = px.scatter(filtered_df, x="sleep_hours", y="stress_level", size="exercise_minutes",
+                                              color="wellness_score", hover_data=["username", "mood"],
+                                              title="Sleep vs Stress vs Exercise",
+                                              color_continuous_scale=[[0, COLOR_HIGH], [0.5, COLOR_MEDIUM], [1, COLOR_GOOD]])
+                    st.plotly_chart(style_plot(fig_scatter), use_container_width=True)
+                with col4:
+                    if not prediction_df.empty:
+                        pred_filtered = prediction_df.copy()
+                        if selected_user != "All Users":
+                            pred_filtered = pred_filtered[pred_filtered["username"].astype(str) == selected_user]
+                        if isinstance(selected_dates, tuple) and len(selected_dates) == 2:
+                            pred_filtered = pred_filtered[
+                                (pred_filtered["date"].dt.date >= start_date) & (pred_filtered["date"].dt.date <= end_date)
+                            ]
+                        
+                        if not pred_filtered.empty:
+                            risk_counts = pred_filtered["risk_level"].value_counts().reset_index()
+                            risk_counts.columns = ["Risk", "Count"]
+                            fig_risk = px.bar(risk_counts, x="Risk", y="Count", color="Risk",
+                                               title="Risk Level Distribution", color_discrete_map=RISK_COLOR_MAP)
+                            st.plotly_chart(style_plot(fig_risk), use_container_width=True)
+                        else:
+                            st.info("No prediction records available for the selected filters.")
+                    else:
+                        st.info("No prediction records available yet.")
             
             with insights_tab:
                 corr_cols = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
@@ -2074,6 +2342,29 @@ elif page == "📈 Dashboard":
                     st.plotly_chart(style_plot(heatmap), use_container_width=True)
                 
                 st.plotly_chart(create_mood_calendar(filtered_df), use_container_width=True)
+                
+                last_row = filtered_df.sort_values("date").iloc[-1]
+                radar_col, info_col = st.columns([1.2, 1])
+                with radar_col:
+                    st.plotly_chart(create_wellness_radar(
+                        last_row["sleep_hours"], last_row["stress_level"],
+                        last_row["anxiety_level"], last_row["exercise_minutes"], last_row["mood"],
+                        last_row.get("social_connection", 5), last_row.get("screen_time", 4),
+                        last_row.get("caffeine_intake", 2), last_row.get("water_intake", 6),
+                        last_row.get("sunlight_exposure", 30), last_row.get("work_life_balance", 5),
+                    ), use_container_width=True)
+                with info_col:
+                    st.markdown("### Latest Snapshot")
+                    st.metric("Latest Wellness", f"{last_row['wellness_score']:.0f}/100")
+                    st.metric("Latest Mood", last_row["mood"])
+                    st.metric("Latest Stress", f"{last_row['stress_level']}/10")
+                    st.metric("Latest Anxiety", f"{last_row['anxiety_level']}/10")
+                
+                if trend_nudge(filtered_df):
+                    st.warning(
+                        "Wellness scores have been trending down over the last few check-ins. "
+                        "Consider visiting **Support & Coping** or reaching out to someone you trust."
+                    )
             
             with lifestyle_tab:
                 st.markdown("### 🌿 Lifestyle Factor Analysis")
@@ -2082,30 +2373,44 @@ elif page == "📈 Dashboard":
                     st.plotly_chart(lifestyle_fig, use_container_width=True)
                 else:
                     st.info("Need at least 2 entries with lifestyle data to generate heatmap.")
+                
+                lifestyle_metrics = [
+                    ("social_connection", "Social Connection", COLOR_SOCIAL),
+                    ("screen_time", "Screen Time (hours)", COLOR_SCREEN),
+                    ("caffeine_intake", "Caffeine Intake (cups)", COLOR_CAFFEINE),
+                    ("water_intake", "Water Intake (glasses)", COLOR_WATER),
+                    ("sunlight_exposure", "Sunlight Exposure (min)", COLOR_SUNLIGHT),
+                    ("work_life_balance", "Work-Life Balance", COLOR_WORKLIFE),
+                ]
+                
+                for i in range(0, len(lifestyle_metrics), 2):
+                    c1, c2 = st.columns(2)
+                    for j, (col, title, color) in enumerate(lifestyle_metrics[i:i+2]):
+                        if col in filtered_df.columns:
+                            fig = px.line(filtered_df.sort_values("date"), x="date", y=col, markers=True,
+                                          title=title, color_discrete_sequence=[color])
+                            fig.update_traces(line_shape=line_shape)
+                            if j == 0:
+                                c1.plotly_chart(style_plot(fig), use_container_width=True)
+                            else:
+                                c2.plotly_chart(style_plot(fig), use_container_width=True)
 
 # ═══════════════════════════════════════════════════════════════
 # 📝 JOURNAL PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "📝 Journal":
     require_login()
-    page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day.")
-    
-    # 🔒 LOCKED to current user
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 Journaling as **{username}**")
+    page_header("📝", "Reflection", "Journal & Sentiment Analysis", "Write about your day and we will analyze your mood.")
     
     with st.form("journal_form"):
-        journal_text = st.text_area("Your Journal Entry:", height=250, 
-                                    placeholder="How was your day?", key="journal_text")
+        username = st.text_input("👤 Your name", value=st.session_state.get("current_user", "Guest User"), key="journal_username")
+        journal_text = st.text_area("Your Journal Entry:", height=250, placeholder="How was your day? What made you happy or worried?", key="journal_text")
         submitted = st.form_submit_button("🔍 Analyze & Save", use_container_width=True)
     
     if submitted:
         if journal_text.strip():
             sentiment, polarity = analyze_sentiment(journal_text.strip())
-            # 🔒 Save with current user's email
-            entry = save_journal_entry(current_email, journal_text.strip(), sentiment, polarity)
+            entry = save_journal_entry(username, journal_text.strip(), sentiment, polarity)
             if entry:
                 st.markdown("## 📊 Sentiment Analysis Results")
                 col1, col2 = st.columns(2)
@@ -2125,31 +2430,33 @@ elif page == "📝 Journal":
                     )
                     st.plotly_chart(fig_polarity, use_container_width=True)
                 
-                st.success(f"✅ Entry saved!")
+                st.markdown("### 📝 Your Entry:")
+                st.write(journal_text)
+                st.success(f"✅ Entry saved for {username} at {entry['date']}!")
+                
+                if sentiment == "negative" and polarity < -0.4:
+                    pulse_divider()
+                    st.info(
+                        "That sounds like a heavy day. Writing it down is a good step — "
+                        "if it would help, the **Support & Coping** page has grounding techniques and resources."
+                    )
         else:
             st.warning("⚠️ Please write something in your journal first!")
 
 # ═══════════════════════════════════════════════════════════════
-# 📓 MY JOURNALS PAGE (SECURE)
+# 📓 MY JOURNALS PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "📓 My Journals":
     require_login()
-    page_header("📓", "Your Words", "My Journal History", "Your private journal entries.")
+    page_header("📓", "Your Words", "My Journal History", "Review, reflect on, and manage your saved journal entries.")
     
-    # 🔒 LOCKED to current user - NO text input
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 Viewing journals for **{username}**")
-    st.caption("Only you can see your own journal entries.")
-    
-    # 🔒 Secure fetch - only current user's journals
-    df = get_user_journals(current_email)
+    username = st.text_input("👤 Enter your name to view your journals", value=st.session_state.get("current_user", "Guest User"), key="myjournals_username")
+    df = get_journal_entries(username)
     
     if df.empty:
-        st.info("No journal entries found. Go to **Journal** to write your first entry!")
+        st.info("No journal entries found for this name yet. Go to **Journal** to write your first entry!")
     else:
-        st.caption(f"{len(df)} journal entries found.")
+        st.caption(f"{len(df)} journal entries found for **{username}**.")
         
         col1, col2, col3, col4 = st.columns(4)
         col1.metric("Total Entries", len(df))
@@ -2161,8 +2468,11 @@ elif page == "📓 My Journals":
             pulse_divider()
             st.markdown("### 📈 Sentiment Trend")
             df_chart = df.sort_values("date").copy()
+            df_chart["polarity_smooth"] = df_chart["polarity"].rolling(window=min(3, len(df_chart)), min_periods=1).mean()
             fig = px.line(df_chart, x="date", y="polarity", markers=True,
                           title="Polarity Over Time", color_discrete_sequence=[COLOR_PRIMARY])
+            fig.add_scatter(x=df_chart["date"], y=df_chart["polarity_smooth"],
+                            mode="lines", name="Trend", line=dict(color=COLOR_MEDIUM, width=2))
             fig.add_hline(y=0, line_dash="dot", line_color=C['muted'], annotation_text="Neutral")
             st.plotly_chart(style_plot(fig), use_container_width=True)
         
@@ -2176,8 +2486,7 @@ elif page == "📓 My Journals":
                 c1.markdown(f"**{row['date'].strftime('%Y-%m-%d %H:%M')}** · {sentiment_emoji} {row['sentiment'].title()}")
                 c2.write(f"Polarity: {row['polarity']:.3f}")
                 if c3.button("🗑️", key=f"del_journal_{row['id']}_{idx}", help="Delete this entry"):
-                    # 🔒 Delete only if it belongs to current user
-                    delete_journal_entry(row["id"], current_email)
+                    delete_journal_entry(row["id"])
                     st.rerun()
             with st.expander("Read entry"):
                 st.write(row["text"])
@@ -2188,39 +2497,32 @@ elif page == "📓 My Journals":
         with dl_col:
             st.download_button(
                 "📥 Download My Journals (Excel)",
-                data=export_journal_to_excel(current_email),
-                file_name=f"my_journals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                data=export_journal_to_excel(username),
+                file_name=f"{username}_journals_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                 mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                 key="myjournals_dl"
             )
         with clear_col:
             if st.button("🧹 Clear all my journals", use_container_width=True, key="myjournals_clear"):
-                # 🔒 Delete only current user's journals
-                delete_all_user_journals(current_email)
+                delete_all_journal_entries(username)
                 st.success("All journal entries cleared.")
                 st.rerun()
 
 # ═══════════════════════════════════════════════════════════════
-# 🗂️ MY ENTRIES PAGE (SECURE)
+# 🗂️ MY ENTRIES PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "🗂️ My Entries":
     require_login()
-    page_header("🗂️", "Your Data", "My Entries", "Your private assessment history.")
+    page_header("🗂️", "Your Data", "My Entries", "Review, correct, or remove your own check-in history.")
     
-    # 🔒 LOCKED to current user - NO text input
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 Viewing entries for **{username}**")
-    st.caption("Only you can see your own assessment history.")
-    
-    # 🔒 Secure fetch - only current user's entries
-    mine = get_user_history(current_email).sort_values("date", ascending=False)
+    username = st.text_input("👤 Enter your name to view your entries", value=st.session_state.get("current_user", "Guest User"), key="myentries_username")
+    df = get_history_data()
+    mine = df[df["username"].astype(str) == username].sort_values("date", ascending=False) if not df.empty else df
     
     if mine.empty:
-        st.info("No entries found yet.")
+        st.info("No entries found for this name yet.")
     else:
-        st.caption(f"{len(mine)} entries found.")
+        st.caption(f"{len(mine)} entries found for **{username}**.")
         
         for idx, row in mine.iterrows():
             c1, c2, c3, c4, c5 = st.columns([2, 1.2, 1, 1.2, 0.8])
@@ -2229,23 +2531,20 @@ elif page == "🗂️ My Entries":
             c3.write(f"😴 {row['sleep_hours']:.0f}h")
             c4.write(f"Wellness: {row['wellness_score']:.0f}/100")
             if c5.button("🗑️", key=f"del_entry_{row['id']}_{idx}", help="Delete this entry"):
-                # 🔒 Delete only if it belongs to current user
-                delete_user_entry(row["id"], current_email)
+                delete_entry(row["id"])
                 st.rerun()
         
         pulse_divider()
         st.download_button(
             "📥 Download My Data (Excel)",
-            data=export_to_excel(mine.drop(columns=["mood_num", "user_email"], errors="ignore"), 
-                                 sheet_name="My History"),
-            file_name=f"my_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+            data=export_to_excel(mine.drop(columns=["mood_num"], errors="ignore"), sheet_name="My History"),
+            file_name=f"{username}_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             key="myentries_dl"
         )
         
         if st.button("🧹 Clear all my entries", use_container_width=True, key="myentries_clear"):
-            # 🔒 Delete only current user's entries
-            delete_all_user_entries(current_email)
+            delete_all_entries(username)
             st.success("All entries cleared.")
             st.rerun()
 
@@ -2254,7 +2553,7 @@ elif page == "🗂️ My Entries":
 # ═══════════════════════════════════════════════════════════════
 elif page == "🆘 Support & Coping":
     require_login()
-    page_header("🆘", "Take a Moment", "Support & Coping Toolkit", "Tools for right now.")
+    page_header("🆘", "Take a Moment", "Support & Coping Toolkit", "Tools for right now, and where to go for more support.")
     
     st.markdown("### 🫁 Guided Breathing")
     st.caption("Box breathing: in for 4s, hold 4s, out for 4s, hold 4s. Follow the circle.")
@@ -2265,10 +2564,24 @@ elif page == "🆘 Support & Coping":
     st.write("Name to yourself: 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell, 1 you can taste.")
     
     pulse_divider()
+    st.markdown("### 📝 Journaling Prompts")
+    prompts = [
+        "What is one thing that felt hard today, and one thing that helped?",
+        "What would I tell a friend who felt the way I feel right now?",
+        "What is one small thing I can do in the next hour to take care of myself?",
+    ]
+    for p in prompts:
+        st.info(p)
+    
+    pulse_divider()
     st.markdown("### 📞 If You Need to Talk to Someone")
     st.error("**India: 14416 Suicide & Crisis Lifeline** — call or text **14416**, available 24/7.")
-    st.warning("**US: 988 Suicide & Crisis Lifeline** — call or text **988**.")
-    st.info("**Outside US/India** — search \"[your country] crisis helpline\".")
+    st.warning("**Crisis Text Line** — text **HOME** to **tel:78930-78930** (India).")
+    st.info("**Outside the India** — search \"[your country] crisis helpline\" or contact local emergency services.")
+    st.caption(
+        "MindTrack is a self-reflection tool, not a diagnostic service or emergency line. "
+        "If you are in immediate danger, please contact local emergency services right away."
+    )
 
 # ═══════════════════════════════════════════════════════════════
 # 📄 REPORT PAGE
@@ -2318,34 +2631,32 @@ elif page == "📄 Report":
                             key="report_dl_pdf")
 
 # ═══════════════════════════════════════════════════════════════
-# 🧠 AI INSIGHTS PAGE (SECURE)
+# 🧠 AI INSIGHTS PAGE
 # ═══════════════════════════════════════════════════════════════
 elif page == "🧠 AI Insights":
     require_login()
     page_header("🧠", "Intelligence", "AI Wellness Insights",
-                "Pattern recognition and personalized intelligence.")
+                "Pattern recognition, predictive analysis, and personalized intelligence for your wellness journey.")
     
-    # 🔒 LOCKED to current user - NO text input
-    current_email = get_current_email()
-    username = st.session_state.current_user
-    
-    st.info(f"🔒 AI analysis for **{username}**")
-    
-    # 🔒 Secure fetch - only current user's history
-    mine = get_user_history(current_email).sort_values("date")
+    username = st.text_input("👤 Analyze data for", value=st.session_state.get("current_user", "Guest User"), key="ai_username")
+    hist = get_history_data()
+    mine = hist[hist["username"].astype(str) == username].sort_values("date") if not hist.empty else hist
     
     if mine.empty or len(mine) < 2:
-        st.info("📭 Not enough data for AI analysis yet. Complete at least 2 assessments.")
+        st.info("📭 Not enough data for AI analysis yet. Complete at least 2 assessments to unlock insights.")
         if not SKLEARN_AVAILABLE:
-            st.warning("⚠️ scikit-learn is not installed. Run `pip install scikit-learn`.")
+            st.warning("⚠️ scikit-learn is not installed. Run `pip install scikit-learn` to enable full AI features.")
         st.stop()
     
     st.markdown("## 📝 Your Wellness Story")
     narrative = generate_ai_narrative(mine, username)
+    card_bg = C["card"]
+    border_color = C["border"]
+    text_color = C["ink"]
     st.markdown(
-        f'<div style="background:{C["card"]};border:1px solid {C["border"]};'
+        f'<div style="background:{card_bg};border:1px solid {border_color};'
         f'border-radius:12px;padding:20px;line-height:1.7;font-size:1rem;'
-        f'color:{C["ink"]};">{narrative}</div>',
+        f'color:{text_color};">{narrative}</div>',
         unsafe_allow_html=True
     )
     
@@ -2363,12 +2674,27 @@ elif page == "🧠 AI Insights":
                 "Reliability (R²)": round(data["r2"], 2),
             })
         trend_df = pd.DataFrame(trend_df_data)
-        st.dataframe(trend_df, use_container_width=True)
+        
+        def color_direction(val):
+            if val == "Improving":
+                return f"color: {COLOR_GOOD}; font-weight: 600;"
+            elif val == "Declining":
+                return f"color: {COLOR_HIGH}; font-weight: 600;"
+            return f"color: {COLOR_MEDIUM};"
+        
+        try:
+            styled = trend_df.style.map(color_direction, subset=["Direction"])
+        except AttributeError:
+            styled = trend_df.style.applymap(color_direction, subset=["Direction"])
+        st.dataframe(styled, use_container_width=True)
+        
         pulse_divider()
     
     correlations = find_key_correlations(mine)
     if correlations:
         st.markdown("## 🔗 Hidden Patterns in Your Data")
+        st.caption("Factors that move together in your personal history")
+        
         col1, col2 = st.columns([1.2, 1])
         with col1:
             corr_net = create_correlation_network(mine)
@@ -2385,6 +2711,7 @@ elif page == "🧠 AI Insights":
                     f"r = {corr['correlation']} ({corr['strength']} {corr['direction']})</span>",
                     unsafe_allow_html=True
                 )
+        
         pulse_divider()
     
     anomalies = detect_anomalies(mine)
@@ -2399,6 +2726,7 @@ elif page == "🧠 AI Insights":
                 f'(Z-score: {anom["z_score"]})</div>',
                 unsafe_allow_html=True
             )
+        
         pulse_divider()
     
     st.markdown("## 🔮 Predictive Wellness Forecast")
@@ -2413,7 +2741,7 @@ elif page == "🧠 AI Insights":
             st.metric("Predicted Next Wellness Score", f"{prediction}/100",
                      f"{diff:+.0f} from current", delta_color=delta_color)
     else:
-        st.info("Need more data to generate predictions.")
+        st.info("Need more data to generate predictions. Keep logging your assessments!")
     
     pulse_divider()
     
@@ -2421,9 +2749,37 @@ elif page == "🧠 AI Insights":
     smart_recs = generate_smart_recommendations(mine, trends, correlations, anomalies)
     for rec in smart_recs:
         st.success(rec)
+    
+    if len(mine) >= 5 and SKLEARN_AVAILABLE:
+        st.markdown("## 🎯 What Drives Your Wellness Score?")
+        features = ["sleep_hours", "stress_level", "anxiety_level", "exercise_minutes",
+                    "social_connection", "screen_time", "caffeine_intake", "water_intake",
+                    "sunlight_exposure", "work_life_balance"]
+        available = [c for c in features if c in mine.columns]
+        
+        if len(available) >= 3:
+            X = mine[available].fillna(mine[available].median()).values
+            y = mine["wellness_score"].values
+            model = LinearRegression()
+            model.fit(X, y)
+            
+            importance_df = pd.DataFrame({
+                "Factor": [c.replace("_", " ").title() for c in available],
+                "Impact on Wellness": model.coef_,
+                "Abs Impact": np.abs(model.coef_)
+            }).sort_values("Abs Impact", ascending=True)
+            
+            fig_imp = px.bar(importance_df, x="Impact on Wellness", y="Factor", orientation="h",
+                            title="Factor Importance (How Much Each Affects Your Score)",
+                            color="Impact on Wellness", color_continuous_scale=[COLOR_HIGH, COLOR_MEDIUM, COLOR_GOOD])
+            fig_imp.update_layout(showlegend=False, yaxis_title="")
+            st.plotly_chart(style_plot(fig_imp), use_container_width=True)
+            
+            top_driver = importance_df.iloc[-1]["Factor"]
+            st.info(f"🎯 **Key Insight:** **{top_driver}** has the strongest influence on your personal wellness score. Small improvements here may have the biggest impact.")
 
 # ═══════════════════════════════════════════════════════════════
-# 📊 ADMIN PAGE (with User Management)
+# 📊 ADMIN PAGE (Enhanced with User Management)
 # ═══════════════════════════════════════════════════════════════
 elif page == "📊 Admin":
     require_login()
@@ -2435,9 +2791,9 @@ elif page == "📊 Admin":
     admin_password = admin_password or os.getenv("ADMIN_PASSWORD", "")
     
     if not admin_password:
-        st.error("Admin access is locked. Set ADMIN_PASSWORD in Streamlit secrets or environment.")
+        st.error("Admin access is locked. The app owner must set ADMIN_PASSWORD in Streamlit secrets or the deployment environment.")
     elif not st.session_state.get("admin_authenticated", False):
-        page_header("🔐", "Restricted Access", "Admin Login", "Enter the owner password.")
+        page_header("🔐", "Restricted Access", "Admin Login", "Enter the owner password to access the Admin Dashboard.")
         with st.form("admin_login_form"):
             entered_password = st.text_input("Owner password", type="password")
             submitted = st.form_submit_button("Unlock Admin Dashboard", use_container_width=True)
@@ -2453,48 +2809,71 @@ elif page == "📊 Admin":
             st.session_state["admin_authenticated"] = False
             st.rerun()
         
-        page_header("📊", "Back Office", "Admin Dashboard", "Manage users and data.")
+        page_header("📊", "Back Office", "Admin Dashboard", "Manage users, data, and view system information.")
         
-        # 🔒 ADMIN-ONLY: View all users
+        # User Management Section
         st.markdown("## 👥 User Management")
         st.caption("View and manage all registered accounts")
         
-        users_df = get_all_users_admin()
-        
-        if users_df.empty:
-            st.info("No users registered yet.")
-        else:
-            st.dataframe(users_df, use_container_width=True)
-            st.metric("Total Registered Users", len(users_df))
+        try:
+            conn = get_connection()
+            users_df = pd.read_sql_query("SELECT email, name, created_at FROM users ORDER BY created_at DESC", conn)
+            conn.close()
             
-            with st.expander("🗑️ Delete User Account"):
-                st.warning("⚠️ This will permanently delete the user account and all their data!")
-                delete_email = st.selectbox("Select user to delete", users_df["email"].tolist(), key="admin_delete_user")
-                if st.button("🗑️ Delete User", key="admin_delete_btn"):
-                    try:
+            if users_df.empty:
+                st.info("No users registered yet.")
+            else:
+                st.dataframe(users_df, use_container_width=True)
+                st.metric("Total Registered Users", len(users_df))
+                
+                with st.expander("🔍 View User Details"):
+                    selected_email = st.selectbox("Select user", users_df["email"].tolist(), key="admin_user_select")
+                    if selected_email:
                         conn = get_connection()
-                        conn.execute("DELETE FROM users WHERE email=?", (delete_email,))
-                        conn.execute("DELETE FROM user_history WHERE user_email=?", (delete_email,))
-                        conn.execute("DELETE FROM predictions WHERE user_email=?", (delete_email,))
-                        conn.execute("DELETE FROM goals WHERE user_email=?", (delete_email,))
-                        conn.commit()
+                        user_data = conn.execute(
+                            "SELECT * FROM users WHERE email=?", (selected_email,)
+                        ).fetchone()
                         conn.close()
                         
-                        # Also delete from journal CSV
-                        if os.path.exists(JOURNAL_CSV):
-                            df = pd.read_csv(JOURNAL_CSV)
-                            df = df[df["user_email"].astype(str) != delete_email]
-                            df.to_csv(JOURNAL_CSV, index=False)
-                        
-                        st.success(f"✅ User {delete_email} deleted successfully!")
-                        st.rerun()
-                    except Exception as e:
-                        st.error(f"Error deleting user: {e}")
+                        if user_data:
+                            st.markdown(f"**Email:** {user_data['email']}")
+                            st.markdown(f"**Name:** {user_data['name']}")
+                            st.markdown(f"**Created:** {user_data['created_at']}")
+                            st.caption(f"Password Hash: {user_data['password_hash'][:30]}...")
+                            st.caption(f"Salt: {user_data['salt'][:20]}...")
+                
+                with st.expander("🗑️ Delete User Account"):
+                    st.warning("⚠️ This will permanently delete the user account and all their data!")
+                    delete_email = st.selectbox("Select user to delete", users_df["email"].tolist(), key="admin_delete_user")
+                    if st.button("🗑️ Delete User", key="admin_delete_btn"):
+                        try:
+                            conn = get_connection()
+                            # Delete user account
+                            conn.execute("DELETE FROM users WHERE email=?", (delete_email,))
+                            # Delete user's history
+                            conn.execute("DELETE FROM user_history WHERE username=?", 
+                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
+                            # Delete user's predictions
+                            conn.execute("DELETE FROM predictions WHERE username=?", 
+                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
+                            # Delete user's goals
+                            conn.execute("DELETE FROM goals WHERE username=?", 
+                                       (users_df[users_df["email"] == delete_email]["name"].iloc[0],))
+                            conn.commit()
+                            conn.close()
+                            st.success(f"✅ User {delete_email} deleted successfully!")
+                            st.rerun()
+                        except Exception as e:
+                            st.error(f"Error deleting user: {e}")
+        except Exception as e:
+            st.error(f"❌ Error loading users: {e}")
         
         pulse_divider()
         
-        # 🔒 ADMIN-ONLY: View login history
+        # Login History Section
         st.markdown("## 🔐 Login History")
+        st.caption("Recent login activity")
+        
         try:
             conn = get_connection()
             logins_df = pd.read_sql_query(
@@ -2508,27 +2887,29 @@ elif page == "📊 Admin":
             else:
                 st.dataframe(logins_df, use_container_width=True)
         except Exception as e:
-            st.info("Login history table not yet created.")
+            st.info("Login history table not yet created. Logins will be tracked after the next login.")
         
         pulse_divider()
         
-        # 🔒 ADMIN-ONLY: View all data
+        # Data Management Section
         st.markdown("## 📁 Data Management")
-        st.caption(f"Backed by SQLite at `{DB_PATH}`")
+        st.caption(f"Backed by a SQL database (SQLite) at `{DB_PATH}`")
         
         init_db()
         
         col1, col2 = st.columns(2)
         with col1:
             try:
-                df_history = get_all_history_admin()
-                st.markdown("### 👥 All User History Data")
+                conn = get_connection()
+                df_history = pd.read_sql_query("SELECT * FROM user_history", conn)
+                conn.close()
+                st.markdown("### 👥 User History Data")
                 st.dataframe(df_history, use_container_width=True)
                 st.metric("Total Entries", len(df_history))
                 if not df_history.empty:
-                    st.download_button("📥 Download All History (Excel)",
-                                        data=export_to_excel(df_history, sheet_name="All History"),
-                                        file_name=f"all_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
+                    st.download_button("📥 Download Patient History (Excel)",
+                                        data=export_to_excel(df_history, sheet_name="Patient History"),
+                                        file_name=f"patient_history_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
                                         key="admin_dl_history")
             except Exception as e:
@@ -2539,11 +2920,11 @@ elif page == "📊 Admin":
                 conn = get_connection()
                 df_predictions = pd.read_sql_query("SELECT * FROM predictions", conn)
                 conn.close()
-                st.markdown("### 🤖 All Predictions Data")
+                st.markdown("### 🤖 Predictions Data")
                 st.dataframe(df_predictions, use_container_width=True)
                 st.metric("Total Predictions", len(df_predictions))
                 if not df_predictions.empty:
-                    st.download_button("📥 Download All Predictions (Excel)",
+                    st.download_button("📥 Download Predictions (Excel)",
                                         data=export_to_excel(df_predictions, sheet_name="Predictions"),
                                         file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx",
                                         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -2553,7 +2934,25 @@ elif page == "📊 Admin":
         
         pulse_divider()
         
+        st.markdown("### 🎯 Saved Goals")
+        try:
+            conn = get_connection()
+            df_goals = pd.read_sql_query("SELECT * FROM goals", conn)
+            conn.close()
+            st.dataframe(df_goals, use_container_width=True)
+        except Exception as e:
+            st.error(f"❌ Error: {e}")
+        
+        pulse_divider()
+        
+        # Database Info
         st.markdown("### ℹ️ Database Information")
         if os.path.exists(DB_PATH):
             st.info(f"**Database Location:** `{os.path.abspath(DB_PATH)}`")
             st.info(f"**Database Size:** {os.path.getsize(DB_PATH) / 1024:.2f} KB")
+            st.info(f"**Schema File:** `{os.path.join(DATA_DIR, 'users_schema.sql')}`")
+        else:
+            st.warning("Database not found. It will be created on first use.")
+
+
+# Due to length, I'll continue with the remaining pages in the next part
